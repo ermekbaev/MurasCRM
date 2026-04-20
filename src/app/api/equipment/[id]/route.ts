@@ -7,6 +7,7 @@ const updateSchema = z.object({
   name: z.string().min(1).optional(),
   type: z.string().optional(),
   workWidth: z.number().nullable().optional(),
+  pricePerLm: z.number().nullable().optional(),
   materials: z.array(z.string()).optional(),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).optional(),
 });
@@ -30,7 +31,11 @@ export async function PATCH(
     include: { _count: { select: { services: true } } },
   });
 
-  return NextResponse.json({ ...equipment, workWidth: equipment.workWidth ? Number(equipment.workWidth) : null });
+  return NextResponse.json({
+    ...equipment,
+    workWidth: equipment.workWidth ? Number(equipment.workWidth) : null,
+    pricePerLm: equipment.pricePerLm ? Number(equipment.pricePerLm) : null,
+  });
 }
 
 export async function DELETE(

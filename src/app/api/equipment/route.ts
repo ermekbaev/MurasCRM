@@ -6,7 +6,8 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string().min(1),
   type: z.string(),
-  workWidth: z.number().optional(),
+  workWidth: z.number().nullable().optional(),
+  pricePerLm: z.number().nullable().optional(),
   materials: z.array(z.string()).default([]),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).default("ACTIVE"),
 });
@@ -20,7 +21,11 @@ export async function GET() {
     include: { _count: { select: { services: true } } },
   });
 
-  return NextResponse.json(equipment.map((e) => ({ ...e, workWidth: e.workWidth ? Number(e.workWidth) : null })));
+  return NextResponse.json(equipment.map((e) => ({
+    ...e,
+    workWidth: e.workWidth ? Number(e.workWidth) : null,
+    pricePerLm: e.pricePerLm ? Number(e.pricePerLm) : null,
+  })));
 }
 
 export async function POST(req: Request) {

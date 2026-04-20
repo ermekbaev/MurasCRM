@@ -24,7 +24,7 @@ interface CalcResult {
 export default function CalculatorPage() {
   const [type, setType] = useState<string>("DTF");
   const [params, setParams] = useState({
-    width: "1.00",
+    width: "",
     height: "",
     quantity: "1",
     cutLength: "",
@@ -37,8 +37,6 @@ export default function CalculatorPage() {
     urgency: false,
     urgencyPercent: "30",
   });
-
-  const ROLL_WIDTHS = ["0.33", "0.50", "0.60", "0.90", "1.00", "1.20", "1.60"];
   const [discountTiers, setDiscountTiers] = useState<{ minQty: string; discountPct: string }[]>([]);
   const [result, setResult] = useState<CalcResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,13 +53,16 @@ export default function CalculatorPage() {
   const [savingInvoice, setSavingInvoice] = useState(false);
   const [savedInvoiceOk, setSavedInvoiceOk] = useState(false);
   const [priceSuggestions, setPriceSuggestions] = useState<Record<string, { price: number; unit: string }>>({});
+  const [mediaEquipment, setMediaEquipment] = useState<{ id: string; name: string; workWidth: number; pricePerLm: number | null }[]>([]);
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState("");
 
   useEffect(() => {
     Promise.all([
       fetch("/api/orders?status=active&limit=50").then((r) => r.json()),
       fetch("/api/services").then((r) => r.json()),
       fetch("/api/clients?limit=100").then((r) => r.json()),
-    ]).then(([ordersData, servicesData, clientsData]) => {
+      fetch("/api/equipment").then((r) => r.json()),
+    ]).then(([ordersData, servicesData, clientsData, equipmentData]) => {
       setOrders(Array.isArray(ordersData.orders) ? ordersData.orders : Array.isArray(ordersData) ? ordersData : []);
       setClients(Array.isArray(clientsData.clients) ? clientsData.clients : Array.isArray(clientsData) ? clientsData : []);
       if (Array.isArray(servicesData)) {
@@ -72,6 +73,10 @@ export default function CalculatorPage() {
           }
         }
         setPriceSuggestions(suggestions);
+      }
+      if (Array.isArray(equipmentData)) {
+        const media = equipmentData.filter((e: { workWidth: number | null; status: string }) => e.workWidth && e.status === "ACTIVE");
+        setMediaEquipment(media);
       }
     });
   }, []);
@@ -225,33 +230,48 @@ export default function CalculatorPage() {
                 <>
                   <div>
                     <label className="text-sm font-medium text-gray-700 block mb-2">
-                      Ширина рулона (м)
+                      Оборудование / носитель
                     </label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {ROLL_WIDTHS.map((w) => (
-                        <button
-                          key={w}
-                          type="button"
-                          onClick={() => updateParam("width", w)}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                            params.width === w
-                              ? "bg-violet-600 text-white border-violet-600"
-                              : "bg-white text-gray-700 border-gray-200 hover:border-violet-300"
-                          }`}
-                        >
-                          {w} м
-                        </button>
-                      ))}
+                    {mediaEquipment.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {mediaEquipment.map((eq) => (
+                          <button
+                            key={eq.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedEquipmentId(eq.id);
+                              updateParam("width", String(eq.workWidth));
+                              if (eq.pricePerLm) updateParam("pricePerUnit", String(eq.pricePerLm));
+                            }}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors text-left ${
+                              selectedEquipmentId === eq.id
+                                ? "bg-violet-600 text-white border-violet-600"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-violet-300"
+                            }`}
+                          >
+                            <span className="block">{eq.name}</span>
+                            <span className="block opacity-75">{eq.workWidth} м{eq.pricePerLm ? ` · ${eq.pricePerLm} сом/пог.м` : ""}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 mb-2">
+                        Нет оборудования с заданной шириной.{" "}
+                        <a href="/settings/equipment" className="text-violet-600 hover:underline">Добавить →</a>
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.001}
+                        value={params.width}
+                        onChange={(e) => { setSelectedEquipmentId(""); updateParam("width", e.target.value); }}
+                        placeholder="Или введите ширину вручную (м)"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                      {params.width && <span className="text-xs text-gray-500 shrink-0">{params.width} м</span>}
                     </div>
-                    <input
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      value={params.width}
-                      onChange={(e) => updateParam("width", e.target.value)}
-                      placeholder="другая ширина"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <Input

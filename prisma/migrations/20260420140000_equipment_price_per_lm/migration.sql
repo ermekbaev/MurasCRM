@@ -1,0 +1,1 @@
+ALTER TABLE "Equipment" ADD COLUMN IF NOT EXISTS "pricePerLm" DECIMAL(12,2);

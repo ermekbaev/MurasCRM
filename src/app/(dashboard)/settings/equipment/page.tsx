@@ -14,12 +14,13 @@ interface Equipment {
   name: string;
   type: string;
   workWidth: number | null;
+  pricePerLm: number | null;
   materials: string[];
   status: string;
   _count: { services: number };
 }
 
-const EMPTY_FORM = { name: "", type: "", workWidth: "", materials: "", status: "ACTIVE" };
+const EMPTY_FORM = { name: "", type: "", workWidth: "", pricePerLm: "", materials: "", status: "ACTIVE" };
 
 export default function EquipmentSettingsPage() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -47,6 +48,7 @@ export default function EquipmentSettingsPage() {
       name: eq.name,
       type: eq.type,
       workWidth: eq.workWidth?.toString() || "",
+      pricePerLm: eq.pricePerLm?.toString() || "",
       materials: eq.materials.join(", "),
       status: eq.status,
     });
@@ -59,6 +61,7 @@ export default function EquipmentSettingsPage() {
     const payload = {
       ...form,
       workWidth: form.workWidth ? Number(form.workWidth) : null,
+      pricePerLm: form.pricePerLm ? Number(form.pricePerLm) : null,
       materials: form.materials.split(",").map((m) => m.trim()).filter(Boolean),
     };
 
@@ -127,8 +130,15 @@ export default function EquipmentSettingsPage() {
                   {EQUIPMENT_STATUS_LABELS[eq.status as keyof typeof EQUIPMENT_STATUS_LABELS]}
                 </span>
               </div>
-              {eq.workWidth && (
-                <p className="text-xs text-gray-500 mt-2">Рабочая ширина: {eq.workWidth} м</p>
+              {(eq.workWidth || eq.pricePerLm) && (
+                <div className="flex gap-3 mt-2">
+                  {eq.workWidth && (
+                    <p className="text-xs text-gray-500">Ширина: <span className="font-medium text-gray-700">{eq.workWidth} м</span></p>
+                  )}
+                  {eq.pricePerLm && (
+                    <p className="text-xs text-gray-500">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} сом/пог.м</span></p>
+                  )}
+                </div>
               )}
               {eq.materials.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -175,14 +185,24 @@ export default function EquipmentSettingsPage() {
               step={0.001}
               value={form.workWidth}
               onChange={(e) => setForm({ ...form, workWidth: e.target.value })}
+              placeholder="1.00"
             />
-            <Select
-              label="Статус"
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value })}
-              options={[{ value: "ACTIVE", label: "Работает" }, { value: "MAINTENANCE", label: "На обслуживании" }]}
+            <Input
+              label="Цена за пог.м (сом)"
+              type="number"
+              min={0}
+              step={0.01}
+              value={form.pricePerLm}
+              onChange={(e) => setForm({ ...form, pricePerLm: e.target.value })}
+              placeholder="1500"
             />
           </div>
+          <Select
+            label="Статус"
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
+            options={[{ value: "ACTIVE", label: "Работает" }, { value: "MAINTENANCE", label: "На обслуживании" }]}
+          />
           <Input
             label="Материалы (через запятую)"
             value={form.materials}

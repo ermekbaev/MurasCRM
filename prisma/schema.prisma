@@ -459,14 +459,15 @@ model ConsumableMovement {
 // ─── Equipment ────────────────────────────────────────────────────────────────
 
 model Equipment {
-  id        String          @id @default(cuid())
-  name      String
-  type      String
-  workWidth Decimal?        @db.Decimal(8, 3)
-  materials String[]
-  status    EquipmentStatus @default(ACTIVE)
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id         String          @id @default(cuid())
+  name       String
+  type       String
+  workWidth  Decimal?        @db.Decimal(8, 3)
+  pricePerLm Decimal?        @db.Decimal(12, 2)
+  materials  String[]
+  status     EquipmentStatus @default(ACTIVE)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 
   services Service[]
 }
