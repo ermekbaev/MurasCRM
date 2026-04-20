@@ -47,7 +47,8 @@ export async function POST(req: Request) {
     discountQty = [],
   } = parsed.data;
 
-  const area = width * height;
+  // width = roll/media fixed width, height = variable length entered by user
+  const area = width * height; // used for film, lamination costs
   let baseCost = 0;
   let materialCost = 0;
   let baseCostPrice = 0;
@@ -56,29 +57,30 @@ export async function POST(req: Request) {
 
   switch (type) {
     case "DTF": {
-      baseCost = area * pricePerUnit;
-      materialCost = area * filmPrice;
-      baseCostPrice = area * costPricePerUnit;
-      materialCostPrice = area * filmCostPrice;
+      // price per linear meter × length × qty
+      baseCost = height * pricePerUnit * quantity;
+      materialCost = area * filmPrice * quantity;
+      baseCostPrice = height * costPricePerUnit * quantity;
+      materialCostPrice = area * filmCostPrice * quantity;
       breakdown = [
-        { label: `Печать ${area.toFixed(3)} м²`, value: baseCost },
-        { label: "Плёнка", value: materialCost },
+        { label: `Печать ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
+        ...(materialCost > 0 ? [{ label: `Плёнка (${area.toFixed(3)} м²)`, value: materialCost }] : []),
       ];
       break;
     }
     case "UV_DTF": {
-      baseCost = area * pricePerUnit * quantity;
-      baseCostPrice = area * costPricePerUnit * quantity;
+      baseCost = height * pricePerUnit * quantity;
+      baseCostPrice = height * costPricePerUnit * quantity;
       breakdown = [
-        { label: `UV DTF ${area.toFixed(3)} м² × ${quantity} шт`, value: baseCost },
+        { label: `UV DTF ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
       ];
       break;
     }
     case "UV_FLATBED": {
-      baseCost = area * pricePerUnit;
-      baseCostPrice = area * costPricePerUnit;
+      baseCost = height * pricePerUnit * quantity;
+      baseCostPrice = height * costPricePerUnit * quantity;
       breakdown = [
-        { label: `UV планшет ${area.toFixed(3)} м²`, value: baseCost },
+        { label: `UV планшет ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
       ];
       break;
     }
@@ -99,10 +101,10 @@ export async function POST(req: Request) {
       break;
     }
     case "HIGH_PRECISION": {
-      baseCost = area * pricePerUnit;
-      baseCostPrice = area * costPricePerUnit;
+      baseCost = height * pricePerUnit * quantity;
+      baseCostPrice = height * costPricePerUnit * quantity;
       breakdown = [
-        { label: `Печать ${area.toFixed(3)} м²`, value: baseCost },
+        { label: `Печать ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
       ];
       break;
     }
@@ -111,14 +113,15 @@ export async function POST(req: Request) {
   let subtotal = baseCost + materialCost;
   let costTotal = baseCostPrice + materialCostPrice;
 
-  // Lamination
+  // Lamination — area × qty for area-based types
   const laminationPrice = 400;
   if (laminationGloss || laminationMatte) {
-    const laminCost = area * laminationPrice;
-    const laminCostPrice = area * (laminationCostPrice || laminationPrice * 0.4);
+    const laminArea = (type !== "LASER_CUT" && type !== "PLOTTER_CUT") ? area * quantity : area;
+    const laminCost = laminArea * laminationPrice;
+    const laminCostPrice = laminArea * (laminationCostPrice || laminationPrice * 0.4);
     subtotal += laminCost;
     costTotal += laminCostPrice;
-    breakdown.push({ label: `Ламинация ${laminationGloss ? "глянец" : "мат"}`, value: laminCost });
+    breakdown.push({ label: `Ламинация ${laminationGloss ? "глянец" : "мат"} (${laminArea.toFixed(3)} м²)`, value: laminCost });
   }
 
   // Quantity discount
