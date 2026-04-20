@@ -88,15 +88,25 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
   });
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const selected = Array.from(e.target.files || []);
+  function addFiles(incoming: File[]) {
     setPendingFiles((prev) => {
       const existingNames = new Set(prev.map((f) => f.name));
-      return [...prev, ...selected.filter((f) => !existingNames.has(f.name))];
+      return [...prev, ...incoming.filter((f) => !existingNames.has(f.name))];
     });
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    addFiles(Array.from(e.target.files || []));
     e.target.value = "";
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    addFiles(Array.from(e.dataTransfer.files));
   }
 
   function closeModal() {
@@ -490,34 +500,52 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
               hidden
               onChange={handleFileSelect}
             />
-            {pendingFiles.length > 0 ? (
-              <div className="space-y-1.5">
-                {pendingFiles.map((f, idx) => (
-                  <div key={idx} className="flex items-center justify-between px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText size={13} className="text-gray-400 shrink-0" />
-                      <span className="text-xs text-gray-700 truncate">{f.name}</span>
-                      <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => pendingFiles.length === 0 && fileInputRef.current?.click()}
+              className={`rounded-lg border-2 border-dashed transition-colors ${
+                isDragging
+                  ? "border-violet-400 bg-violet-50"
+                  : pendingFiles.length === 0
+                  ? "border-gray-200 hover:border-violet-300 cursor-pointer"
+                  : "border-gray-200"
+              }`}
+            >
+              {pendingFiles.length > 0 ? (
+                <div className="p-2 space-y-1.5">
+                  {pendingFiles.map((f, idx) => (
+                    <div key={idx} className="flex items-center justify-between px-3 py-1.5 bg-white rounded-md border border-gray-100">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText size={13} className="text-gray-400 shrink-0" />
+                        <span className="text-xs text-gray-700 truncate">{f.name}</span>
+                        <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingFiles((p) => p.filter((_, i) => i !== idx)); }}
+                        className="ml-2 p-0.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                      >
+                        <X size={13} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setPendingFiles((p) => p.filter((_, i) => i !== idx))}
-                      className="ml-2 p-0.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-gray-200 rounded-lg py-4 text-xs text-gray-400 hover:border-violet-300 hover:text-violet-500 transition-colors"
-              >
-                Нажмите чтобы добавить файлы
-              </button>
-            )}
+                  ))}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                    className="w-full py-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium"
+                  >
+                    + Добавить ещё
+                  </button>
+                </div>
+              ) : (
+                <div className="py-6 flex flex-col items-center gap-1 text-gray-400 select-none">
+                  <Paperclip size={18} className={isDragging ? "text-violet-500" : ""} />
+                  <p className="text-xs">Перетащите файлы сюда или нажмите чтобы выбрать</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
