@@ -349,8 +349,8 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
             <Input label="Мин. остаток" type="number" min={0} step={0.001} value={form.minStock} onChange={(e) => setForm({ ...form, minStock: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Цена закупки (₽)" type="number" min={0} value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} />
-            <Input label="Цена списания (₽)" type="number" min={0} value={form.writeoffPrice} onChange={(e) => setForm({ ...form, writeoffPrice: e.target.value })} />
+            <Input label="Цена закупки (сом)" type="number" min={0} value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} />
+            <Input label="Цена списания (сом)" type="number" min={0} value={form.writeoffPrice} onChange={(e) => setForm({ ...form, writeoffPrice: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -406,7 +406,7 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-500">{formatDate(m.date)}</p>
-                    {m.totalCost && <p className="text-xs text-gray-400">{m.totalCost.toLocaleString("ru-RU")} ₽</p>}
+                    {m.totalCost && <p className="text-xs text-gray-400">{m.totalCost.toLocaleString("ru-RU")} сом</p>}
                   </div>
                 </div>
               ))}
@@ -456,7 +456,7 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
             onChange={(e) => setMovementForm({ ...movementForm, qty: e.target.value })}
           />
           <Input
-            label="Сумма (₽)"
+            label="Сумма (сом)"
             type="number"
             min={0}
             value={movementForm.totalCost}

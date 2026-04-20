@@ -263,7 +263,7 @@ export default function ServicesSettingsPage() {
             />
             <Input label="Единица измерения" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
           </div>
-          <Input label="Базовая цена (₽)" type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+          <Input label="Базовая цена (сом)" type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
           <Select
             label="Оборудование"
             value={form.equipmentId}
