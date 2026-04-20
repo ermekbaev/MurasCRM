@@ -103,12 +103,12 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
     setFormItems((prev) => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
   }
 
-  function selectService(idx: number, serviceId: string) {
-    const svc = services.find((s) => s.id === serviceId);
+  function handleItemName(idx: number, value: string) {
+    const svc = services.find((s) => s.name === value);
     if (svc) {
-      updateItem(idx, { serviceId, name: svc.name, unit: svc.unit, price: svc.price });
+      updateItem(idx, { name: value, serviceId: svc.id, unit: svc.unit, price: svc.price });
     } else {
-      updateItem(idx, { serviceId: "", name: "", unit: "шт", price: 0 });
+      updateItem(idx, { name: value, serviceId: "" });
     }
   }
 
@@ -379,59 +379,57 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               <label className="text-sm font-medium text-gray-700">Позиции</label>
               {itemsTotal > 0 && (
                 <span className="text-sm font-semibold text-violet-700">
-                  Итого: {itemsTotal.toLocaleString("ru-RU", { style: "currency", currency: "KGS", maximumFractionDigits: 0 })}
+                  Итого: {itemsTotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} сом
                 </span>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="grid grid-cols-[1fr_56px_40px_80px_28px] gap-x-1 mb-1 px-1">
+              <span className="text-xs text-gray-400">Наименование</span>
+              <span className="text-xs text-gray-400 text-right">Кол-во</span>
+              <span className="text-xs text-gray-400 text-center">Ед.</span>
+              <span className="text-xs text-gray-400 text-right">Цена</span>
+              <span />
+            </div>
+            <div className="space-y-1">
               {formItems.map((item, idx) => (
-                <div key={idx} className="flex gap-2 items-start">
-                  <div className="flex-1 min-w-0">
-                    <select
-                      value={item.serviceId}
-                      onChange={(e) => selectService(idx, e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white mb-1"
-                    >
-                      <option value="">— выбрать из каталога —</option>
-                      {services.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
+                <div key={idx} className="grid grid-cols-[1fr_56px_40px_80px_28px] gap-x-1 items-center">
+                  <div className="relative">
                     <input
                       value={item.name}
-                      onChange={(e) => updateItem(idx, { name: e.target.value })}
-                      placeholder="Или введите вручную"
+                      onChange={(e) => handleItemName(idx, e.target.value)}
+                      placeholder="Название..."
+                      list={`svc-list-${idx}`}
                       className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                     />
+                    <datalist id={`svc-list-${idx}`}>
+                      {services.map((s) => (
+                        <option key={s.id} value={s.name} />
+                      ))}
+                    </datalist>
                   </div>
-                  <div className="flex gap-1 shrink-0">
-                    <input
-                      type="number" min="0.01" step="any" value={item.qty}
-                      onChange={(e) => updateItem(idx, { qty: parseFloat(e.target.value) || 1 })}
-                      className="w-14 px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
-                      title="Количество"
-                    />
-                    <input
-                      value={item.unit}
-                      onChange={(e) => updateItem(idx, { unit: e.target.value })}
-                      className="w-10 px-1 py-1.5 text-sm border border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
-                      title="Ед. изм."
-                    />
-                    <input
-                      type="number" min="0" step="any" value={item.price}
-                      onChange={(e) => updateItem(idx, { price: parseFloat(e.target.value) || 0 })}
-                      className="w-24 px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
-                      title="Цена"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFormItems((p) => p.filter((_, i) => i !== idx))}
-                      disabled={formItems.length <= 1}
-                      className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 disabled:opacity-30 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  <input
+                    type="number" min="0.01" step="any" value={item.qty}
+                    onChange={(e) => updateItem(idx, { qty: parseFloat(e.target.value) || 1 })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                  <input
+                    value={item.unit}
+                    onChange={(e) => updateItem(idx, { unit: e.target.value })}
+                    className="w-full px-1 py-1.5 text-sm border border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                  <input
+                    type="number" min="0" step="any" value={item.price}
+                    onChange={(e) => updateItem(idx, { price: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormItems((p) => p.filter((_, i) => i !== idx))}
+                    disabled={formItems.length <= 1}
+                    className="flex items-center justify-center p-1 rounded text-red-400 hover:bg-red-50 disabled:opacity-30 transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
               ))}
             </div>
