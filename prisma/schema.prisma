@@ -1,0 +1,554 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  MANAGER
+  DESIGNER
+  OPERATOR
+  ACCOUNTANT
+}
+
+enum ClientType {
+  INDIVIDUAL
+  LEGAL
+  IP
+}
+
+enum ClientSource {
+  REFERRAL
+  ADVERTISING
+  COLD_CALL
+  SOCIAL_MEDIA
+  OTHER
+}
+
+enum OrderType {
+  DTF
+  UV_DTF
+  UV_FLATBED
+  LASER_CUT
+  PLOTTER_CUT
+  HIGH_PRECISION
+  COMBO
+}
+
+enum OrderStatus {
+  NEW
+  IN_PROGRESS
+  REVIEW
+  READY
+  ISSUED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  URGENT
+  VERY_URGENT
+}
+
+enum PaymentStatus {
+  UNPAID
+  ADVANCE
+  PAID
+}
+
+enum TaskType {
+  DESIGN
+  FILE_PREP
+  PRINT
+  CUT
+  LAMINATION
+  MOUNTING
+  QC
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum FileCategory {
+  SOURCES
+  PENDING_APPROVAL
+  APPROVED
+  READY
+  ARCHIVE
+}
+
+enum FileStatus {
+  UPLOADED
+  PENDING_APPROVAL
+  APPROVED
+  REVISION
+}
+
+enum EquipmentStatus {
+  ACTIVE
+  MAINTENANCE
+}
+
+enum ConsumableType {
+  DTF_FILM
+  UV_INK
+  VINYL
+  BANNER
+  SUBSTRATE
+  OTHER
+}
+
+enum MovementDirection {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum DocumentTemplateType {
+  INVOICE
+  ACT
+  CONTRACT
+  OTHER
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  password       String
+  name           String
+  role           Role     @default(MANAGER)
+  phone          String?
+  telegramChatId String?
+  isBlocked      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  managedOrders  Order[]        @relation("OrderManager")
+  assignedOrders Order[]        @relation("OrderAssignees")
+  tasks          Task[]
+  orderComments  OrderComment[]
+  changeLogs     ChangeLog[]
+  uploadedFiles  File[]
+  taskComments   TaskComment[]
+  fileComments   FileComment[]
+}
+
+// ─── Client ───────────────────────────────────────────────────────────────────
+
+model Client {
+  id            String       @id @default(cuid())
+  type          ClientType   @default(INDIVIDUAL)
+  name          String
+  inn           String?
+  kpp           String?
+  ogrn          String?
+  phone         String?
+  email         String?
+  telegram      String?
+  whatsapp      String?
+  legalAddress  String?
+  postalAddress String?
+  bankName      String?
+  bankAccount   String?
+  bankBik       String?
+  corrAccount   String?
+  source        ClientSource @default(OTHER)
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  orders   Order[]
+  invoices Invoice[]
+}
+
+// ─── Order ────────────────────────────────────────────────────────────────────
+
+model Order {
+  id            String        @id @default(cuid())
+  number        String        @unique
+  type          OrderType
+  status        OrderStatus   @default(NEW)
+  priority      Priority      @default(NORMAL)
+  deadline      DateTime?
+  clientId      String
+  managerId     String?
+  amount        Decimal       @default(0) @db.Decimal(12, 2)
+  paymentStatus PaymentStatus @default(UNPAID)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  equipmentId   String?
+
+  client     Client         @relation(fields: [clientId], references: [id])
+  manager    User?          @relation("OrderManager", fields: [managerId], references: [id])
+  assignees  User[]         @relation("OrderAssignees")
+  equipment  Equipment?     @relation(fields: [equipmentId], references: [id])
+  items      OrderItem[]
+  files      OrderFile[]
+  comments   OrderComment[]
+  changeLogs ChangeLog[]
+  tasks      Task[]
+  invoices   Invoice[]
+  acts       Act[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  serviceId String?
+  name      String
+  qty       Decimal  @db.Decimal(10, 3)
+  unit      String
+  price     Decimal  @db.Decimal(12, 2)
+  discount  Decimal  @default(0) @db.Decimal(5, 2)
+  total     Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [serviceId], references: [id])
+}
+
+model OrderFile {
+  id        String     @id @default(cuid())
+  orderId   String
+  fileId    String
+  version   Int        @default(1)
+  status    FileStatus @default(UPLOADED)
+  comment   String?
+  createdAt DateTime   @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  file  File  @relation(fields: [fileId], references: [id])
+}
+
+model OrderComment {
+  id        String   @id @default(cuid())
+  orderId   String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model ChangeLog {
+  id        String   @id @default(cuid())
+  orderId   String
+  field     String
+  oldValue  String?
+  newValue  String?
+  userId    String
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+// ─── Task ─────────────────────────────────────────────────────────────────────
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  orderId     String?
+  assigneeId  String?
+  type        TaskType   @default(DESIGN)
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(NORMAL)
+  dueDate     DateTime?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  tags        String[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  order          Order?          @relation(fields: [orderId], references: [id])
+  assignee       User?           @relation(fields: [assigneeId], references: [id])
+  checklistItems ChecklistItem[]
+  comments       TaskComment[]
+  files          TaskFile[]
+}
+
+model ChecklistItem {
+  id          String   @id @default(cuid())
+  taskId      String
+  text        String
+  isCompleted Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+}
+
+model TaskFile {
+  id        String   @id @default(cuid())
+  taskId    String
+  fileId    String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  file File @relation(fields: [fileId], references: [id])
+}
+
+// ─── Invoice & Act ────────────────────────────────────────────────────────────
+
+model Invoice {
+  id        String    @id @default(cuid())
+  number    String    @unique
+  clientId  String
+  orderId   String?
+  date      DateTime  @default(now())
+  dueDate   DateTime?
+  vatRate   Decimal   @default(0) @db.Decimal(5, 2)
+  subtotal  Decimal   @default(0) @db.Decimal(12, 2)
+  vatAmount Decimal   @default(0) @db.Decimal(12, 2)
+  total     Decimal   @default(0) @db.Decimal(12, 2)
+  basis     String?
+  isPaid    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  client Client        @relation(fields: [clientId], references: [id])
+  order  Order?        @relation(fields: [orderId], references: [id])
+  items  InvoiceItem[]
+  acts   Act[]
+}
+
+model InvoiceItem {
+  id        String  @id @default(cuid())
+  invoiceId String
+  name      String
+  qty       Decimal @db.Decimal(10, 3)
+  unit      String
+  price     Decimal @db.Decimal(12, 2)
+  total     Decimal @db.Decimal(12, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Act {
+  id        String   @id @default(cuid())
+  number    String   @unique
+  invoiceId String?
+  orderId   String?
+  date      DateTime @default(now())
+  total     Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice Invoice?  @relation(fields: [invoiceId], references: [id])
+  order   Order?    @relation(fields: [orderId], references: [id])
+  items   ActItem[]
+}
+
+model ActItem {
+  id    String  @id @default(cuid())
+  actId String
+  name  String
+  qty   Decimal @db.Decimal(10, 3)
+  unit  String
+  price Decimal @db.Decimal(12, 2)
+  total Decimal @db.Decimal(12, 2)
+
+  act Act @relation(fields: [actId], references: [id], onDelete: Cascade)
+}
+
+// ─── Document Template ────────────────────────────────────────────────────────
+
+model DocumentTemplate {
+  id        String               @id @default(cuid())
+  name      String
+  type      DocumentTemplateType @default(OTHER)
+  body      String               @db.Text
+  variables String[]
+  isDefault Boolean              @default(false)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+}
+
+// ─── File ─────────────────────────────────────────────────────────────────────
+
+model File {
+  id           String       @id @default(cuid())
+  key          String       @unique
+  originalName String
+  size         Int
+  mimeType     String
+  category     FileCategory @default(SOURCES)
+  status       FileStatus   @default(UPLOADED)
+  version      Int          @default(1)
+  uploadedById String
+  linkedTo     String?
+  linkedId     String?
+  comment      String?
+  createdAt    DateTime     @default(now())
+
+  uploadedBy User          @relation(fields: [uploadedById], references: [id])
+  orderFiles OrderFile[]
+  taskFiles  TaskFile[]
+  fileComments FileComment[]
+}
+
+model FileComment {
+  id        String   @id @default(cuid())
+  fileId    String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ─── Consumable ───────────────────────────────────────────────────────────────
+
+model Consumable {
+  id            String         @id @default(cuid())
+  name          String
+  type          ConsumableType @default(OTHER)
+  unit          String
+  stock         Decimal        @default(0) @db.Decimal(12, 3)
+  minStock      Decimal        @default(0) @db.Decimal(12, 3)
+  purchasePrice Decimal        @default(0) @db.Decimal(12, 2)
+  writeoffPrice Decimal        @default(0) @db.Decimal(12, 2)
+  supplierId    String?
+  article       String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  supplier  Supplier?            @relation(fields: [supplierId], references: [id])
+  movements ConsumableMovement[]
+  services  ServiceConsumable[]
+}
+
+model ConsumableMovement {
+  id           String            @id @default(cuid())
+  consumableId String
+  direction    MovementDirection
+  qty          Decimal           @db.Decimal(12, 3)
+  orderId      String?
+  date         DateTime          @default(now())
+  note         String?
+  totalCost    Decimal?          @db.Decimal(12, 2)
+  createdAt    DateTime          @default(now())
+
+  consumable Consumable @relation(fields: [consumableId], references: [id])
+}
+
+// ─── Equipment ────────────────────────────────────────────────────────────────
+
+model Equipment {
+  id        String          @id @default(cuid())
+  name      String
+  type      String
+  workWidth Decimal?        @db.Decimal(8, 3)
+  materials String[]
+  status    EquipmentStatus @default(ACTIVE)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  services Service[]
+  orders   Order[]
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
+model Service {
+  id          String     @id @default(cuid())
+  name        String
+  type        OrderType?
+  unit        String
+  price       Decimal    @db.Decimal(12, 2)
+  equipmentId String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  equipment   Equipment?           @relation(fields: [equipmentId], references: [id])
+  orderItems  OrderItem[]
+  consumables ServiceConsumable[]
+}
+
+model ServiceConsumable {
+  id           String  @id @default(cuid())
+  serviceId    String
+  consumableId String
+  qtyPerUnit   Decimal @db.Decimal(10, 4)
+
+  service    Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  consumable Consumable @relation(fields: [consumableId], references: [id])
+}
+
+// ─── Supplier ─────────────────────────────────────────────────────────────────
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  materials   String[]
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  consumables Consumable[]
+}
+
+// ─── Tag ──────────────────────────────────────────────────────────────────────
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("#6366f1")
+  createdAt DateTime @default(now())
+}
+
+// ─── CompanySettings ──────────────────────────────────────────────────────────
+
+model CompanySettings {
+  id               String   @id @default(cuid())
+  name             String   @default("")
+  inn              String   @default("")
+  kpp              String   @default("")
+  ogrn             String   @default("")
+  legalAddress     String   @default("")
+  phone            String   @default("")
+  email            String   @default("")
+  website          String   @default("")
+  bankName         String   @default("")
+  bankAccount      String   @default("")
+  bankBik          String   @default("")
+  corrAccount      String   @default("")
+  director         String   @default("")
+  accountant       String   @default("")
+  logoKey          String?
+  stampKey         String?
+  signatureKey     String?
+  telegramBotToken String?
+  updatedAt        DateTime @updatedAt
+}
