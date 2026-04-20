@@ -8,6 +8,7 @@ const schema = z.object({
   type: z.string(),
   workWidth: z.number().nullable().optional(),
   pricePerLm: z.number().nullable().optional(),
+  pricingUnit: z.enum(["LM", "SQM", "PCS", "CUT"]).default("LM"),
   materials: z.array(z.string()).default([]),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).default("ACTIVE"),
 });
@@ -25,6 +26,7 @@ export async function GET() {
     ...e,
     workWidth: e.workWidth ? Number(e.workWidth) : null,
     pricePerLm: e.pricePerLm ? Number(e.pricePerLm) : null,
+    pricingUnit: e.pricingUnit || "LM",
   })));
 }
 

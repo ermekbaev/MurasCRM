@@ -8,6 +8,7 @@ const updateSchema = z.object({
   type: z.string().optional(),
   workWidth: z.number().nullable().optional(),
   pricePerLm: z.number().nullable().optional(),
+  pricingUnit: z.enum(["LM", "SQM", "PCS", "CUT"]).optional(),
   materials: z.array(z.string()).optional(),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).optional(),
 });
@@ -35,6 +36,7 @@ export async function PATCH(
     ...equipment,
     workWidth: equipment.workWidth ? Number(equipment.workWidth) : null,
     pricePerLm: equipment.pricePerLm ? Number(equipment.pricePerLm) : null,
+    pricingUnit: equipment.pricingUnit || "LM",
   });
 }
 

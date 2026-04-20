@@ -15,12 +15,27 @@ interface Equipment {
   type: string;
   workWidth: number | null;
   pricePerLm: number | null;
+  pricingUnit: string;
   materials: string[];
   status: string;
   _count: { services: number };
 }
 
-const EMPTY_FORM = { name: "", type: "DTF", workWidth: "", pricePerLm: "", materials: "", status: "ACTIVE" };
+const PRICING_UNIT_LABELS: Record<string, string> = {
+  LM: "Погонный метр (пог.м)",
+  SQM: "Квадратный метр (м²)",
+  PCS: "Штука (шт)",
+  CUT: "Длина реза (мм/пог.м)",
+};
+
+const PRICING_UNIT_SHORT: Record<string, string> = {
+  LM: "сом/пог.м",
+  SQM: "сом/м²",
+  PCS: "сом/шт",
+  CUT: "сом/мм",
+};
+
+const EMPTY_FORM = { name: "", type: "DTF", workWidth: "", pricePerLm: "", pricingUnit: "LM", materials: "", status: "ACTIVE" };
 
 const TYPE_LABELS: Record<string, string> = {
   DTF: "DTF-печать", UV_DTF: "UV DTF", UV_FLATBED: "UV планшет",
@@ -58,6 +73,7 @@ export default function EquipmentSettingsPage() {
       type: eq.type,
       workWidth: eq.workWidth?.toString() || "",
       pricePerLm: eq.pricePerLm?.toString() || "",
+      pricingUnit: eq.pricingUnit || "LM",
       materials: eq.materials.join(", "),
       status: eq.status,
     });
@@ -74,6 +90,8 @@ export default function EquipmentSettingsPage() {
       pricePerLm: form.pricePerLm ? Number(form.pricePerLm) : null,
       materials: form.materials.split(",").map((m) => m.trim()).filter(Boolean),
     };
+    const hasWidth = form.pricingUnit === "LM" || form.pricingUnit === "SQM";
+    if (!hasWidth) payload.workWidth = null;
 
     if (editingId) {
       const res = await fetch(`/api/equipment/${editingId}`, {
@@ -147,12 +165,12 @@ export default function EquipmentSettingsPage() {
                 </span>
               </div>
               {(eq.workWidth || eq.pricePerLm) && (
-                <div className="flex gap-3 mt-2">
+                <div className="flex gap-3 mt-2 flex-wrap">
                   {eq.workWidth && (
                     <p className="text-xs text-gray-500">Ширина: <span className="font-medium text-gray-700">{eq.workWidth} м</span></p>
                   )}
                   {eq.pricePerLm && (
-                    <p className="text-xs text-gray-500">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} сом/пог.м</span></p>
+                    <p className="text-xs text-gray-500">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
                   )}
                 </div>
               )}
@@ -206,18 +224,31 @@ export default function EquipmentSettingsPage() {
               { value: "OTHER", label: "Другое" },
             ]}
           />
+          <Select
+            label="Единица расчёта *"
+            value={form.pricingUnit}
+            onChange={(e) => setForm({ ...form, pricingUnit: e.target.value })}
+            options={[
+              { value: "LM", label: "Погонный метр (пог.м)" },
+              { value: "SQM", label: "Квадратный метр (м²)" },
+              { value: "PCS", label: "Штука (шт)" },
+              { value: "CUT", label: "Длина реза (мм/пог.м)" },
+            ]}
+          />
           <div className="grid grid-cols-2 gap-4">
+            {(form.pricingUnit === "LM" || form.pricingUnit === "SQM") && (
+              <Input
+                label="Рабочая ширина (м)"
+                type="number"
+                min={0}
+                step={0.001}
+                value={form.workWidth}
+                onChange={(e) => setForm({ ...form, workWidth: e.target.value })}
+                placeholder="1.00"
+              />
+            )}
             <Input
-              label="Рабочая ширина (м)"
-              type="number"
-              min={0}
-              step={0.001}
-              value={form.workWidth}
-              onChange={(e) => setForm({ ...form, workWidth: e.target.value })}
-              placeholder="1.00"
-            />
-            <Input
-              label="Цена за пог.м (сом)"
+              label={`Цена за ${PRICING_UNIT_SHORT[form.pricingUnit] || "ед"}`}
               type="number"
               min={0}
               step={0.01}

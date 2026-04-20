@@ -32,8 +32,16 @@ interface EquipmentItem {
   type: string;
   workWidth: number | null;
   pricePerLm: number | null;
+  pricingUnit: string;
   status: string;
 }
+
+const PRICING_UNIT_SHORT: Record<string, string> = {
+  LM: "пог.м",
+  SQM: "м²",
+  PCS: "шт",
+  CUT: "мм",
+};
 
 interface CalcResult {
   subtotal: number;
@@ -46,11 +54,13 @@ interface CalcResult {
 
 export default function CalculatorPage() {
   const [type, setType] = useState<string>("");
+  const [pricingUnit, setPricingUnit] = useState<string>("LM");
   const [selectedEquipmentId, setSelectedEquipmentId] = useState("");
   const [selectedEquipmentName, setSelectedEquipmentName] = useState("");
   const [params, setParams] = useState({
     width: "",
     height: "",
+    qty: "",
     cutLength: "",
     pricePerUnit: "",
     costPricePerUnit: "",
@@ -90,15 +100,18 @@ export default function CalculatorPage() {
     });
   }, []);
 
-  const isCutType = type === "LASER_CUT" || type === "PLOTTER_CUT";
-  const isAreaType = type && !isCutType;
+  const isCutUnit = pricingUnit === "CUT";
+  const isPcsUnit = pricingUnit === "PCS";
+  const isSqmUnit = pricingUnit === "SQM";
+  const isLmUnit = pricingUnit === "LM";
+  const hasWidth = isLmUnit || isSqmUnit;
 
   function selectEquipment(eq: EquipmentItem) {
     setSelectedEquipmentId(eq.id);
     setSelectedEquipmentName(eq.name);
-    // Use equipment type if it's a known calc type, otherwise default to DTF
     const calcType = CALC_TYPES.includes(eq.type as CalcType) ? eq.type : "DTF";
     setType(calcType);
+    setPricingUnit(eq.pricingUnit || "LM");
     setResult(null);
     setParams((p) => ({
       ...p,
@@ -116,16 +129,19 @@ export default function CalculatorPage() {
     setLoading(true);
     const body: Record<string, unknown> = {
       type,
+      pricingUnit,
       pricePerUnit: Number(params.pricePerUnit) || 0,
       urgency: params.urgency,
       urgencyPercent: Number(params.urgencyPercent) || 30,
     };
     if (params.costPricePerUnit) body.costPricePerUnit = Number(params.costPricePerUnit);
-    if (isAreaType) {
+    if (isCutUnit) {
+      body.cutLength = Number(params.cutLength) || 0;
+    } else if (isPcsUnit) {
+      body.qty = Number(params.qty) || 0;
+    } else {
       body.width = Number(params.width) || 0;
       body.height = Number(params.height) || 0;
-    } else {
-      body.cutLength = Number(params.cutLength) || 0;
     }
     if (discountTiers.length > 0) {
       body.discountQty = discountTiers
@@ -229,7 +245,7 @@ export default function CalculatorPage() {
                     <optgroup key={t} label={TYPE_LABELS[t] || t}>
                       {items.map((eq) => (
                         <option key={eq.id} value={eq.id}>
-                          {eq.name}{eq.workWidth ? ` (${eq.workWidth} м)` : ""}{eq.pricePerLm ? ` · ${eq.pricePerLm} сом/пог.м` : ""}
+                          {eq.name}{eq.workWidth ? ` (${eq.workWidth} м)` : ""}{eq.pricePerLm ? ` · ${eq.pricePerLm} сом/${PRICING_UNIT_SHORT[eq.pricingUnit] || "ед"}` : ""}
                         </option>
                       ))}
                     </optgroup>
@@ -240,8 +256,8 @@ export default function CalculatorPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLORS[type] || "bg-gray-100 text-gray-600"}`}>
                       {TYPE_LABELS[type] || type}
                     </span>
-                    {params.width && <span className="text-xs text-gray-500">ширина: {params.width} м</span>}
-                    {params.pricePerUnit && <span className="text-xs text-gray-500">цена: {params.pricePerUnit} сом/пог.м</span>}
+                    {params.width && hasWidth && <span className="text-xs text-gray-500">ширина: {params.width} м</span>}
+                    {params.pricePerUnit && <span className="text-xs text-gray-500">цена: {params.pricePerUnit} сом/{PRICING_UNIT_SHORT[pricingUnit] || "ед"}</span>}
                     {!CALC_TYPES.includes(type as CalcType) && (
                       <span className="text-xs text-orange-500">
                         Тип не задан —{" "}
@@ -260,38 +276,62 @@ export default function CalculatorPage() {
               <h2 className="font-semibold text-gray-800 mb-4">Параметры</h2>
               <div className="space-y-4">
 
-                {/* Area-based: width + length + qty */}
-                {isAreaType && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Input
-                        label="Ширина рулона (м)"
-                        type="number"
-                        min={0}
-                        step={0.001}
-                        value={params.width}
-                        onChange={(e) => updateParam("width", e.target.value)}
-                        placeholder="1.00"
-                      />
-                      <Input
-                        label="Длина (м)"
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        value={params.height}
-                        onChange={(e) => updateParam("height", e.target.value)}
-                        placeholder="0.50"
-                      />
-                    </div>
-                  </>
+                {/* LM: width + length */}
+                {isLmUnit && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Ширина рулона (м)"
+                      type="number" min={0} step={0.001}
+                      value={params.width}
+                      onChange={(e) => updateParam("width", e.target.value)}
+                      placeholder="1.00"
+                    />
+                    <Input
+                      label="Длина (пог.м)"
+                      type="number" min={0} step={0.01}
+                      value={params.height}
+                      onChange={(e) => updateParam("height", e.target.value)}
+                      placeholder="5.00"
+                    />
+                  </div>
                 )}
 
-                {/* Cut-based */}
-                {isCutType && (
+                {/* SQM: width + height */}
+                {isSqmUnit && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Ширина (м)"
+                      type="number" min={0} step={0.001}
+                      value={params.width}
+                      onChange={(e) => updateParam("width", e.target.value)}
+                      placeholder="1.00"
+                    />
+                    <Input
+                      label="Высота (м)"
+                      type="number" min={0} step={0.001}
+                      value={params.height}
+                      onChange={(e) => updateParam("height", e.target.value)}
+                      placeholder="0.50"
+                    />
+                  </div>
+                )}
+
+                {/* PCS: quantity */}
+                {isPcsUnit && (
                   <Input
-                    label={type === "LASER_CUT" ? "Длина реза (мм)" : "Погонные метры"}
-                    type="number"
-                    min={0}
+                    label="Количество (шт)"
+                    type="number" min={1} step={1}
+                    value={params.qty}
+                    onChange={(e) => updateParam("qty", e.target.value)}
+                    placeholder="100"
+                  />
+                )}
+
+                {/* CUT: cut length */}
+                {isCutUnit && (
+                  <Input
+                    label={type === "LASER_CUT" ? "Длина реза (мм)" : "Длина реза (пог.м)"}
+                    type="number" min={0}
                     value={params.cutLength}
                     onChange={(e) => updateParam("cutLength", e.target.value)}
                     placeholder={type === "LASER_CUT" ? "1000" : "5"}
@@ -301,25 +341,22 @@ export default function CalculatorPage() {
                 {/* Price */}
                 <div className="grid grid-cols-2 gap-3">
                   <Input
-                    label={isCutType ? "Цена (сом/мм или пог.м)" : "Цена за пог.м (сом)"}
-                    type="number"
-                    min={0}
+                    label={`Цена за ${PRICING_UNIT_SHORT[pricingUnit] || "ед"} (сом)`}
+                    type="number" min={0}
                     value={params.pricePerUnit}
                     onChange={(e) => updateParam("pricePerUnit", e.target.value)}
                   />
                   <Input
                     label="Себестоимость"
-                    type="number"
-                    min={0}
+                    type="number" min={0}
                     value={params.costPricePerUnit}
                     onChange={(e) => updateParam("costPricePerUnit", e.target.value)}
                     placeholder="Не обязательно"
                   />
                 </div>
 
-
                 {/* Quantity discounts */}
-                {isAreaType && (
+                {!isCutUnit && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-medium text-gray-700">Скидки за тираж</p>
@@ -390,19 +427,34 @@ export default function CalculatorPage() {
               </div>
 
               {result.area !== null && (
-                <div className="p-3 bg-gray-50 rounded-lg mb-4 flex gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500">Длина</p>
-                    <p className="text-base font-bold text-gray-900">{Number(params.height).toFixed(2)} пог.м</p>
-                  </div>
-                  <div className="border-l border-gray-200 pl-4">
-                    <p className="text-xs text-gray-500">Площадь</p>
-                    <p className="text-base font-bold text-gray-900">{result.area.toFixed(4)} м²</p>
-                  </div>
-                  <div className="border-l border-gray-200 pl-4">
-                    <p className="text-xs text-gray-500">Ширина</p>
-                    <p className="text-base font-bold text-gray-900">{params.width} м</p>
-                  </div>
+                <div className="p-3 bg-gray-50 rounded-lg mb-4 flex gap-4 flex-wrap">
+                  {isSqmUnit ? (
+                    <>
+                      <div>
+                        <p className="text-xs text-gray-500">Площадь</p>
+                        <p className="text-base font-bold text-gray-900">{result.area.toFixed(4)} м²</p>
+                      </div>
+                      <div className="border-l border-gray-200 pl-4">
+                        <p className="text-xs text-gray-500">Ширина × Высота</p>
+                        <p className="text-base font-bold text-gray-900">{params.width} × {params.height} м</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <p className="text-xs text-gray-500">Длина</p>
+                        <p className="text-base font-bold text-gray-900">{Number(params.height).toFixed(2)} пог.м</p>
+                      </div>
+                      <div className="border-l border-gray-200 pl-4">
+                        <p className="text-xs text-gray-500">Площадь</p>
+                        <p className="text-base font-bold text-gray-900">{result.area.toFixed(4)} м²</p>
+                      </div>
+                      <div className="border-l border-gray-200 pl-4">
+                        <p className="text-xs text-gray-500">Ширина</p>
+                        <p className="text-base font-bold text-gray-900">{params.width} м</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 

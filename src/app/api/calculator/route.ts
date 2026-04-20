@@ -3,9 +3,11 @@ import { auth } from "@/auth";
 import { z } from "zod";
 
 const calcSchema = z.object({
-  type: z.enum(["DTF", "UV_DTF", "UV_FLATBED", "LASER_CUT", "PLOTTER_CUT", "HIGH_PRECISION"]),
+  type: z.string(),
+  pricingUnit: z.enum(["LM", "SQM", "PCS", "CUT"]).default("LM"),
   width: z.number().optional(),
   height: z.number().optional(),
+  qty: z.number().optional(),
   cutLength: z.number().optional(),
   pricePerUnit: z.number().optional(),
   costPricePerUnit: z.number().optional(),
@@ -13,6 +15,15 @@ const calcSchema = z.object({
   urgencyPercent: z.number().optional(),
   discountQty: z.array(z.object({ minQty: z.number(), discountPct: z.number() })).optional(),
 });
+
+const UNIT_LABELS: Record<string, string> = {
+  DTF: "DTF-печать",
+  UV_DTF: "UV DTF",
+  UV_FLATBED: "UV планшет",
+  LASER_CUT: "Лазерная резка",
+  PLOTTER_CUT: "Плоттерная резка",
+  HIGH_PRECISION: "Высокоточная печать",
+};
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -24,8 +35,10 @@ export async function POST(req: Request) {
 
   const {
     type,
+    pricingUnit,
     width = 0,
     height = 0,
+    qty = 0,
     cutLength = 0,
     pricePerUnit = 0,
     costPricePerUnit = 0,
@@ -34,47 +47,44 @@ export async function POST(req: Request) {
     discountQty = [],
   } = parsed.data;
 
-  // width = fixed roll width, height = variable length
-  const area = width * height;
+  const label = UNIT_LABELS[type] || type;
   let baseCost = 0;
   let baseCostPrice = 0;
   let breakdown: { label: string; value: number }[] = [];
+  let area: number | null = null;
+  let discountBase: number = 0; // value used for discount tier comparison
 
-  switch (type) {
-    case "DTF": {
+  switch (pricingUnit) {
+    case "LM": {
       baseCost = height * pricePerUnit;
       baseCostPrice = height * costPricePerUnit;
-      breakdown = [{ label: `Печать ${height.toFixed(2)} пог.м`, value: baseCost }];
+      area = width > 0 ? width * height : null;
+      discountBase = height;
+      breakdown = [{ label: `${label} ${height.toFixed(2)} пог.м`, value: baseCost }];
       break;
     }
-    case "UV_DTF": {
-      baseCost = height * pricePerUnit;
-      baseCostPrice = height * costPricePerUnit;
-      breakdown = [{ label: `UV DTF ${height.toFixed(2)} пог.м`, value: baseCost }];
+    case "SQM": {
+      const sqm = width * height;
+      baseCost = sqm * pricePerUnit;
+      baseCostPrice = sqm * costPricePerUnit;
+      area = sqm;
+      discountBase = sqm;
+      breakdown = [{ label: `${label} ${sqm.toFixed(4)} м²`, value: baseCost }];
       break;
     }
-    case "UV_FLATBED": {
-      baseCost = height * pricePerUnit;
-      baseCostPrice = height * costPricePerUnit;
-      breakdown = [{ label: `UV планшет ${height.toFixed(2)} пог.м`, value: baseCost }];
+    case "PCS": {
+      baseCost = qty * pricePerUnit;
+      baseCostPrice = qty * costPricePerUnit;
+      discountBase = qty;
+      breakdown = [{ label: `${label} ${qty} шт`, value: baseCost }];
       break;
     }
-    case "LASER_CUT": {
+    case "CUT": {
       baseCost = cutLength * pricePerUnit;
       baseCostPrice = cutLength * costPricePerUnit;
-      breakdown = [{ label: `Лазерная резка ${cutLength} мм`, value: baseCost }];
-      break;
-    }
-    case "PLOTTER_CUT": {
-      baseCost = cutLength * pricePerUnit;
-      baseCostPrice = cutLength * costPricePerUnit;
-      breakdown = [{ label: `Плоттерная резка ${cutLength} пог.м`, value: baseCost }];
-      break;
-    }
-    case "HIGH_PRECISION": {
-      baseCost = height * pricePerUnit;
-      baseCostPrice = height * costPricePerUnit;
-      breakdown = [{ label: `Печать ${height.toFixed(2)} пог.м`, value: baseCost }];
+      discountBase = cutLength;
+      const cutLabel = type === "LASER_CUT" ? `${cutLength} мм` : `${cutLength} пог.м`;
+      breakdown = [{ label: `${label} ${cutLabel}`, value: baseCost }];
       break;
     }
   }
@@ -82,10 +92,9 @@ export async function POST(req: Request) {
   let subtotal = baseCost;
   let costTotal = baseCostPrice;
 
-  // Quantity discounts (based on length now, keep for compatibility)
   if (discountQty.length > 0) {
     const applicableTier = discountQty
-      .filter((d) => height >= d.minQty)
+      .filter((d) => discountBase >= d.minQty)
       .sort((a, b) => b.minQty - a.minQty)[0];
     if (applicableTier) {
       const discountAmount = (subtotal * applicableTier.discountPct) / 100;
@@ -94,7 +103,6 @@ export async function POST(req: Request) {
     }
   }
 
-  // Urgency
   if (urgency && urgencyPercent > 0) {
     const urgencyCost = (subtotal * urgencyPercent) / 100;
     subtotal += urgencyCost;
@@ -109,6 +117,6 @@ export async function POST(req: Request) {
     margin,
     breakdown,
     pricePerUnit: null,
-    area: type !== "LASER_CUT" && type !== "PLOTTER_CUT" ? area : null,
+    area,
   });
 }
