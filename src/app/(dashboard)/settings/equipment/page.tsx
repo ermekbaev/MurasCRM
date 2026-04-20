@@ -34,6 +34,7 @@ export default function EquipmentSettingsPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
 
   useEffect(() => {
@@ -45,11 +46,13 @@ export default function EquipmentSettingsPage() {
   function openCreate() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setSaveError("");
     setModalOpen(true);
   }
 
   function openEdit(eq: Equipment) {
     setEditingId(eq.id);
+    setSaveError("");
     setForm({
       name: eq.name,
       type: eq.type,
@@ -64,6 +67,7 @@ export default function EquipmentSettingsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setSaveError("");
     const payload = {
       ...form,
       workWidth: form.workWidth ? Number(form.workWidth) : null,
@@ -79,8 +83,11 @@ export default function EquipmentSettingsPage() {
       });
       if (res.ok) {
         const updated = await res.json();
-        setEquipment((prev) => prev.map((eq) => eq.id === editingId ? updated : eq));
+        setEquipment((prev) => prev.map((eq) => eq.id === editingId ? { ...updated, _count: eq._count } : eq));
         setModalOpen(false);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSaveError(err?.error ? JSON.stringify(err.error) : "Ошибка сохранения");
       }
     } else {
       const res = await fetch("/api/equipment", {
@@ -92,6 +99,9 @@ export default function EquipmentSettingsPage() {
         const created = await res.json();
         setEquipment((prev) => [...prev, { ...created, _count: { services: 0 } }]);
         setModalOpen(false);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSaveError(err?.error ? JSON.stringify(err.error) : "Ошибка сохранения");
       }
     }
     setSaving(false);
@@ -228,6 +238,9 @@ export default function EquipmentSettingsPage() {
             onChange={(e) => setForm({ ...form, materials: e.target.value })}
             placeholder="Акрил, ПВХ, Дерево"
           />
+          {saveError && (
+            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{saveError}</p>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>Отмена</Button>
             <Button type="submit" loading={saving}>{editingId ? "Сохранить" : "Добавить"}</Button>

@@ -213,69 +213,54 @@ export default function CalculatorPage() {
 
           {/* Equipment selector */}
           <Card padding="md">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-                <Cpu size={16} className="text-violet-500" /> Станок
-              </h2>
-              {equipment.length === 0 && (
-                <a href="/settings/equipment" className="text-xs text-violet-600 hover:underline">
-                  Настроить оборудование →
-                </a>
-              )}
-            </div>
-
+            <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+              <Cpu size={16} className="text-violet-500" /> Станок
+            </h2>
             {equipment.length === 0 ? (
-              <div className="text-center py-6">
-                <Cpu size={32} className="text-gray-200 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Нет активного оборудования с видом работы.</p>
-                <a href="/settings/equipment" className="text-sm text-violet-600 hover:underline mt-1 block">
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-400 mb-1">Оборудование не настроено.</p>
+                <a href="/settings/equipment" className="text-sm text-violet-600 hover:underline">
                   Добавить оборудование →
                 </a>
               </div>
             ) : (
-              <div className="space-y-3">
-                {Object.entries(equipmentByType).map(([t, items]) => (
-                  <div key={t}>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">
-                      {TYPE_LABELS[t] || t}
-                    </p>
-                    <div className="grid grid-cols-1 gap-2">
+              <>
+                <select
+                  value={selectedEquipmentId}
+                  onChange={(e) => {
+                    const eq = equipment.find((eq) => eq.id === e.target.value);
+                    if (eq) selectEquipment(eq);
+                    else { setSelectedEquipmentId(""); setType(""); setResult(null); }
+                  }}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="">— выберите станок —</option>
+                  {Object.entries(equipmentByType).map(([t, items]) => (
+                    <optgroup key={t} label={TYPE_LABELS[t] || t}>
                       {items.map((eq) => (
-                        <button
-                          key={eq.id}
-                          type="button"
-                          onClick={() => selectEquipment(eq)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
-                            selectedEquipmentId === eq.id
-                              ? "bg-violet-50 border-violet-400 ring-1 ring-violet-400"
-                              : "bg-white border-gray-200 hover:border-violet-300"
-                          }`}
-                        >
-                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${TYPE_COLORS[eq.type] || "bg-gray-100 text-gray-600"}`}>
-                            <Cpu size={14} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate">{eq.name}</p>
-                            <p className="text-xs text-gray-400">
-                              {eq.workWidth ? `${eq.workWidth} м` : "ширина не задана"}
-                              {eq.pricePerLm ? ` · ${eq.pricePerLm} сом/пог.м` : ""}
-                            </p>
-                            {!CALC_TYPES.includes(eq.type as CalcType) && (
-                              <p className="text-xs text-orange-500 mt-0.5">
-                                Тип не настроен —{" "}
-                                <a href="/settings/equipment" className="underline hover:text-orange-700">задать →</a>
-                              </p>
-                            )}
-                          </div>
-                          {selectedEquipmentId === eq.id && (
-                            <Check size={16} className="text-violet-600 shrink-0" />
-                          )}
-                        </button>
+                        <option key={eq.id} value={eq.id}>
+                          {eq.name}{eq.workWidth ? ` (${eq.workWidth} м)` : ""}{eq.pricePerLm ? ` · ${eq.pricePerLm} сом/пог.м` : ""}
+                        </option>
                       ))}
-                    </div>
+                    </optgroup>
+                  ))}
+                </select>
+                {selectedEquipmentId && (
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLORS[type] || "bg-gray-100 text-gray-600"}`}>
+                      {TYPE_LABELS[type] || type}
+                    </span>
+                    {params.width && <span className="text-xs text-gray-500">ширина: {params.width} м</span>}
+                    {params.pricePerUnit && <span className="text-xs text-gray-500">цена: {params.pricePerUnit} сом/пог.м</span>}
+                    {!CALC_TYPES.includes(type as CalcType) && (
+                      <span className="text-xs text-orange-500">
+                        Тип не задан —{" "}
+                        <a href="/settings/equipment" className="underline">настроить →</a>
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </Card>
 
