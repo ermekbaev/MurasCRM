@@ -87,9 +87,12 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     notes: "",
   });
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingScreenshots, setPendingScreenshots] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [isDraggingScreenshots, setIsDraggingScreenshots] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const screenshotInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef<Map<string, string>>(new Map());
 
   function fileKey(f: File) { return `${f.name}-${f.size}-${f.lastModified}`; }
@@ -104,8 +107,16 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
 
   function addFiles(incoming: File[]) {
     setPendingFiles((prev) => {
-      const existingKeys = new Set(prev.map(fileKey));
-      return [...prev, ...incoming.filter((f) => !existingKeys.has(fileKey(f)))];
+      const existing = new Set(prev.map(fileKey));
+      return [...prev, ...incoming.filter((f) => !existing.has(fileKey(f)))];
+    });
+  }
+
+  function addScreenshots(incoming: File[]) {
+    const images = incoming.filter((f) => f.type.startsWith("image/"));
+    setPendingScreenshots((prev) => {
+      const existing = new Set(prev.map(fileKey));
+      return [...prev, ...images.filter((f) => !existing.has(fileKey(f)))];
     });
   }
 
@@ -114,10 +125,21 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     e.target.value = "";
   }
 
-  function handleDrop(e: React.DragEvent) {
+  function handleScreenshotSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    addScreenshots(Array.from(e.target.files || []));
+    e.target.value = "";
+  }
+
+  function handleDropFiles(e: React.DragEvent) {
     e.preventDefault();
-    setIsDragging(false);
+    setIsDraggingFiles(false);
     addFiles(Array.from(e.dataTransfer.files));
+  }
+
+  function handleDropScreenshots(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDraggingScreenshots(false);
+    addScreenshots(Array.from(e.dataTransfer.files));
   }
 
   useEffect(() => {
@@ -134,7 +156,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
           return new File([blob], `скриншот_${time}.${ext}`, { type: item.type });
         })
         .filter(Boolean) as File[];
-      if (images.length > 0) addFiles(images);
+      if (images.length > 0) addScreenshots(images);
     }
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
@@ -145,6 +167,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "" });
     setFormItems([emptyItem()]);
     setPendingFiles([]);
+    setPendingScreenshots([]);
     setUploadProgress({ done: 0, total: 0 });
   }
 
@@ -203,9 +226,13 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     if (res.ok) {
       const created = await res.json();
 
-      if (pendingFiles.length > 0) {
-        setUploadProgress({ done: 0, total: pendingFiles.length });
-        for (const file of pendingFiles) {
+      const allUploads = [
+        ...pendingFiles.map((f) => ({ file: f, comment: undefined })),
+        ...pendingScreenshots.map((f) => ({ file: f, comment: "SCREENSHOT" })),
+      ];
+      if (allUploads.length > 0) {
+        setUploadProgress({ done: 0, total: allUploads.length });
+        for (const { file, comment } of allUploads) {
           try {
             const metaRes = await fetch(`/api/orders/${created.id}/files`, {
               method: "POST",
@@ -215,6 +242,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
                 mimeType: file.type || "application/octet-stream",
                 size: file.size,
                 category: "SOURCES",
+                ...(comment ? { comment } : {}),
               }),
             });
             if (metaRes.ok) {
@@ -225,7 +253,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
                 headers: { "Content-Type": file.type || "application/octet-stream" },
               });
             }
-          } catch { /* file can be added later from order detail */ }
+          } catch { /* can be added later from order detail */ }
           setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
         }
       }
@@ -516,84 +544,104 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-700">Файлы</label>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium"
-              >
-                <Paperclip size={12} /> Прикрепить файл
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium">
+                <Paperclip size={12} /> Прикрепить
               </button>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              hidden
-              onChange={handleFileSelect}
-            />
+            <input ref={fileInputRef} type="file" multiple hidden onChange={handleFileSelect} />
             <div
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingFiles(true); }}
+              onDragLeave={() => setIsDraggingFiles(false)}
+              onDrop={handleDropFiles}
               onClick={() => pendingFiles.length === 0 && fileInputRef.current?.click()}
               className={`rounded-lg border-2 border-dashed transition-colors ${
-                isDragging
-                  ? "border-violet-400 bg-violet-50"
-                  : pendingFiles.length === 0
-                  ? "border-gray-200 hover:border-violet-300 cursor-pointer"
+                isDraggingFiles ? "border-violet-400 bg-violet-50"
+                  : pendingFiles.length === 0 ? "border-gray-200 hover:border-violet-300 cursor-pointer"
                   : "border-gray-200"
               }`}
             >
               {pendingFiles.length > 0 ? (
                 <div className="p-2 space-y-1.5">
-                  {pendingFiles.map((f, idx) => {
-                    const isImage = f.type.startsWith("image/");
-                    return (
-                      <div key={idx} className="relative group rounded-md border border-gray-100 bg-white overflow-hidden">
-                        {isImage ? (
-                          <div className="relative">
-                            <img
-                              src={getPreviewUrl(f)}
-                              alt={f.name}
-                              className="w-full max-h-48 object-contain bg-gray-50"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/40 flex items-center justify-between">
-                              <span className="text-xs text-white truncate">{f.name}</span>
-                              <span className="text-xs text-white/70 shrink-0 ml-2">{formatFileSize(f.size)}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between px-3 py-1.5">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText size={13} className="text-gray-400 shrink-0" />
-                              <span className="text-xs text-gray-700 truncate">{f.name}</span>
-                              <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
-                            </div>
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setPendingFiles((p) => p.filter((_, i) => i !== idx)); }}
-                          className="absolute top-1 right-1 p-0.5 rounded bg-white/80 text-gray-500 hover:text-red-500 hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
-                        >
-                          <X size={13} />
-                        </button>
+                  {pendingFiles.map((f, idx) => (
+                    <div key={idx} className="relative group flex items-center justify-between px-3 py-1.5 bg-white rounded-md border border-gray-100">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText size={13} className="text-gray-400 shrink-0" />
+                        <span className="text-xs text-gray-700 truncate">{f.name}</span>
+                        <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
                       </div>
-                    );
-                  })}
-                  <button
-                    type="button"
+                      <button type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingFiles((p) => p.filter((_, i) => i !== idx)); }}
+                        className="ml-2 p-0.5 text-gray-400 hover:text-red-500 transition-colors shrink-0">
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button"
                     onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                    className="w-full py-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium"
-                  >
+                    className="w-full py-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium">
                     + Добавить ещё
                   </button>
                 </div>
               ) : (
-                <div className="py-6 flex flex-col items-center gap-1.5 text-gray-400 select-none">
-                  <Paperclip size={18} className={isDragging ? "text-violet-500" : ""} />
+                <div className="py-5 flex flex-col items-center gap-1 text-gray-400 select-none">
+                  <Paperclip size={16} className={isDraggingFiles ? "text-violet-500" : ""} />
                   <p className="text-xs">Перетащите файлы или нажмите чтобы выбрать</p>
-                  <p className="text-xs text-gray-300">Скриншот — Ctrl+V</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Screenshots */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Скрин-превью</label>
+                <p className="text-xs text-gray-400">Визуальная подсказка — не нужно скачивать чтобы понять что за заказ</p>
+              </div>
+              <button type="button" onClick={() => screenshotInputRef.current?.click()}
+                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium shrink-0 ml-2">
+                <Paperclip size={12} /> Добавить
+              </button>
+            </div>
+            <input ref={screenshotInputRef} type="file" multiple accept="image/*" hidden onChange={handleScreenshotSelect} />
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingScreenshots(true); }}
+              onDragLeave={() => setIsDraggingScreenshots(false)}
+              onDrop={handleDropScreenshots}
+              onClick={() => pendingScreenshots.length === 0 && screenshotInputRef.current?.click()}
+              className={`rounded-lg border-2 border-dashed transition-colors ${
+                isDraggingScreenshots ? "border-violet-400 bg-violet-50"
+                  : pendingScreenshots.length === 0 ? "border-gray-200 hover:border-violet-300 cursor-pointer"
+                  : "border-gray-200"
+              }`}
+            >
+              {pendingScreenshots.length > 0 ? (
+                <div className="p-2 space-y-2">
+                  {pendingScreenshots.map((f, idx) => (
+                    <div key={idx} className="relative group rounded-md overflow-hidden border border-gray-100">
+                      <img src={getPreviewUrl(f)} alt={f.name} className="w-full max-h-52 object-contain bg-gray-50" />
+                      <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/40 flex items-center justify-between">
+                        <span className="text-xs text-white truncate">{f.name}</span>
+                        <span className="text-xs text-white/70 shrink-0 ml-2">{formatFileSize(f.size)}</span>
+                      </div>
+                      <button type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingScreenshots((p) => p.filter((_, i) => i !== idx)); }}
+                        className="absolute top-1 right-1 p-0.5 rounded bg-white/80 text-gray-500 hover:text-red-500 hover:bg-white transition-colors opacity-0 group-hover:opacity-100">
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button"
+                    onClick={(e) => { e.stopPropagation(); screenshotInputRef.current?.click(); }}
+                    className="w-full py-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium">
+                    + Добавить ещё
+                  </button>
+                </div>
+              ) : (
+                <div className="py-5 flex flex-col items-center gap-1 text-gray-400 select-none">
+                  <p className="text-xs">Перетащите изображение или нажмите</p>
+                  <p className="text-xs text-gray-300">Ctrl+V для вставки скриншота</p>
                 </div>
               )}
             </div>
