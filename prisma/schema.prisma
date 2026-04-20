@@ -178,7 +178,6 @@ model Client {
 model Order {
   id            String        @id @default(cuid())
   number        String        @unique
-  type          OrderType
   status        OrderStatus   @default(NEW)
   priority      Priority      @default(NORMAL)
   deadline      DateTime?

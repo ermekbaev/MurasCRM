@@ -6,7 +6,6 @@ import { generateOrderNumber } from "@/lib/utils";
 import { notifyNewOrder } from "@/lib/telegram";
 
 const orderSchema = z.object({
-  type: z.enum(["DTF", "UV_DTF", "UV_FLATBED", "LASER_CUT", "PLOTTER_CUT", "HIGH_PRECISION", "COMBO"]),
   clientId: z.string().min(1),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).default("NORMAL"),
   deadline: z.string().optional(),

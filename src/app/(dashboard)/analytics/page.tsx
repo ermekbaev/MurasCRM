@@ -318,25 +318,23 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by type */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 mb-4">Выручка по типам работ</h2>
+          <h2 className="font-semibold text-gray-800 mb-4">Выручка по типам услуг</h2>
           {data.ordersByType.length === 0 ? (
             <div className="h-40 flex items-center justify-center text-gray-400 text-sm">Нет данных</div>
           ) : (
-            <>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={data.ordersByType.map((d) => ({
-                  name: ORDER_TYPE_LABELS[d.type as keyof typeof ORDER_TYPE_LABELS]?.slice(0, 8) || d.type,
-                  revenue: d.revenue,
-                  count: d.count,
-                }))}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
-                  <Tooltip formatter={(v, name) => [name === "revenue" ? formatCurrency(Number(v)) : v, name === "revenue" ? "Выручка" : "Заказов"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                  <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={data.ordersByType.map((d) => ({
+                name: (ORDER_TYPE_LABELS[d.type as keyof typeof ORDER_TYPE_LABELS] ?? d.type).slice(0, 10),
+                revenue: d.revenue,
+                count: d.count,
+              }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
+                <Tooltip formatter={(v, name) => [name === "revenue" ? formatCurrency(Number(v)) : v, name === "revenue" ? "Выручка" : "Позиций"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </Card>
 

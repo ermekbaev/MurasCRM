@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     currentRevenue,
     prevRevenue,
     ordersByStatus,
-    ordersByType,
+    ordersByServiceType,
     ordersByPriority,
     topServices,
     revenueByMonth,
@@ -60,11 +60,9 @@ export async function GET(req: Request) {
       by: ["status"],
       _count: true,
     }),
-    prisma.order.groupBy({
-      by: ["type"],
-      where: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } },
-      _sum: { amount: true },
-      _count: true,
+    prisma.orderItem.findMany({
+      where: { order: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } } },
+      select: { total: true, service: { select: { type: true } } },
     }),
     prisma.order.groupBy({
       by: ["priority"],
@@ -110,6 +108,18 @@ export async function GET(req: Request) {
     }),
   ]);
 
+  // Aggregate items by service type
+  const svcTypeMap: Record<string, { count: number; revenue: number }> = {};
+  ordersByServiceType.forEach((item) => {
+    const type = item.service?.type || "OTHER";
+    if (!svcTypeMap[type]) svcTypeMap[type] = { count: 0, revenue: 0 };
+    svcTypeMap[type].count++;
+    svcTypeMap[type].revenue += Number(item.total);
+  });
+  const serviceTypeData = Object.entries(svcTypeMap)
+    .map(([type, d]) => ({ type, count: d.count, revenue: d.revenue }))
+    .sort((a, b) => b.revenue - a.revenue);
+
   // Process monthly revenue
   const monthlyMap: Record<string, number> = {};
   for (let i = 11; i >= 0; i--) {
@@ -152,11 +162,7 @@ export async function GET(req: Request) {
       avgCheck,
     },
     ordersByStatus: ordersByStatus.map((o) => ({ status: o.status, count: o._count })),
-    ordersByType: ordersByType.map((o) => ({
-      type: o.type,
-      count: o._count,
-      revenue: Number(o._sum.amount || 0),
-    })),
+    ordersByType: serviceTypeData,
     ordersByPriority: ordersByPriority.map((o) => ({ priority: o.priority, count: o._count })),
     topServices: topServices.map((s) => ({
       name: s.name,

@@ -6,7 +6,6 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
-  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   PAYMENT_STATUS_LABELS,
@@ -85,13 +84,11 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   const [orders, setOrders] = useState(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [isModalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formItems, setFormItems] = useState<FormItem[]>([emptyItem()]);
   const [form, setForm] = useState({
-    type: "DTF",
     clientId: "",
     priority: "NORMAL",
     deadline: "",
@@ -127,9 +124,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       (statusFilter === "active" && ["NEW", "IN_PROGRESS", "REVIEW"].includes(o.status)) ||
       (statusFilter === "completed" && ["READY", "ISSUED"].includes(o.status)) ||
       o.status === statusFilter;
-    const matchType = !typeFilter || o.type === typeFilter;
     const matchPriority = !priorityFilter || o.priority === priorityFilter;
-    return matchSearch && matchStatus && matchType && matchPriority;
+    return matchSearch && matchStatus && matchPriority;
   });
 
   async function handleCreate(e: React.FormEvent) {
@@ -165,7 +161,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
         ...prev,
       ]);
       setModalOpen(false);
-      setForm({ type: "DTF", clientId: "", priority: "NORMAL", deadline: "", notes: "", equipmentId: "" });
+      setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "", equipmentId: "" });
       setFormItems([emptyItem()]);
     }
     setLoading(false);
@@ -220,16 +216,6 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             <option value="CANCELLED">Отменено</option>
           </select>
           <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
-          >
-            <option value="">Все типы</option>
-            {Object.entries(ORDER_TYPE_LABELS).map(([val, label]) => (
-              <option key={val} value={val}>{label}</option>
-            ))}
-          </select>
-          <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
@@ -249,7 +235,6 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Заявка</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Тип</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Статус</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Приоритет</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Срок</th>
@@ -260,7 +245,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                  <td colSpan={6} className="text-center py-12 text-gray-400">
                     <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
                     Заявки не найдены
                   </td>
@@ -280,11 +265,6 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                           {formatDate(order.createdAt)}
                         </p>
                       </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-gray-600">
-                        {ORDER_TYPE_LABELS[order.type as keyof typeof ORDER_TYPE_LABELS]}
-                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS]}`}>
@@ -327,20 +307,12 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       {/* Create Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Новая заявка" size="lg">
         <form onSubmit={handleCreate} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Тип работы *"
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-              options={Object.entries(ORDER_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-            />
-            <Select
-              label="Приоритет"
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-              options={Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-            />
-          </div>
+          <Select
+            label="Приоритет"
+            value={form.priority}
+            onChange={(e) => setForm({ ...form, priority: e.target.value })}
+            options={Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+          />
           <Select
             label="Клиент *"
             value={form.clientId}

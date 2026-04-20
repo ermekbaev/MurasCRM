@@ -5,7 +5,6 @@ import { z } from "zod";
 import { notifyOrderStatusChanged } from "@/lib/telegram";
 
 const updateSchema = z.object({
-  type: z.enum(["DTF", "UV_DTF", "UV_FLATBED", "LASER_CUT", "PLOTTER_CUT", "HIGH_PRECISION", "COMBO"]).optional(),
   status: z.enum(["NEW", "IN_PROGRESS", "REVIEW", "READY", "ISSUED", "CANCELLED"]).optional(),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).optional(),
   deadline: z.string().nullable().optional(),

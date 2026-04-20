@@ -73,7 +73,7 @@ export async function POST(
     });
     if (order) {
       vars.order_number   = order.number;
-      vars.order_type     = ORDER_TYPE_LABELS[order.type] ?? order.type;
+      vars.order_type     = [...new Set(order.items.map((i) => i.service?.name ?? i.name))].join(", ");
       vars.order_status   = ORDER_STATUS_LABELS[order.status] ?? order.status;
       vars.order_deadline = fmtDate(order.deadline);
       vars.order_amount   = fmt(Number(order.amount));

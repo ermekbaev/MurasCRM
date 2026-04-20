@@ -6,7 +6,6 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
-  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   PAYMENT_STATUS_LABELS,
@@ -46,7 +45,6 @@ interface OrderDetailClientProps {
   order: {
     id: string;
     number: string;
-    type: string;
     status: string;
     priority: string;
     paymentStatus: string;
@@ -292,7 +290,6 @@ export default function OrderDetailClient({
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[order.priority as keyof typeof PRIORITY_COLORS]}`}>
                 {PRIORITY_LABELS[order.priority as keyof typeof PRIORITY_LABELS]}
               </span>
-              <span className="text-xs text-gray-400">{ORDER_TYPE_LABELS[order.type as keyof typeof ORDER_TYPE_LABELS]}</span>
               <span className="text-xs text-gray-400">· {formatDate(order.createdAt)}</span>
             </div>
           </div>
