@@ -333,11 +333,11 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
                   <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-3">
                       <Link href={`/orders/${order.id}`} className="group">
-                        <p className="font-medium text-gray-800 group-hover:text-violet-600 transition-colors">
-                          {order.number}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate max-w-40">
+                        <p className="font-medium text-gray-800 group-hover:text-violet-600 transition-colors truncate max-w-48">
                           {order.client.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {order.number}
                         </p>
                         <p className="text-xs text-gray-400">
                           {formatDate(order.createdAt)}
