@@ -54,8 +54,6 @@ export default function CalculatorPage() {
     cutLength: "",
     pricePerUnit: "",
     costPricePerUnit: "",
-    laminationGloss: false,
-    laminationMatte: false,
     urgency: false,
     urgencyPercent: "30",
   });
@@ -121,8 +119,6 @@ export default function CalculatorPage() {
       pricePerUnit: Number(params.pricePerUnit) || 0,
       urgency: params.urgency,
       urgencyPercent: Number(params.urgencyPercent) || 30,
-      laminationGloss: params.laminationGloss,
-      laminationMatte: params.laminationMatte,
     };
     if (params.costPricePerUnit) body.costPricePerUnit = Number(params.costPricePerUnit);
     if (isAreaType) {
@@ -321,30 +317,6 @@ export default function CalculatorPage() {
                   />
                 </div>
 
-                {/* Lamination */}
-                {isAreaType && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Ламинация (+400 сом/м²)</p>
-                    <div className="flex gap-4">
-                      {[
-                        { label: "Без ламинации", gloss: false, matte: false },
-                        { label: "Глянец", gloss: true, matte: false },
-                        { label: "Мат", gloss: false, matte: true },
-                      ].map((opt) => (
-                        <label key={opt.label} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="lamination"
-                            checked={params.laminationGloss === opt.gloss && params.laminationMatte === opt.matte}
-                            onChange={() => { updateParam("laminationGloss", opt.gloss); updateParam("laminationMatte", opt.matte); }}
-                            className="accent-violet-600"
-                          />
-                          <span className="text-sm">{opt.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Quantity discounts */}
                 {isAreaType && (

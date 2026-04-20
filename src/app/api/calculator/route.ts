@@ -9,9 +9,6 @@ const calcSchema = z.object({
   cutLength: z.number().optional(),
   pricePerUnit: z.number().optional(),
   costPricePerUnit: z.number().optional(),
-  laminationGloss: z.boolean().optional(),
-  laminationMatte: z.boolean().optional(),
-  laminationCostPrice: z.number().optional(),
   urgency: z.boolean().optional(),
   urgencyPercent: z.number().optional(),
   discountQty: z.array(z.object({ minQty: z.number(), discountPct: z.number() })).optional(),
@@ -32,9 +29,6 @@ export async function POST(req: Request) {
     cutLength = 0,
     pricePerUnit = 0,
     costPricePerUnit = 0,
-    laminationGloss,
-    laminationMatte,
-    laminationCostPrice = 0,
     urgency,
     urgencyPercent = 30,
     discountQty = [],
@@ -87,16 +81,6 @@ export async function POST(req: Request) {
 
   let subtotal = baseCost;
   let costTotal = baseCostPrice;
-
-  // Lamination
-  const laminationPrice = 400;
-  if (laminationGloss || laminationMatte) {
-    const laminCost = area * laminationPrice;
-    const laminCostPrice = area * (laminationCostPrice || laminationPrice * 0.4);
-    subtotal += laminCost;
-    costTotal += laminCostPrice;
-    breakdown.push({ label: `Ламинация ${laminationGloss ? "глянец" : "мат"} (${area.toFixed(3)} м²)`, value: laminCost });
-  }
 
   // Quantity discounts (based on length now, keep for compatibility)
   if (discountQty.length > 0) {
