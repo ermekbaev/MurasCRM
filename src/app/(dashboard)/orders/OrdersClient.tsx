@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatCurrency, formatDate, formatFileSize } from "@/lib/utils";
 import {
@@ -90,11 +90,22 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlsRef = useRef<Map<string, string>>(new Map());
+
+  function fileKey(f: File) { return `${f.name}-${f.size}-${f.lastModified}`; }
+
+  function getPreviewUrl(f: File): string {
+    const k = fileKey(f);
+    if (!previewUrlsRef.current.has(k)) {
+      previewUrlsRef.current.set(k, URL.createObjectURL(f));
+    }
+    return previewUrlsRef.current.get(k)!;
+  }
 
   function addFiles(incoming: File[]) {
     setPendingFiles((prev) => {
-      const existingNames = new Set(prev.map((f) => f.name));
-      return [...prev, ...incoming.filter((f) => !existingNames.has(f.name))];
+      const existingKeys = new Set(prev.map(fileKey));
+      return [...prev, ...incoming.filter((f) => !existingKeys.has(fileKey(f)))];
     });
   }
 
@@ -108,6 +119,26 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     setIsDragging(false);
     addFiles(Array.from(e.dataTransfer.files));
   }
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    function handlePaste(e: ClipboardEvent) {
+      const items = Array.from(e.clipboardData?.items || []);
+      const images = items
+        .filter((item) => item.type.startsWith("image/"))
+        .map((item) => {
+          const blob = item.getAsFile();
+          if (!blob) return null;
+          const ext = item.type.split("/")[1] || "png";
+          const time = new Date().toLocaleTimeString("ru-RU").replace(/:/g, "-");
+          return new File([blob], `скриншот_${time}.${ext}`, { type: item.type });
+        })
+        .filter(Boolean) as File[];
+      if (images.length > 0) addFiles(images);
+    }
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [isModalOpen]);
 
   function closeModal() {
     setModalOpen(false);
@@ -515,22 +546,41 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
             >
               {pendingFiles.length > 0 ? (
                 <div className="p-2 space-y-1.5">
-                  {pendingFiles.map((f, idx) => (
-                    <div key={idx} className="flex items-center justify-between px-3 py-1.5 bg-white rounded-md border border-gray-100">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText size={13} className="text-gray-400 shrink-0" />
-                        <span className="text-xs text-gray-700 truncate">{f.name}</span>
-                        <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
+                  {pendingFiles.map((f, idx) => {
+                    const isImage = f.type.startsWith("image/");
+                    return (
+                      <div key={idx} className="relative group rounded-md border border-gray-100 bg-white overflow-hidden">
+                        {isImage ? (
+                          <div className="relative">
+                            <img
+                              src={getPreviewUrl(f)}
+                              alt={f.name}
+                              className="w-full max-h-48 object-contain bg-gray-50"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/40 flex items-center justify-between">
+                              <span className="text-xs text-white truncate">{f.name}</span>
+                              <span className="text-xs text-white/70 shrink-0 ml-2">{formatFileSize(f.size)}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between px-3 py-1.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText size={13} className="text-gray-400 shrink-0" />
+                              <span className="text-xs text-gray-700 truncate">{f.name}</span>
+                              <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setPendingFiles((p) => p.filter((_, i) => i !== idx)); }}
+                          className="absolute top-1 right-1 p-0.5 rounded bg-white/80 text-gray-500 hover:text-red-500 hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <X size={13} />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPendingFiles((p) => p.filter((_, i) => i !== idx)); }}
-                        className="ml-2 p-0.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
-                      >
-                        <X size={13} />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
@@ -540,9 +590,10 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
                   </button>
                 </div>
               ) : (
-                <div className="py-6 flex flex-col items-center gap-1 text-gray-400 select-none">
+                <div className="py-6 flex flex-col items-center gap-1.5 text-gray-400 select-none">
                   <Paperclip size={18} className={isDragging ? "text-violet-500" : ""} />
-                  <p className="text-xs">Перетащите файлы сюда или нажмите чтобы выбрать</p>
+                  <p className="text-xs">Перетащите файлы или нажмите чтобы выбрать</p>
+                  <p className="text-xs text-gray-300">Скриншот — Ctrl+V</p>
                 </div>
               )}
             </div>
