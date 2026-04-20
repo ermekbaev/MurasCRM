@@ -20,7 +20,13 @@ interface Equipment {
   _count: { services: number };
 }
 
-const EMPTY_FORM = { name: "", type: "", workWidth: "", pricePerLm: "", materials: "", status: "ACTIVE" };
+const EMPTY_FORM = { name: "", type: "DTF", workWidth: "", pricePerLm: "", materials: "", status: "ACTIVE" };
+
+const TYPE_LABELS: Record<string, string> = {
+  DTF: "DTF-печать", UV_DTF: "UV DTF", UV_FLATBED: "UV планшет",
+  LASER_CUT: "Лазерная резка", PLOTTER_CUT: "Плоттерная резка",
+  HIGH_PRECISION: "Высокоточная печать", OTHER: "Другое",
+};
 
 export default function EquipmentSettingsPage() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -123,7 +129,7 @@ export default function EquipmentSettingsPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800 text-sm">{eq.name}</p>
-                    <p className="text-xs text-gray-400">{eq.type}</p>
+                    <p className="text-xs text-gray-400">{TYPE_LABELS[eq.type] || eq.type}</p>
                   </div>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${eq.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
@@ -176,7 +182,20 @@ export default function EquipmentSettingsPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Название *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input label="Тип *" required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="Принтер, Лазерный станок..." />
+          <Select
+            label="Вид работы *"
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            options={[
+              { value: "DTF", label: "DTF-печать" },
+              { value: "UV_DTF", label: "UV DTF" },
+              { value: "UV_FLATBED", label: "UV планшет" },
+              { value: "LASER_CUT", label: "Лазерная резка" },
+              { value: "PLOTTER_CUT", label: "Плоттерная резка" },
+              { value: "HIGH_PRECISION", label: "Высокоточная печать" },
+              { value: "OTHER", label: "Другое" },
+            ]}
+          />
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Рабочая ширина (м)"
