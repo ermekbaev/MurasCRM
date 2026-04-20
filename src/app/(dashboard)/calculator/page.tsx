@@ -51,12 +51,9 @@ export default function CalculatorPage() {
   const [params, setParams] = useState({
     width: "",
     height: "",
-    quantity: "1",
     cutLength: "",
     pricePerUnit: "",
     costPricePerUnit: "",
-    filmPrice: "",
-    filmCostPrice: "",
     laminationGloss: false,
     laminationMatte: false,
     urgency: false,
@@ -131,9 +128,6 @@ export default function CalculatorPage() {
     if (isAreaType) {
       body.width = Number(params.width) || 0;
       body.height = Number(params.height) || 0;
-      body.quantity = Number(params.quantity) || 1;
-      body.filmPrice = Number(params.filmPrice) || 0;
-      if (params.filmCostPrice) body.filmCostPrice = Number(params.filmCostPrice);
     } else {
       body.cutLength = Number(params.cutLength) || 0;
     }
@@ -293,13 +287,6 @@ export default function CalculatorPage() {
                         placeholder="0.50"
                       />
                     </div>
-                    <Input
-                      label="Тираж (шт)"
-                      type="number"
-                      min={1}
-                      value={params.quantity}
-                      onChange={(e) => updateParam("quantity", e.target.value)}
-                    />
                   </>
                 )}
 
@@ -333,28 +320,6 @@ export default function CalculatorPage() {
                     placeholder="Не обязательно"
                   />
                 </div>
-
-                {/* DTF film */}
-                {type === "DTF" && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      label="Цена плёнки (сом/м²)"
-                      type="number"
-                      min={0}
-                      value={params.filmPrice}
-                      onChange={(e) => updateParam("filmPrice", e.target.value)}
-                      placeholder="50"
-                    />
-                    <Input
-                      label="Себест. плёнки (сом/м²)"
-                      type="number"
-                      min={0}
-                      value={params.filmCostPrice}
-                      onChange={(e) => updateParam("filmCostPrice", e.target.value)}
-                      placeholder="30"
-                    />
-                  </div>
-                )}
 
                 {/* Lamination */}
                 {isAreaType && (

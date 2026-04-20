@@ -6,13 +6,9 @@ const calcSchema = z.object({
   type: z.enum(["DTF", "UV_DTF", "UV_FLATBED", "LASER_CUT", "PLOTTER_CUT", "HIGH_PRECISION"]),
   width: z.number().optional(),
   height: z.number().optional(),
-  quantity: z.number().optional(),
   cutLength: z.number().optional(),
-  material: z.string().optional(),
   pricePerUnit: z.number().optional(),
   costPricePerUnit: z.number().optional(),
-  filmPrice: z.number().optional(),
-  filmCostPrice: z.number().optional(),
   laminationGloss: z.boolean().optional(),
   laminationMatte: z.boolean().optional(),
   laminationCostPrice: z.number().optional(),
@@ -33,12 +29,9 @@ export async function POST(req: Request) {
     type,
     width = 0,
     height = 0,
-    quantity = 1,
     cutLength = 0,
     pricePerUnit = 0,
     costPricePerUnit = 0,
-    filmPrice = 0,
-    filmCostPrice = 0,
     laminationGloss,
     laminationMatte,
     laminationCostPrice = 0,
@@ -47,96 +40,74 @@ export async function POST(req: Request) {
     discountQty = [],
   } = parsed.data;
 
-  // width = roll/media fixed width, height = variable length entered by user
-  const area = width * height; // used for film, lamination costs
+  // width = fixed roll width, height = variable length
+  const area = width * height;
   let baseCost = 0;
-  let materialCost = 0;
   let baseCostPrice = 0;
-  let materialCostPrice = 0;
   let breakdown: { label: string; value: number }[] = [];
 
   switch (type) {
     case "DTF": {
-      // price per linear meter × length × qty
-      baseCost = height * pricePerUnit * quantity;
-      materialCost = area * filmPrice * quantity;
-      baseCostPrice = height * costPricePerUnit * quantity;
-      materialCostPrice = area * filmCostPrice * quantity;
-      breakdown = [
-        { label: `Печать ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
-        ...(materialCost > 0 ? [{ label: `Плёнка (${area.toFixed(3)} м²)`, value: materialCost }] : []),
-      ];
+      baseCost = height * pricePerUnit;
+      baseCostPrice = height * costPricePerUnit;
+      breakdown = [{ label: `Печать ${height.toFixed(2)} пог.м`, value: baseCost }];
       break;
     }
     case "UV_DTF": {
-      baseCost = height * pricePerUnit * quantity;
-      baseCostPrice = height * costPricePerUnit * quantity;
-      breakdown = [
-        { label: `UV DTF ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
-      ];
+      baseCost = height * pricePerUnit;
+      baseCostPrice = height * costPricePerUnit;
+      breakdown = [{ label: `UV DTF ${height.toFixed(2)} пог.м`, value: baseCost }];
       break;
     }
     case "UV_FLATBED": {
-      baseCost = height * pricePerUnit * quantity;
-      baseCostPrice = height * costPricePerUnit * quantity;
-      breakdown = [
-        { label: `UV планшет ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
-      ];
+      baseCost = height * pricePerUnit;
+      baseCostPrice = height * costPricePerUnit;
+      breakdown = [{ label: `UV планшет ${height.toFixed(2)} пог.м`, value: baseCost }];
       break;
     }
     case "LASER_CUT": {
       baseCost = cutLength * pricePerUnit;
       baseCostPrice = cutLength * costPricePerUnit;
-      breakdown = [
-        { label: `Лазерная резка ${cutLength} мм`, value: baseCost },
-      ];
+      breakdown = [{ label: `Лазерная резка ${cutLength} мм`, value: baseCost }];
       break;
     }
     case "PLOTTER_CUT": {
       baseCost = cutLength * pricePerUnit;
       baseCostPrice = cutLength * costPricePerUnit;
-      breakdown = [
-        { label: `Плоттерная резка ${cutLength} пог.м`, value: baseCost },
-      ];
+      breakdown = [{ label: `Плоттерная резка ${cutLength} пог.м`, value: baseCost }];
       break;
     }
     case "HIGH_PRECISION": {
-      baseCost = height * pricePerUnit * quantity;
-      baseCostPrice = height * costPricePerUnit * quantity;
-      breakdown = [
-        { label: `Печать ${height.toFixed(2)} пог.м × ${quantity} шт`, value: baseCost },
-      ];
+      baseCost = height * pricePerUnit;
+      baseCostPrice = height * costPricePerUnit;
+      breakdown = [{ label: `Печать ${height.toFixed(2)} пог.м`, value: baseCost }];
       break;
     }
   }
 
-  let subtotal = baseCost + materialCost;
-  let costTotal = baseCostPrice + materialCostPrice;
+  let subtotal = baseCost;
+  let costTotal = baseCostPrice;
 
-  // Lamination — area × qty for area-based types
+  // Lamination
   const laminationPrice = 400;
   if (laminationGloss || laminationMatte) {
-    const laminArea = (type !== "LASER_CUT" && type !== "PLOTTER_CUT") ? area * quantity : area;
-    const laminCost = laminArea * laminationPrice;
-    const laminCostPrice = laminArea * (laminationCostPrice || laminationPrice * 0.4);
+    const laminCost = area * laminationPrice;
+    const laminCostPrice = area * (laminationCostPrice || laminationPrice * 0.4);
     subtotal += laminCost;
     costTotal += laminCostPrice;
-    breakdown.push({ label: `Ламинация ${laminationGloss ? "глянец" : "мат"} (${laminArea.toFixed(3)} м²)`, value: laminCost });
+    breakdown.push({ label: `Ламинация ${laminationGloss ? "глянец" : "мат"} (${area.toFixed(3)} м²)`, value: laminCost });
   }
 
-  // Quantity discount
-  let discountPct = 0;
+  // Quantity discounts (based on length now, keep for compatibility)
   if (discountQty.length > 0) {
     const applicableTier = discountQty
-      .filter((d) => quantity >= d.minQty)
+      .filter((d) => height >= d.minQty)
       .sort((a, b) => b.minQty - a.minQty)[0];
-    if (applicableTier) discountPct = applicableTier.discountPct;
-  }
-
-  const discountAmount = (subtotal * discountPct) / 100;
-  subtotal -= discountAmount;
-  if (discountAmount > 0) {
-    breakdown.push({ label: `Скидка ${discountPct}% за тираж`, value: -discountAmount });
+    if (applicableTier) {
+      const discountAmount = (subtotal * applicableTier.discountPct) / 100;
+      subtotal -= discountAmount;
+      breakdown.push({ label: `Скидка ${applicableTier.discountPct}%`, value: -discountAmount });
+    }
   }
 
   // Urgency
@@ -153,7 +124,7 @@ export async function POST(req: Request) {
     costTotal: costTotal > 0 ? costTotal : null,
     margin,
     breakdown,
-    pricePerUnit: quantity > 1 ? subtotal / quantity : null,
+    pricePerUnit: null,
     area: type !== "LASER_CUT" && type !== "PLOTTER_CUT" ? area : null,
   });
 }
