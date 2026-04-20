@@ -104,7 +104,7 @@ export async function GET(req: Request) {
       by: ["equipmentId"],
       where: {
         equipmentId: { not: null },
-        status: { in: ["NEW", "IN_PROGRESS", "PAUSED"] },
+        status: { in: ["NEW", "IN_PROGRESS"] },
       },
       _count: true,
     }),
