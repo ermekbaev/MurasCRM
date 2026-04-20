@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
@@ -121,7 +121,10 @@ export default function OrderDetailClient({
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"items" | "files" | "tasks" | "comments" | "history">("items");
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [isDraggingTab, setIsDraggingTab] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const screenshotInputRef = useRef<HTMLInputElement>(null);
+  const localPreviewsRef = useRef<Map<string, string>>(new Map());
 
   // Items edit state
   type EditItem = { id?: string; name: string; qty: number; unit: string; price: number; discount: number };
@@ -169,9 +172,10 @@ export default function OrderDetailClient({
     setCommentLoading(false);
   }
 
-  async function handleFileUpload(file: File) {
+  async function handleFileUpload(file: File, comment?: string) {
     setUploadingFile(true);
     try {
+      const localUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
       const res = await fetch(`/api/orders/${order.id}/files`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -180,6 +184,7 @@ export default function OrderDetailClient({
           mimeType: file.type || "application/octet-stream",
           size: file.size,
           category: "SOURCES",
+          ...(comment ? { comment } : {}),
         }),
       });
       if (!res.ok) return;
@@ -187,12 +192,45 @@ export default function OrderDetailClient({
       if (uploadUrl) {
         await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
       }
+      if (localUrl) localPreviewsRef.current.set(orderFile.id, localUrl);
       setOrder((prev) => ({ ...prev, files: [orderFile, ...prev.files] }));
     } finally {
       setUploadingFile(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      if (screenshotInputRef.current) screenshotInputRef.current.value = "";
     }
   }
+
+  async function handleDropOnTab(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDraggingTab(false);
+    if (!canEdit) return;
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      const isImage = file.type.startsWith("image/");
+      await handleFileUpload(file, isImage ? "SCREENSHOT" : undefined);
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab !== "files") return;
+    function handlePaste(e: ClipboardEvent) {
+      if (!canEdit) return;
+      const items = Array.from(e.clipboardData?.items || []);
+      items
+        .filter((item) => item.type.startsWith("image/"))
+        .forEach((item) => {
+          const blob = item.getAsFile();
+          if (!blob) return;
+          const ext = item.type.split("/")[1] || "png";
+          const time = new Date().toLocaleTimeString("ru-RU").replace(/:/g, "-");
+          const file = new File([blob], `скриншот_${time}.${ext}`, { type: item.type });
+          handleFileUpload(file, "SCREENSHOT");
+        });
+    }
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [activeTab, canEdit]);
 
   async function handleDeleteFile(orderFileId: string) {
     if (!confirm("Удалить файл?")) return;
@@ -601,71 +639,130 @@ export default function OrderDetailClient({
 
           {/* Files tab */}
           {activeTab === "files" && (
-            <div className="space-y-3">
+            <div
+              className={`space-y-4 relative rounded-xl transition-colors ${isDraggingTab ? "ring-2 ring-violet-400 ring-offset-2" : ""}`}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingTab(true); }}
+              onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingTab(false); }}
+              onDrop={handleDropOnTab}
+            >
+              {isDraggingTab && (
+                <div className="absolute inset-0 z-10 rounded-xl border-2 border-dashed border-violet-400 bg-violet-50/90 flex items-center justify-center pointer-events-none">
+                  <div className="text-center">
+                    <Upload size={28} className="mx-auto mb-1 text-violet-500" />
+                    <p className="text-sm font-medium text-violet-600">Отпустите для загрузки</p>
+                    <p className="text-xs text-violet-400">Изображения → скрин-превью, остальное → файлы</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Hidden inputs */}
+              <input ref={fileInputRef} type="file" multiple hidden
+                onChange={(e) => { Array.from(e.target.files || []).forEach((f) => handleFileUpload(f)); }} />
+              <input ref={screenshotInputRef} type="file" multiple accept="image/*" hidden
+                onChange={(e) => { Array.from(e.target.files || []).forEach((f) => handleFileUpload(f, "SCREENSHOT")); }} />
+
+              {/* Action buttons */}
               {canEdit && (
-                <div className="flex justify-end">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    loading={uploadingFile}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload size={14} /> Загрузить файл
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => screenshotInputRef.current?.click()}>
+                    <ImageIcon size={13} /> Добавить скрин
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" loading={uploadingFile} onClick={() => fileInputRef.current?.click()}>
+                    <Upload size={13} /> Загрузить файл
                   </Button>
                 </div>
               )}
-              <Card padding="none">
-                {order.files.length === 0 ? (
-                  <div className="py-10 text-center text-gray-400 text-sm">
-                    <Paperclip size={28} className="mx-auto mb-2 opacity-30" />
-                    Файлов нет
+
+              {/* Screenshots section */}
+              {(() => {
+                const screenshots = order.files.filter((f) => f.comment === "SCREENSHOT");
+                if (screenshots.length === 0) return null;
+                return (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase mb-2">Скрин-превью</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {screenshots.map((of) => {
+                        const previewUrl = localPreviewsRef.current.get(of.id) || of.file.downloadUrl;
+                        return (
+                          <div key={of.id} className="relative group rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                            {previewUrl ? (
+                              <img src={previewUrl} alt={of.file.originalName} className="w-full object-contain max-h-48" />
+                            ) : (
+                              <div className="h-32 flex items-center justify-center text-gray-300">
+                                <ImageIcon size={32} />
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/40 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-xs text-white truncate">{of.file.originalName}</span>
+                              <div className="flex items-center gap-1 shrink-0 ml-2">
+                                {of.file.downloadUrl && (
+                                  <a href={of.file.downloadUrl} target="_blank" rel="noreferrer"
+                                    className="p-0.5 rounded bg-white/20 hover:bg-white/40 text-white">
+                                    <Download size={12} />
+                                  </a>
+                                )}
+                                {canEdit && (
+                                  <button onClick={() => handleDeleteFile(of.id)}
+                                    className="p-0.5 rounded bg-white/20 hover:bg-red-500/80 text-white">
+                                    <X size={12} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {order.files.map((of) => {
-                      const isImage = of.file.mimeType.startsWith("image/");
-                      return (
-                        <div key={of.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
-                          <div className="shrink-0 text-gray-400">
-                            {isImage ? <ImageIcon size={18} /> : <FileText size={18} />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate">{of.file.originalName}</p>
-                            <p className="text-xs text-gray-400">
-                              {formatFileSize(of.file.size)} · v{of.version} · {of.file.uploadedBy.name} · {formatDate(of.createdAt)}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            {of.file.downloadUrl && (
-                              <a href={of.file.downloadUrl} target="_blank" rel="noreferrer">
-                                <Button type="button" variant="outline" size="sm">
-                                  <Download size={13} />
+                );
+              })()}
+
+              {/* Regular files section */}
+              {(() => {
+                const regularFiles = order.files.filter((f) => f.comment !== "SCREENSHOT");
+                const isEmpty = order.files.length === 0;
+                return (
+                  <Card padding="none">
+                    {isEmpty ? (
+                      <div className="py-10 text-center text-gray-400 text-sm">
+                        <Paperclip size={28} className="mx-auto mb-2 opacity-30" />
+                        <p>Файлов нет</p>
+                        {canEdit && <p className="text-xs mt-1 text-gray-300">Перетащите сюда или нажмите Ctrl+V для скриншота</p>}
+                      </div>
+                    ) : regularFiles.length === 0 ? (
+                      <div className="py-6 text-center text-gray-400 text-sm">
+                        <p className="text-xs text-gray-300">Файлов нет — только скрины выше</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-50">
+                        {regularFiles.map((of) => (
+                          <div key={of.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                            <FileText size={18} className="shrink-0 text-gray-400" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800 truncate">{of.file.originalName}</p>
+                              <p className="text-xs text-gray-400">
+                                {formatFileSize(of.file.size)} · v{of.version} · {of.file.uploadedBy.name} · {formatDate(of.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {of.file.downloadUrl && (
+                                <a href={of.file.downloadUrl} target="_blank" rel="noreferrer">
+                                  <Button type="button" variant="outline" size="sm"><Download size={13} /></Button>
+                                </a>
+                              )}
+                              {canEdit && (
+                                <Button type="button" variant="outline" size="sm" onClick={() => handleDeleteFile(of.id)}>
+                                  <span className="text-red-500 text-xs">✕</span>
                                 </Button>
-                              </a>
-                            )}
-                            {canEdit && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteFile(of.id)}
-                              >
-                                <span className="text-red-500 text-xs">✕</span>
-                              </Button>
-                            )}
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </Card>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                );
+              })()}
             </div>
           )}
 
