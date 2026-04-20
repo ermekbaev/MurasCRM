@@ -123,7 +123,7 @@ export default function ChangelogPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium text-gray-800">{log.user.name}</span>
-                    <Badge variant="default" size="sm">{log.user.role}</Badge>
+                    <Badge variant="default" className="text-xs">{log.user.role}</Badge>
                     <span className="text-xs text-gray-400">изменил(а)</span>
                     <span className="text-xs font-semibold text-gray-700">
                       {FIELD_LABELS[log.field] ?? log.field}
