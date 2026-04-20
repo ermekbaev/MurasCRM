@@ -10,7 +10,6 @@ const updateSchema = z.object({
   deadline: z.string().nullable().optional(),
   paymentStatus: z.enum(["UNPAID", "ADVANCE", "PAID"]).optional(),
   notes: z.string().optional(),
-  equipmentId: z.string().nullable().optional(),
   assigneeIds: z.array(z.string()).optional(),
   managerId: z.string().optional(),
 });

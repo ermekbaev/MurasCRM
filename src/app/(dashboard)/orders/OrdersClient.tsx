@@ -22,7 +22,6 @@ import { Role } from "@prisma/client";
 interface Order {
   id: string;
   number: string;
-  type: string;
   status: string;
   priority: string;
   paymentStatus: string;
@@ -46,12 +45,6 @@ interface User {
   role: string;
 }
 
-interface Equipment {
-  id: string;
-  name: string;
-  type: string;
-}
-
 interface Service {
   id: string;
   name: string;
@@ -72,7 +65,6 @@ interface Props {
   initialOrders: Order[];
   clients: Client[];
   users: User[];
-  equipment: Equipment[];
   services: Service[];
   currentUserId: string;
   currentRole: string;
@@ -80,7 +72,7 @@ interface Props {
 
 const emptyItem = (): FormItem => ({ serviceId: "", name: "", qty: 1, unit: "шт", price: 0, discount: 0 });
 
-export default function OrdersClient({ initialOrders, clients, users, equipment, services, currentUserId, currentRole }: Props) {
+export default function OrdersClient({ initialOrders, clients, users, services, currentUserId, currentRole }: Props) {
   const [orders, setOrders] = useState(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -93,7 +85,6 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
     priority: "NORMAL",
     deadline: "",
     notes: "",
-    equipmentId: "",
   });
 
   function updateItem(idx: number, patch: Partial<FormItem>) {
@@ -161,7 +152,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
         ...prev,
       ]);
       setModalOpen(false);
-      setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "", equipmentId: "" });
+      setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "" });
       setFormItems([emptyItem()]);
     }
     setLoading(false);
@@ -320,15 +311,6 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             placeholder="Выберите клиента"
             options={clients.map((c) => ({ value: c.id, label: c.name }))}
           />
-          {equipment.length > 0 && (
-            <Select
-              label="Оборудование"
-              value={form.equipmentId}
-              onChange={(e) => setForm({ ...form, equipmentId: e.target.value })}
-              placeholder="Не выбрано"
-              options={equipment.map((eq) => ({ value: eq.id, label: `${eq.name} (${eq.type})` }))}
-            />
-          )}
           <Input
             label="Срок сдачи"
             type="datetime-local"

@@ -97,14 +97,13 @@ export async function GET(req: Request) {
       },
       _count: true,
     }),
-    // Equipment load: active orders per equipment
-    prisma.order.groupBy({
-      by: ["equipmentId"],
+    // Equipment load via services used in active order items
+    prisma.orderItem.findMany({
       where: {
-        equipmentId: { not: null },
-        status: { in: ["NEW", "IN_PROGRESS"] },
+        order: { status: { in: ["NEW", "IN_PROGRESS"] } },
+        service: { equipmentId: { not: null } },
       },
-      _count: true,
+      select: { service: { select: { equipmentId: true } } },
     }),
   ]);
 
@@ -140,8 +139,13 @@ export async function GET(req: Request) {
     : [];
   const operatorMap = Object.fromEntries(operators.map((u) => [u.id, u]));
 
-  // Resolve equipment names
-  const equipmentIds = equipmentLoad.map((e) => e.equipmentId!).filter(Boolean);
+  // Aggregate equipment load from service items
+  const eqCountMap: Record<string, number> = {};
+  equipmentLoad.forEach((item) => {
+    const eqId = item.service?.equipmentId;
+    if (eqId) eqCountMap[eqId] = (eqCountMap[eqId] || 0) + 1;
+  });
+  const equipmentIds = Object.keys(eqCountMap);
   const equipmentList = equipmentIds.length > 0
     ? await prisma.equipment.findMany({ where: { id: { in: equipmentIds } }, select: { id: true, name: true, type: true } })
     : [];
@@ -178,12 +182,12 @@ export async function GET(req: Request) {
         tasks: o._count,
       }))
       .sort((a, b) => b.tasks - a.tasks),
-    equipmentLoad: equipmentLoad
-      .filter((e) => e.equipmentId && equipmentMap[e.equipmentId])
-      .map((e) => ({
-        name: equipmentMap[e.equipmentId!]?.name || "—",
-        type: equipmentMap[e.equipmentId!]?.type || "",
-        orders: e._count,
+    equipmentLoad: equipmentIds
+      .filter((id) => equipmentMap[id])
+      .map((id) => ({
+        name: equipmentMap[id].name,
+        type: equipmentMap[id].type,
+        orders: eqCountMap[id],
       }))
       .sort((a, b) => b.orders - a.orders),
   });

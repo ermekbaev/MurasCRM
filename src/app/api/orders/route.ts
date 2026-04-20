@@ -10,7 +10,6 @@ const orderSchema = z.object({
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).default("NORMAL"),
   deadline: z.string().optional(),
   notes: z.string().optional(),
-  equipmentId: z.string().optional().nullable(),
   assigneeIds: z.array(z.string()).optional(),
   items: z.array(z.object({
     name: z.string(),

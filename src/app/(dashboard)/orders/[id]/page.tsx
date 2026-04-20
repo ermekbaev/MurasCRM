@@ -12,13 +12,12 @@ export default async function OrderDetailPage({
   const { id } = await params;
   const session = await auth();
 
-  const [order, users, services, equipment] = await Promise.all([
+  const [order, users, services] = await Promise.all([
     prisma.order.findUnique({
       where: { id },
       include: {
         client: true,
         manager: { select: { id: true, name: true } },
-        equipment: { select: { id: true, name: true, type: true } },
         assignees: { select: { id: true, name: true, role: true } },
         items: { include: { service: { select: { name: true, unit: true } } } },
         files: {
@@ -48,10 +47,6 @@ export default async function OrderDetailPage({
       where: { isActive: true },
       select: { id: true, name: true, unit: true, price: true, type: true },
     }),
-    prisma.equipment.findMany({
-      where: { status: "ACTIVE" },
-      select: { id: true, name: true, type: true },
-    }),
   ]);
 
   if (!order) notFound();
@@ -79,7 +74,6 @@ export default async function OrderDetailPage({
         createdAt: order.createdAt.toISOString(),
         updatedAt: order.updatedAt.toISOString(),
         deadline: order.deadline?.toISOString() || null,
-        equipment: order.equipment ?? null,
         files: filesWithUrls,
         items: order.items.map((i) => ({
           ...i,
@@ -99,7 +93,6 @@ export default async function OrderDetailPage({
       }}
       users={users}
       services={services.map((s) => ({ ...s, price: Number(s.price) }))}
-      equipment={equipment}
       currentUserId={session?.user.id || ""}
       currentRole={session?.user.role || "MANAGER"}
     />

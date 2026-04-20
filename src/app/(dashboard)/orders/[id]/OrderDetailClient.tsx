@@ -60,7 +60,6 @@ interface OrderDetailClientProps {
       email: string | null;
     };
     manager: { id: string; name: string } | null;
-    equipment: { id: string; name: string; type: string } | null;
     assignees: { id: string; name: string; role: string }[];
     files: OrderFile[];
     items: {
@@ -99,7 +98,6 @@ interface OrderDetailClientProps {
   };
   users: { id: string; name: string; role: string }[];
   services: { id: string; name: string; unit: string; price: number; type: string | null }[];
-  equipment: { id: string; name: string; type: string }[];
   currentUserId: string;
   currentRole: string;
 }
@@ -114,7 +112,6 @@ export default function OrderDetailClient({
   order: initialOrder,
   users,
   services,
-  equipment,
   currentUserId,
   currentRole,
 }: OrderDetailClientProps) {
@@ -351,17 +348,6 @@ export default function OrderDetailClient({
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                     />
                   </div>
-                  {equipment.length > 0 && (
-                    <div>
-                      <dt className="text-xs text-gray-500 mb-1">Оборудование</dt>
-                      <Select
-                        value={order.equipment?.id || ""}
-                        onChange={(e) => updateField("equipmentId", e.target.value || null as unknown as string)}
-                        placeholder="Не выбрано"
-                        options={equipment.map((eq) => ({ value: eq.id, label: `${eq.name} (${eq.type})` }))}
-                      />
-                    </div>
-                  )}
                 </>
               ) : (
                 <>
@@ -376,12 +362,6 @@ export default function OrderDetailClient({
                     <dd className="text-gray-800">{formatDate(order.deadline)}</dd>
                   </div>
                 </>
-              )}
-              {order.equipment && (
-                <div className="flex justify-between text-sm">
-                  <dt className="text-gray-500">Оборудование</dt>
-                  <dd className="text-gray-800">{order.equipment.name}</dd>
-                </div>
               )}
               <div className="flex justify-between text-sm">
                 <dt className="text-gray-500">Менеджер</dt>

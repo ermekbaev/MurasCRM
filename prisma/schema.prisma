@@ -189,12 +189,9 @@ model Order {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  equipmentId   String?
-
   client     Client         @relation(fields: [clientId], references: [id])
   manager    User?          @relation("OrderManager", fields: [managerId], references: [id])
   assignees  User[]         @relation("OrderAssignees")
-  equipment  Equipment?     @relation(fields: [equipmentId], references: [id])
   items      OrderItem[]
   files      OrderFile[]
   comments   OrderComment[]
@@ -472,7 +469,6 @@ model Equipment {
   updatedAt DateTime        @updatedAt
 
   services Service[]
-  orders   Order[]
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────

@@ -72,10 +72,12 @@ async function getDashboardData() {
       where: { status: { in: ["TODO", "IN_PROGRESS"] }, assigneeId: { not: null } },
       _count: { id: true },
     }),
-    prisma.order.groupBy({
-      by: ["equipmentId"],
-      where: { status: { in: ["NEW", "IN_PROGRESS", "REVIEW"] }, equipmentId: { not: null } },
-      _count: { id: true },
+    prisma.orderItem.findMany({
+      where: {
+        order: { status: { in: ["NEW", "IN_PROGRESS", "REVIEW"] } },
+        service: { equipmentId: { not: null } },
+      },
+      select: { service: { select: { equipmentId: true } } },
     }),
   ]);
 
@@ -103,18 +105,18 @@ async function getDashboardData() {
     }))
     .sort((a, b) => b.activeTasks - a.activeTasks);
 
-  // Resolve equipment names
-  const equipmentIds = equipmentOrderCounts.map((r) => r.equipmentId!).filter(Boolean);
+  // Aggregate equipment load from service items
+  const eqCountMap: Record<string, number> = {};
+  equipmentOrderCounts.forEach((item) => {
+    const eqId = item.service?.equipmentId;
+    if (eqId) eqCountMap[eqId] = (eqCountMap[eqId] || 0) + 1;
+  });
+  const equipmentIds = Object.keys(eqCountMap);
   const equipmentList = equipmentIds.length > 0
     ? await prisma.equipment.findMany({ where: { id: { in: equipmentIds } }, select: { id: true, name: true, status: true } })
     : [];
-  const equipmentLoad = equipmentOrderCounts
-    .map((r) => ({
-      id: r.equipmentId!,
-      name: equipmentList.find((e) => e.id === r.equipmentId)?.name || "—",
-      status: equipmentList.find((e) => e.id === r.equipmentId)?.status || "ACTIVE",
-      activeOrders: r._count.id,
-    }))
+  const equipmentLoad = equipmentList
+    .map((e) => ({ id: e.id, name: e.name, status: e.status, activeOrders: eqCountMap[e.id] || 0 }))
     .sort((a, b) => b.activeOrders - a.activeOrders);
 
   return {
