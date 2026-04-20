@@ -14,7 +14,7 @@ type CalcType = typeof CALC_TYPES[number];
 const TYPE_LABELS: Record<string, string> = {
   DTF: "DTF-печать", UV_DTF: "UV DTF", UV_FLATBED: "UV планшет",
   LASER_CUT: "Лазерная резка", PLOTTER_CUT: "Плоттерная резка",
-  HIGH_PRECISION: "Высокоточная печать",
+  HIGH_PRECISION: "Высокоточная печать", OTHER: "Не настроено",
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -90,11 +90,7 @@ export default function CalculatorPage() {
       setOrders(Array.isArray(ordersData.orders) ? ordersData.orders : []);
       setClients(Array.isArray(clientsData.clients) ? clientsData.clients : []);
       if (Array.isArray(equipmentData)) {
-        setEquipment(
-          equipmentData.filter((e: EquipmentItem) =>
-            e.status === "ACTIVE" && CALC_TYPES.includes(e.type as CalcType)
-          )
-        );
+        setEquipment(equipmentData.filter((e: EquipmentItem) => e.status === "ACTIVE"));
       }
     });
   }, []);
@@ -105,7 +101,9 @@ export default function CalculatorPage() {
   function selectEquipment(eq: EquipmentItem) {
     setSelectedEquipmentId(eq.id);
     setSelectedEquipmentName(eq.name);
-    setType(eq.type);
+    // Use equipment type if it's a known calc type, otherwise default to DTF
+    const calcType = CALC_TYPES.includes(eq.type as CalcType) ? eq.type : "DTF";
+    setType(calcType);
     setResult(null);
     setParams((p) => ({
       ...p,
@@ -191,10 +189,11 @@ export default function CalculatorPage() {
     } finally { setSavingInvoice(false); }
   }
 
-  // Group equipment by type for display
+  // Group equipment by type for display; unknown types go under "OTHER"
   const equipmentByType = equipment.reduce<Record<string, EquipmentItem[]>>((acc, eq) => {
-    if (!acc[eq.type]) acc[eq.type] = [];
-    acc[eq.type].push(eq);
+    const key = CALC_TYPES.includes(eq.type as CalcType) ? eq.type : "OTHER";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(eq);
     return acc;
   }, {});
 
@@ -261,6 +260,12 @@ export default function CalculatorPage() {
                               {eq.workWidth ? `${eq.workWidth} м` : "ширина не задана"}
                               {eq.pricePerLm ? ` · ${eq.pricePerLm} сом/пог.м` : ""}
                             </p>
+                            {!CALC_TYPES.includes(eq.type as CalcType) && (
+                              <p className="text-xs text-orange-500 mt-0.5">
+                                Тип не настроен —{" "}
+                                <a href="/settings/equipment" className="underline hover:text-orange-700">задать →</a>
+                              </p>
+                            )}
                           </div>
                           {selectedEquipmentId === eq.id && (
                             <Check size={16} className="text-violet-600 shrink-0" />
