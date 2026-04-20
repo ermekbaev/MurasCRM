@@ -383,55 +383,84 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-[1fr_56px_40px_80px_28px] gap-x-1 mb-1 px-1">
-              <span className="text-xs text-gray-400">Наименование</span>
-              <span className="text-xs text-gray-400 text-right">Кол-во</span>
-              <span className="text-xs text-gray-400 text-center">Ед.</span>
-              <span className="text-xs text-gray-400 text-right">Цена</span>
-              <span />
-            </div>
-            <div className="space-y-1">
-              {formItems.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-[1fr_56px_40px_80px_28px] gap-x-1 items-center">
-                  <div className="relative">
-                    <input
-                      value={item.name}
-                      onChange={(e) => handleItemName(idx, e.target.value)}
-                      placeholder="Название..."
-                      list={`svc-list-${idx}`}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    />
-                    <datalist id={`svc-list-${idx}`}>
-                      {services.map((s) => (
-                        <option key={s.id} value={s.name} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <input
-                    type="number" min="0.01" step="any" value={item.qty}
-                    onChange={(e) => updateItem(idx, { qty: parseFloat(e.target.value) || 1 })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  />
-                  <input
-                    value={item.unit}
-                    onChange={(e) => updateItem(idx, { unit: e.target.value })}
-                    className="w-full px-1 py-1.5 text-sm border border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  />
-                  <input
-                    type="number" min="0" step="any" value={item.price}
-                    onChange={(e) => updateItem(idx, { price: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormItems((p) => p.filter((_, i) => i !== idx))}
-                    disabled={formItems.length <= 1}
-                    className="flex items-center justify-center p-1 rounded text-red-400 hover:bg-red-50 disabled:opacity-30 transition-colors"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Наименование</th>
+                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-14">Кол-во</th>
+                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-12">Ед.</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Цена</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-16">Скидка%</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Сумма</th>
+                    <th className="w-8" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {formItems.map((item, idx) => {
+                    const lineTotal = Number(item.qty) * Number(item.price) * (1 - Number(item.discount) / 100);
+                    return (
+                      <tr key={idx} className="hover:bg-gray-50/50">
+                        <td className="px-3 py-1.5">
+                          <input
+                            value={item.name}
+                            onChange={(e) => handleItemName(idx, e.target.value)}
+                            placeholder="Название..."
+                            list={`svc-list-${idx}`}
+                            className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          />
+                          <datalist id={`svc-list-${idx}`}>
+                            {services.map((s) => (
+                              <option key={s.id} value={s.name} />
+                            ))}
+                          </datalist>
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input
+                            type="number" min="0.01" step="any" value={item.qty}
+                            onChange={(e) => updateItem(idx, { qty: parseFloat(e.target.value) || 1 })}
+                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input
+                            value={item.unit}
+                            onChange={(e) => updateItem(idx, { unit: e.target.value })}
+                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input
+                            type="number" min="0" step="any" value={item.price}
+                            onChange={(e) => updateItem(idx, { price: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input
+                            type="number" min="0" max="100" step="any" value={item.discount}
+                            onChange={(e) => updateItem(idx, { discount: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5 text-right text-sm font-medium text-gray-700 whitespace-nowrap">
+                          {lineTotal > 0 ? lineTotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) : "—"}
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setFormItems((p) => p.filter((_, i) => i !== idx))}
+                            disabled={formItems.length <= 1}
+                            className="p-1 rounded text-red-400 hover:bg-red-50 disabled:opacity-30 transition-colors"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
             <button
               type="button"
