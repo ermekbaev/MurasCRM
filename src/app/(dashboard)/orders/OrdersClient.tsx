@@ -17,7 +17,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import { Plus, Search, ShoppingCart, Calendar, AlertTriangle } from "lucide-react";
+import { Plus, Search, ShoppingCart, Calendar, AlertTriangle, Trash2 } from "lucide-react";
 import { Role } from "@prisma/client";
 
 interface Order {
@@ -53,16 +53,35 @@ interface Equipment {
   type: string;
 }
 
+interface Service {
+  id: string;
+  name: string;
+  unit: string;
+  price: number;
+}
+
+interface FormItem {
+  serviceId: string;
+  name: string;
+  qty: number;
+  unit: string;
+  price: number;
+  discount: number;
+}
+
 interface Props {
   initialOrders: Order[];
   clients: Client[];
   users: User[];
   equipment: Equipment[];
+  services: Service[];
   currentUserId: string;
   currentRole: string;
 }
 
-export default function OrdersClient({ initialOrders, clients, users, equipment, currentUserId, currentRole }: Props) {
+const emptyItem = (): FormItem => ({ serviceId: "", name: "", qty: 1, unit: "шт", price: 0, discount: 0 });
+
+export default function OrdersClient({ initialOrders, clients, users, equipment, services, currentUserId, currentRole }: Props) {
   const [orders, setOrders] = useState(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -70,6 +89,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   const [priorityFilter, setPriorityFilter] = useState("");
   const [isModalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formItems, setFormItems] = useState<FormItem[]>([emptyItem()]);
   const [form, setForm] = useState({
     type: "DTF",
     clientId: "",
@@ -78,6 +98,24 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
     notes: "",
     equipmentId: "",
   });
+
+  function updateItem(idx: number, patch: Partial<FormItem>) {
+    setFormItems((prev) => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
+  }
+
+  function selectService(idx: number, serviceId: string) {
+    const svc = services.find((s) => s.id === serviceId);
+    if (svc) {
+      updateItem(idx, { serviceId, name: svc.name, unit: svc.unit, price: svc.price });
+    } else {
+      updateItem(idx, { serviceId: "", name: "", unit: "шт", price: 0 });
+    }
+  }
+
+  const itemsTotal = formItems.reduce(
+    (s, i) => s + Number(i.qty) * Number(i.price) * (1 - Number(i.discount) / 100),
+    0
+  );
 
   const filtered = orders.filter((o) => {
     const matchSearch =
@@ -98,10 +136,21 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
     e.preventDefault();
     if (!form.clientId) return;
     setLoading(true);
+    const validItems = formItems.filter((i) => i.name.trim());
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        items: validItems.map((i) => ({
+          serviceId: i.serviceId || undefined,
+          name: i.name,
+          qty: Number(i.qty),
+          unit: i.unit,
+          price: Number(i.price),
+          discount: Number(i.discount),
+        })),
+      }),
     });
     if (res.ok) {
       const created = await res.json();
@@ -111,12 +160,13 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           amount: Number(created.amount),
           createdAt: created.createdAt,
           deadline: created.deadline,
-          _count: { items: 0, tasks: 0 },
+          _count: { items: validItems.length, tasks: 0 },
         },
         ...prev,
       ]);
       setModalOpen(false);
       setForm({ type: "DTF", clientId: "", priority: "NORMAL", deadline: "", notes: "", equipmentId: "" });
+      setFormItems([emptyItem()]);
     }
     setLoading(false);
   }
@@ -275,7 +325,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       </Card>
 
       {/* Create Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Новая заявка" size="md">
+      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Новая заявка" size="lg">
         <form onSubmit={handleCreate} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -323,6 +373,77 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               placeholder="Комментарий к заявке..."
             />
           </div>
+          {/* Позиции */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">Позиции</label>
+              {itemsTotal > 0 && (
+                <span className="text-sm font-semibold text-violet-700">
+                  Итого: {itemsTotal.toLocaleString("ru-RU", { style: "currency", currency: "KGS", maximumFractionDigits: 0 })}
+                </span>
+              )}
+            </div>
+            <div className="space-y-2">
+              {formItems.map((item, idx) => (
+                <div key={idx} className="flex gap-2 items-start">
+                  <div className="flex-1 min-w-0">
+                    <select
+                      value={item.serviceId}
+                      onChange={(e) => selectService(idx, e.target.value)}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white mb-1"
+                    >
+                      <option value="">— выбрать из каталога —</option>
+                      {services.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <input
+                      value={item.name}
+                      onChange={(e) => updateItem(idx, { name: e.target.value })}
+                      placeholder="Или введите вручную"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    />
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <input
+                      type="number" min="0.01" step="any" value={item.qty}
+                      onChange={(e) => updateItem(idx, { qty: parseFloat(e.target.value) || 1 })}
+                      className="w-14 px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      title="Количество"
+                    />
+                    <input
+                      value={item.unit}
+                      onChange={(e) => updateItem(idx, { unit: e.target.value })}
+                      className="w-10 px-1 py-1.5 text-sm border border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      title="Ед. изм."
+                    />
+                    <input
+                      type="number" min="0" step="any" value={item.price}
+                      onChange={(e) => updateItem(idx, { price: parseFloat(e.target.value) || 0 })}
+                      className="w-24 px-2 py-1.5 text-sm border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      title="Цена"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormItems((p) => p.filter((_, i) => i !== idx))}
+                      disabled={formItems.length <= 1}
+                      className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 disabled:opacity-30 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setFormItems((p) => [...p, emptyItem()])}
+              className="mt-2 flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium"
+            >
+              <Plus size={13} /> Добавить позицию
+            </button>
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>
               Отмена

@@ -10,7 +10,7 @@ export default async function OrdersPage() {
     where.assignees = { some: { id: session.user.id } };
   }
 
-  const [orders, clients, users, equipment] = await Promise.all([
+  const [orders, clients, users, equipment, services] = await Promise.all([
     prisma.order.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -32,6 +32,11 @@ export default async function OrdersPage() {
       select: { id: true, name: true, type: true },
       orderBy: { name: "asc" },
     }),
+    prisma.service.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, unit: true, price: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   return (
@@ -46,6 +51,7 @@ export default async function OrdersPage() {
       clients={clients}
       users={users}
       equipment={equipment}
+      services={services.map((s) => ({ ...s, price: Number(s.price) }))}
       currentUserId={session?.user.id || ""}
       currentRole={session?.user.role || "MANAGER"}
     />
