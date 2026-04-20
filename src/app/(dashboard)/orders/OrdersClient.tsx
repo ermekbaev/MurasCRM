@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatFileSize } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
@@ -16,7 +16,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import { Plus, Search, ShoppingCart, Calendar, AlertTriangle, Trash2 } from "lucide-react";
+import { Plus, Search, ShoppingCart, AlertTriangle, Trash2, Paperclip, X, FileText } from "lucide-react";
 import { Role } from "@prisma/client";
 
 interface Order {
@@ -86,6 +86,26 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     deadline: "",
     notes: "",
   });
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files || []);
+    setPendingFiles((prev) => {
+      const existingNames = new Set(prev.map((f) => f.name));
+      return [...prev, ...selected.filter((f) => !existingNames.has(f.name))];
+    });
+    e.target.value = "";
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "" });
+    setFormItems([emptyItem()]);
+    setPendingFiles([]);
+    setUploadProgress({ done: 0, total: 0 });
+  }
 
   function updateItem(idx: number, patch: Partial<FormItem>) {
     setFormItems((prev) => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
@@ -141,6 +161,34 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     });
     if (res.ok) {
       const created = await res.json();
+
+      if (pendingFiles.length > 0) {
+        setUploadProgress({ done: 0, total: pendingFiles.length });
+        for (const file of pendingFiles) {
+          try {
+            const metaRes = await fetch(`/api/orders/${created.id}/files`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                originalName: file.name,
+                mimeType: file.type || "application/octet-stream",
+                size: file.size,
+                category: "SOURCES",
+              }),
+            });
+            if (metaRes.ok) {
+              const { uploadUrl } = await metaRes.json();
+              await fetch(uploadUrl, {
+                method: "PUT",
+                body: file,
+                headers: { "Content-Type": file.type || "application/octet-stream" },
+              });
+            }
+          } catch { /* file can be added later from order detail */ }
+          setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
+        }
+      }
+
       setOrders((prev) => [
         {
           ...created,
@@ -151,9 +199,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
         },
         ...prev,
       ]);
-      setModalOpen(false);
-      setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "" });
-      setFormItems([emptyItem()]);
+      closeModal();
     }
     setLoading(false);
   }
@@ -296,7 +342,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
       </Card>
 
       {/* Create Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Новая заявка" size="lg">
+      <Modal isOpen={isModalOpen} onClose={closeModal} title="Новая заявка" size="lg">
         <form onSubmit={handleCreate} className="space-y-4">
           <Select
             label="Приоритет"
@@ -425,12 +471,63 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
             </button>
           </div>
 
+          {/* Files */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">Файлы</label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium"
+              >
+                <Paperclip size={12} /> Прикрепить файл
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={handleFileSelect}
+            />
+            {pendingFiles.length > 0 ? (
+              <div className="space-y-1.5">
+                {pendingFiles.map((f, idx) => (
+                  <div key={idx} className="flex items-center justify-between px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText size={13} className="text-gray-400 shrink-0" />
+                      <span className="text-xs text-gray-700 truncate">{f.name}</span>
+                      <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPendingFiles((p) => p.filter((_, i) => i !== idx))}
+                      className="ml-2 p-0.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-gray-200 rounded-lg py-4 text-xs text-gray-400 hover:border-violet-300 hover:text-violet-500 transition-colors"
+              >
+                Нажмите чтобы добавить файлы
+              </button>
+            )}
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>
+            <Button variant="outline" type="button" onClick={closeModal} disabled={loading}>
               Отмена
             </Button>
             <Button type="submit" loading={loading} disabled={!form.clientId}>
-              Создать заявку
+              {loading && uploadProgress.total > 0
+                ? `Загрузка файлов ${uploadProgress.done}/${uploadProgress.total}...`
+                : "Создать заявку"}
             </Button>
           </div>
         </form>
