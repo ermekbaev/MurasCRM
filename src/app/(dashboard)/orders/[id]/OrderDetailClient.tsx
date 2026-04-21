@@ -17,7 +17,7 @@ import {
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import {
-  ArrowLeft, Send, CheckSquare, Clock, User, DollarSign, AlertCircle,
+  ArrowLeft, Send, CheckSquare, Clock, User, CreditCard, AlertCircle,
   Paperclip, Download, FileText, Image as ImageIcon, Upload,
   Pencil, Plus, Trash2, Check, X, UserPlus,
 } from "lucide-react";
@@ -190,7 +190,9 @@ export default function OrderDetailClient({
       if (!res.ok) return;
       const { orderFile, uploadUrl } = await res.json();
       if (uploadUrl) {
-        await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+        try {
+          await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+        } catch { /* S3 upload failed — file record exists, binary may be missing */ }
       }
       if (localUrl) localPreviewsRef.current.set(orderFile.id, localUrl);
       setOrder((prev) => ({ ...prev, files: [orderFile, ...prev.files] }));
@@ -208,7 +210,7 @@ export default function OrderDetailClient({
     const files = Array.from(e.dataTransfer.files);
     for (const file of files) {
       const isImage = file.type.startsWith("image/");
-      await handleFileUpload(file, isImage ? "SCREENSHOT" : undefined);
+      await handleFileUpload(file, isImage ? "SCREENSHOT" : undefined).catch(() => {});
     }
   }
 
@@ -225,7 +227,7 @@ export default function OrderDetailClient({
           const ext = item.type.split("/")[1] || "png";
           const time = new Date().toLocaleTimeString("ru-RU").replace(/:/g, "-");
           const file = new File([blob], `скриншот_${time}.${ext}`, { type: item.type });
-          handleFileUpload(file, "SCREENSHOT");
+          handleFileUpload(file, "SCREENSHOT").catch(() => {});
         });
     }
     window.addEventListener("paste", handlePaste);
@@ -411,7 +413,7 @@ export default function OrderDetailClient({
           {/* Amount */}
           <Card padding="md">
             <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <DollarSign size={15} /> Оплата
+              <CreditCard size={15} /> Оплата
             </h2>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold text-gray-900">{formatCurrency(order.amount)}</span>
