@@ -45,10 +45,23 @@ export default function LoginPage() {
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-violet-600/15 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-800/15 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[38rem] h-[38rem] bg-slate-700/25 rounded-full blur-3xl" />
-        <svg className="absolute inset-0 w-full h-full opacity-[0.05]" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          className="absolute inset-0 w-full h-full opacity-[0.05]"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+            <pattern
+              id="grid"
+              width="40"
+              height="40"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 40 0 L 0 0 0 40"
+                fill="none"
+                stroke="white"
+                strokeWidth="1"
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -58,21 +71,30 @@ export default function LoginPage() {
       {/* Карточка */}
       <div className="relative z-10 w-full max-w-md mx-4">
         <div className="bg-white rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
-
           {/* Шапка */}
           <div className="px-8 pt-8 pb-6 border-b border-slate-100">
             <div className="flex items-center gap-3 mb-5">
               <div className="flex items-center justify-center w-10 h-10">
-                <Image src="/logo-no-text-white.svg" alt="МурасПринт" width={40} height={40} priority />
+                <Image
+                  src="/logo.svg"
+                  alt="МурасПринт"
+                  width={40}
+                  height={40}
+                  priority
+                />
               </div>
               <div>
-                <h1 className="text-base font-bold text-slate-800 leading-tight">МурасПринт</h1>
+                <h1 className="text-base font-bold text-slate-800 leading-tight">
+                  МурасПринт
+                </h1>
                 <p className="text-xs text-slate-500">CRM-система</p>
               </div>
             </div>
             <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-full px-4 py-1.5">
               <LogIn className="w-3.5 h-3.5 text-violet-600" />
-              <span className="text-violet-700 text-xs font-medium">Вход в систему</span>
+              <span className="text-violet-700 text-xs font-medium">
+                Вход в систему
+              </span>
             </div>
           </div>
 
@@ -80,7 +102,10 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="px-8 py-6 space-y-5">
             {/* Email */}
             <div className="space-y-1.5">
-              <label htmlFor="email" className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label
+                htmlFor="email"
+                className="flex items-center gap-2 text-sm font-medium text-slate-700"
+              >
                 <Mail className="w-3.5 h-3.5 text-slate-400" />
                 Email
               </label>
@@ -102,7 +127,10 @@ export default function LoginPage() {
 
             {/* Пароль */}
             <div className="space-y-1.5">
-              <label htmlFor="password" className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label
+                htmlFor="password"
+                className="flex items-center gap-2 text-sm font-medium text-slate-700"
+              >
                 <Lock className="w-3.5 h-3.5 text-slate-400" />
                 Пароль
               </label>
@@ -111,10 +139,14 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value.replace(/\s/g, ""))}
+                  onChange={(e) =>
+                    setPassword(e.target.value.replace(/\s/g, ""))
+                  }
                   onPaste={(e) => {
                     e.preventDefault();
-                    const pasted = e.clipboardData.getData("text").replace(/\s/g, "");
+                    const pasted = e.clipboardData
+                      .getData("text")
+                      .replace(/\s/g, "");
                     setPassword(pasted);
                   }}
                   disabled={loading}
@@ -131,7 +163,11 @@ export default function LoginPage() {
                   tabIndex={-1}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -164,7 +200,9 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-4">© 2026 МурасПринт</p>
+        <p className="text-center text-slate-600 text-xs mt-4">
+          © 2026 МурасПринт
+        </p>
       </div>
     </div>
   );

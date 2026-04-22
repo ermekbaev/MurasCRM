@@ -103,13 +103,33 @@ const navItems: NavItem[] = [
 ];
 
 const settingsItems = [
-  { label: "Компания",      href: "/settings/company",    roles: ["ADMIN"] as Role[] },
-  { label: "Пользователи",  href: "/settings/users",      roles: ["ADMIN"] as Role[] },
-  { label: "Услуги",        href: "/settings/services",   roles: ["ADMIN"] as Role[] },
-  { label: "Оборудование",  href: "/settings/equipment",  roles: ["ADMIN"] as Role[] },
-  { label: "Поставщики",    href: "/settings/suppliers",  roles: ["ADMIN", "MANAGER"] as Role[] },
-  { label: "Теги",          href: "/settings/tags",       roles: ["ADMIN", "MANAGER"] as Role[] },
-  { label: "Шаблоны",       href: "/settings/templates",  roles: ["ADMIN", "ACCOUNTANT"] as Role[] },
+  { label: "Компания", href: "/settings/company", roles: ["ADMIN"] as Role[] },
+  {
+    label: "Пользователи",
+    href: "/settings/users",
+    roles: ["ADMIN"] as Role[],
+  },
+  { label: "Услуги", href: "/settings/services", roles: ["ADMIN"] as Role[] },
+  {
+    label: "Оборудование",
+    href: "/settings/equipment",
+    roles: ["ADMIN"] as Role[],
+  },
+  {
+    label: "Поставщики",
+    href: "/settings/suppliers",
+    roles: ["ADMIN", "MANAGER"] as Role[],
+  },
+  {
+    label: "Теги",
+    href: "/settings/tags",
+    roles: ["ADMIN", "MANAGER"] as Role[],
+  },
+  {
+    label: "Шаблоны",
+    href: "/settings/templates",
+    roles: ["ADMIN", "ACCOUNTANT"] as Role[],
+  },
 ];
 
 interface SidebarProps {
@@ -121,32 +141,38 @@ interface SidebarProps {
 export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(
-    pathname.startsWith("/settings")
+    pathname.startsWith("/settings"),
   );
 
   const filteredNav = navItems.filter((item) => item.roles.includes(role));
-  const filteredSettings = settingsItems.filter((item) => item.roles.includes(role));
+  const filteredSettings = settingsItems.filter((item) =>
+    item.roles.includes(role),
+  );
   const showSettings = filteredSettings.length > 0;
 
   return (
     <aside className="flex flex-col w-60 min-h-screen bg-slate-50 border-r border-slate-200 shrink-0">
       {/* Logo */}
-      <div className="flex h-16 items-center px-4 border-b border-slate-200">
+      <div className="flex h-16 items-center gap-2.5 px-4 border-b border-slate-200">
         <Image
           src="/logo.svg"
-          alt="МурасПринт"
-          width={160}
-          height={40}
-          className="object-contain"
+          alt="Muras-Brand"
+          width={50}
+          height={32}
+          className="object-contain shrink-0"
           priority
         />
+        <span className="text-sm font-semibold text-slate-700 leading-tight">
+          Muras-Brand
+        </span>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
         {filteredNav.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active =
+            pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
@@ -155,17 +181,21 @@ export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
                 "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                 active
                   ? "bg-violet-600 text-white"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
               )}
             >
               <Icon
                 className={cn(
                   "h-4 w-4 shrink-0 transition-colors",
-                  active ? "text-violet-100" : "text-slate-400 group-hover:text-slate-600"
+                  active
+                    ? "text-violet-100"
+                    : "text-slate-400 group-hover:text-slate-600",
                 )}
               />
               {item.label}
-              {active && <ChevronRight className="ml-auto h-3 w-3 text-violet-300" />}
+              {active && (
+                <ChevronRight className="ml-auto h-3 w-3 text-violet-300" />
+              )}
             </Link>
           );
         })}
@@ -178,7 +208,9 @@ export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
             </p>
             <div className="space-y-0.5">
               {filteredSettings.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                const active =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
                 return (
                   <Link
                     key={item.href}
@@ -187,13 +219,15 @@ export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
                       "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                       active
                         ? "bg-violet-600 text-white"
-                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
                     )}
                   >
                     <Settings
                       className={cn(
                         "h-4 w-4 shrink-0",
-                        active ? "text-violet-100" : "text-slate-400 group-hover:text-slate-600"
+                        active
+                          ? "text-violet-100"
+                          : "text-slate-400 group-hover:text-slate-600",
                       )}
                     />
                     {item.label}
@@ -212,7 +246,9 @@ export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
             {userName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-slate-700">{userName}</p>
+            <p className="truncate text-xs font-medium text-slate-700">
+              {userName}
+            </p>
             <p className="truncate text-[11px] text-slate-400">{userEmail}</p>
           </div>
           <button
