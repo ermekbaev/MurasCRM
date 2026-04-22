@@ -195,14 +195,6 @@ export default function CalculatorPage() {
     } finally { setSavingInvoice(false); }
   }
 
-  // Group equipment by type for display; unknown types go under "OTHER"
-  const equipmentByType = equipment.reduce<Record<string, EquipmentItem[]>>((acc, eq) => {
-    const key = CALC_TYPES.includes(eq.type as CalcType) ? eq.type : "OTHER";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(eq);
-    return acc;
-  }, {});
-
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -241,14 +233,10 @@ export default function CalculatorPage() {
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
                   <option value="">— выберите станок —</option>
-                  {Object.entries(equipmentByType).map(([t, items]) => (
-                    <optgroup key={t} label={TYPE_LABELS[t] || t}>
-                      {items.map((eq) => (
-                        <option key={eq.id} value={eq.id}>
-                          {eq.name}{eq.workWidth ? ` (${eq.workWidth} м)` : ""}{eq.pricePerLm ? ` · ${eq.pricePerLm} сом/${PRICING_UNIT_SHORT[eq.pricingUnit] || "ед"}` : ""}
-                        </option>
-                      ))}
-                    </optgroup>
+                  {equipment.map((eq) => (
+                    <option key={eq.id} value={eq.id}>
+                      {eq.name}{eq.workWidth ? ` (${eq.workWidth} м)` : ""}{eq.pricePerLm ? ` · ${eq.pricePerLm} сом/${PRICING_UNIT_SHORT[eq.pricingUnit] || "ед"}` : ""}
+                    </option>
                   ))}
                 </select>
                 {selectedEquipmentId && (
