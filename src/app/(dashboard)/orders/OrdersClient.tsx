@@ -52,6 +52,13 @@ interface Service {
   price: number;
 }
 
+interface Equipment {
+  id: string;
+  name: string;
+  pricePerLm: number;
+  pricingUnit: string;
+}
+
 interface FormItem {
   serviceId: string;
   name: string;
@@ -66,13 +73,18 @@ interface Props {
   clients: Client[];
   users: User[];
   services: Service[];
+  equipment: Equipment[];
   currentUserId: string;
   currentRole: string;
 }
 
+const PRICING_UNIT_SHORT: Record<string, string> = {
+  LM: "пог.м", SQM: "м²", PCS: "шт", CUT: "мм",
+};
+
 const emptyItem = (): FormItem => ({ serviceId: "", name: "", qty: 1, unit: "шт", price: 0, discount: 0 });
 
-export default function OrdersClient({ initialOrders, clients, users, services, currentUserId, currentRole }: Props) {
+export default function OrdersClient({ initialOrders, clients, users, services, equipment, currentUserId, currentRole }: Props) {
   const [orders, setOrders] = useState(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -179,9 +191,14 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     const svc = services.find((s) => s.name === value);
     if (svc) {
       updateItem(idx, { name: value, serviceId: svc.id, unit: svc.unit, price: svc.price });
-    } else {
-      updateItem(idx, { name: value, serviceId: "" });
+      return;
     }
+    const eq = equipment.find((e) => e.name === value);
+    if (eq) {
+      updateItem(idx, { name: value, serviceId: "", unit: PRICING_UNIT_SHORT[eq.pricingUnit] || "шт", price: eq.pricePerLm });
+      return;
+    }
+    updateItem(idx, { name: value, serviceId: "" });
   }
 
   const itemsTotal = formItems.reduce(
@@ -411,7 +428,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
       </Card>
 
       {/* Create Modal */}
-      <Modal isOpen={isModalOpen} onClose={closeModal} title="Новая заявка" size="lg">
+      <Modal isOpen={isModalOpen} onClose={closeModal} title="Новая заявка" size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
           <Select
             label="Приоритет"
@@ -480,7 +497,10 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
                           />
                           <datalist id={`svc-list-${idx}`}>
                             {services.map((s) => (
-                              <option key={s.id} value={s.name} />
+                              <option key={`svc-${s.id}`} value={s.name} />
+                            ))}
+                            {equipment.map((e) => (
+                              <option key={`eq-${e.id}`} value={e.name} />
                             ))}
                           </datalist>
                         </td>
