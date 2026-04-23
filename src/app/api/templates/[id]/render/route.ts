@@ -68,12 +68,12 @@ export async function POST(
       include: {
         client: true,
         manager: { select: { name: true } },
-        items: { include: { service: { select: { name: true } } } },
+        items: { include: { equipment: { select: { name: true } } } },
       },
     });
     if (order) {
       vars.order_number   = order.number;
-      vars.order_type     = [...new Set(order.items.map((i) => i.service?.name ?? i.name))].join(", ");
+      vars.order_type     = [...new Set(order.items.map((i) => i.equipment?.name ?? i.name))].join(", ");
       vars.order_status   = ORDER_STATUS_LABELS[order.status] ?? order.status;
       vars.order_deadline = fmtDate(order.deadline);
       vars.order_amount   = fmt(Number(order.amount));
@@ -93,7 +93,7 @@ export async function POST(
       // Items list
       if (order.items.length > 0) {
         vars.order_items = order.items
-          .map((item, i) => `${i + 1}. ${item.service?.name ?? "Услуга"} — ${Number(item.qty)} ${item.unit} × ${fmt(Number(item.price))} = ${fmt(Number(item.total))} руб.`)
+          .map((item, i) => `${i + 1}. ${item.name} — ${Number(item.qty)} ${item.unit} × ${fmt(Number(item.price))} = ${fmt(Number(item.total))} руб.`)
           .join("\n");
       }
     }

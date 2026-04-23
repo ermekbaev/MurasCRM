@@ -45,34 +45,28 @@ interface User {
   role: string;
 }
 
-interface Service {
-  id: string;
-  name: string;
-  unit: string;
-  price: number;
-}
-
 interface Equipment {
   id: string;
   name: string;
   pricePerLm: number;
   pricingUnit: string;
+  wastePerJob: number | null;
 }
 
 interface FormItem {
-  serviceId: string;
+  equipmentId: string;
   name: string;
-  qty: number;
+  qty: string;
   unit: string;
-  price: number;
-  discount: number;
+  price: string;
+  discount: string;
+  includeWaste: boolean;
 }
 
 interface Props {
   initialOrders: Order[];
   clients: Client[];
   users: User[];
-  services: Service[];
   equipment: Equipment[];
   currentUserId: string;
   currentRole: string;
@@ -82,9 +76,9 @@ const PRICING_UNIT_SHORT: Record<string, string> = {
   LM: "пог.м", SQM: "м²", PCS: "шт", CUT: "мм",
 };
 
-const emptyItem = (): FormItem => ({ serviceId: "", name: "", qty: 1, unit: "шт", price: 0, discount: 0 });
+const emptyItem = (): FormItem => ({ equipmentId: "", name: "", qty: "", unit: "шт", price: "", discount: "", includeWaste: true });
 
-export default function OrdersClient({ initialOrders, clients, users, services, equipment, currentUserId, currentRole }: Props) {
+export default function OrdersClient({ initialOrders, clients, users, equipment, currentUserId, currentRole }: Props) {
   const [orders, setOrders] = useState(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -98,6 +92,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     deadline: "",
     notes: "",
   });
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingScreenshots, setPendingScreenshots] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
@@ -178,6 +173,7 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     setModalOpen(false);
     setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "" });
     setFormItems([emptyItem()]);
+    setSelectedAssignees([]);
     setPendingFiles([]);
     setPendingScreenshots([]);
     setUploadProgress({ done: 0, total: 0 });
@@ -187,18 +183,11 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
     setFormItems((prev) => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
   }
 
-  function handleItemName(idx: number, value: string) {
-    const svc = services.find((s) => s.name === value);
-    if (svc) {
-      updateItem(idx, { name: value, serviceId: svc.id, unit: svc.unit, price: svc.price });
-      return;
-    }
-    const eq = equipment.find((e) => e.name === value);
+  function handleItemEquipment(idx: number, eqId: string) {
+    const eq = equipment.find((e) => e.id === eqId);
     if (eq) {
-      updateItem(idx, { name: value, serviceId: "", unit: PRICING_UNIT_SHORT[eq.pricingUnit] || "шт", price: eq.pricePerLm });
-      return;
+      updateItem(idx, { equipmentId: eq.id, name: eq.name, unit: PRICING_UNIT_SHORT[eq.pricingUnit] || "шт", price: String(eq.pricePerLm) });
     }
-    updateItem(idx, { name: value, serviceId: "" });
   }
 
   const itemsTotal = formItems.reduce(
@@ -230,11 +219,13 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        assigneeIds: selectedAssignees,
         items: validItems.map((i) => ({
-          serviceId: i.serviceId || undefined,
+          equipmentId: i.equipmentId || undefined,
           name: i.name,
           qty: Number(i.qty),
           unit: i.unit,
+          includeWaste: i.includeWaste,
           price: Number(i.price),
           discount: Number(i.discount),
         })),
@@ -450,6 +441,33 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
             onChange={(e) => setForm({ ...form, deadline: e.target.value })}
           />
           <div>
+            <label className="text-sm font-medium text-gray-700 block mb-2">Исполнители</label>
+            <div className="flex flex-wrap gap-2">
+              {users.map((u) => {
+                const selected = selectedAssignees.includes(u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => setSelectedAssignees((prev) =>
+                      selected ? prev.filter((id) => id !== u.id) : [...prev, u.id]
+                    )}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      selected
+                        ? "bg-violet-600 text-white border-violet-600"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-violet-400"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selected ? "bg-violet-500 text-white" : "bg-gray-100 text-gray-500"}`}>
+                      {u.name.charAt(0)}
+                    </span>
+                    {u.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Примечание</label>
             <textarea
               value={form.notes}
@@ -473,43 +491,56 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Наименование</th>
-                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-14">Кол-во</th>
-                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-12">Ед.</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Цена</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-16">Скидка%</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Сумма</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Оборудование</th>
+                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-20">Кол-во</th>
+                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-16">Ед.</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-28">Цена</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Скидка%</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-24">Сумма</th>
                     <th className="w-8" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {formItems.map((item, idx) => {
                     const lineTotal = Number(item.qty) * Number(item.price) * (1 - Number(item.discount) / 100);
+                    const selectedEq = equipment.find((e) => e.id === item.equipmentId);
+                    const hasWaste = !!selectedEq?.wastePerJob;
                     return (
                       <tr key={idx} className="hover:bg-gray-50/50">
                         <td className="px-3 py-1.5">
-                          <input
-                            value={item.name}
-                            onChange={(e) => handleItemName(idx, e.target.value)}
-                            placeholder="Название..."
-                            list={`svc-list-${idx}`}
-                            className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500"
-                          />
-                          <datalist id={`svc-list-${idx}`}>
-                            {services.map((s) => (
-                              <option key={`svc-${s.id}`} value={s.name} />
-                            ))}
+                          <select
+                            value={item.equipmentId}
+                            onChange={(e) => handleItemEquipment(idx, e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
+                          >
+                            <option value="">— выбрать оборудование —</option>
                             {equipment.map((e) => (
-                              <option key={`eq-${e.id}`} value={e.name} />
+                              <option key={e.id} value={e.id}>{e.name}</option>
                             ))}
-                          </datalist>
+                          </select>
                         </td>
                         <td className="px-2 py-1.5">
-                          <input
-                            type="number" min="0.01" step="any" value={item.qty}
-                            onChange={(e) => updateItem(idx, { qty: parseFloat(e.target.value) || 1 })}
-                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
-                          />
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number" min="0.01" step="any" value={item.qty}
+                              onChange={(e) => updateItem(idx, { qty: e.target.value })}
+                              className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            />
+                            {hasWaste && (
+                              <label
+                                title={`Учитывать отход ${selectedEq.wastePerJob} м на прогон`}
+                                className="flex items-center cursor-pointer shrink-0"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={item.includeWaste}
+                                  onChange={(e) => updateItem(idx, { includeWaste: e.target.checked })}
+                                  className="rounded accent-emerald-500"
+                                />
+                                <span className="ml-1 text-xs text-amber-600 whitespace-nowrap">+{selectedEq.wastePerJob}м</span>
+                              </label>
+                            )}
+                          </div>
                         </td>
                         <td className="px-2 py-1.5">
                           <input
@@ -521,14 +552,14 @@ export default function OrdersClient({ initialOrders, clients, users, services, 
                         <td className="px-2 py-1.5">
                           <input
                             type="number" min="0" step="any" value={item.price}
-                            onChange={(e) => updateItem(idx, { price: parseFloat(e.target.value) || 0 })}
+                            onChange={(e) => updateItem(idx, { price: e.target.value })}
                             className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
                           />
                         </td>
                         <td className="px-2 py-1.5">
                           <input
                             type="number" min="0" max="100" step="any" value={item.discount}
-                            onChange={(e) => updateItem(idx, { discount: parseFloat(e.target.value) || 0 })}
+                            onChange={(e) => updateItem(idx, { discount: e.target.value })}
                             className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
                           />
                         </td>

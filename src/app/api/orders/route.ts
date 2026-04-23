@@ -17,7 +17,7 @@ const orderSchema = z.object({
     unit: z.string(),
     price: z.number().nonnegative(),
     discount: z.number().min(0).max(100).default(0),
-    serviceId: z.string().optional(),
+    equipmentId: z.string().optional(),
   })).optional(),
 });
 

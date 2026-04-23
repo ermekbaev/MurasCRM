@@ -9,6 +9,7 @@ const schema = z.object({
   workWidth: z.number().nullable().optional(),
   pricePerLm: z.number().nullable().optional(),
   pricingUnit: z.enum(["LM", "SQM", "PCS", "CUT"]).default("LM"),
+  wastePerJob: z.number().nullable().optional(),
   materials: z.array(z.string()).default([]),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).default("ACTIVE"),
 });
@@ -19,13 +20,14 @@ export async function GET() {
 
   const equipment = await prisma.equipment.findMany({
     orderBy: { name: "asc" },
-    include: { _count: { select: { services: true } } },
+    include: { _count: { select: { orderItems: true } } },
   });
 
   return NextResponse.json(equipment.map((e) => ({
     ...e,
     workWidth: e.workWidth ? Number(e.workWidth) : null,
     pricePerLm: e.pricePerLm ? Number(e.pricePerLm) : null,
+    wastePerJob: e.wastePerJob ? Number(e.wastePerJob) : null,
     pricingUnit: e.pricingUnit || "LM",
   })));
 }

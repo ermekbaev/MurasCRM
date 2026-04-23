@@ -101,20 +101,6 @@ async function main() {
     },
   });
 
-  // Services
-  await prisma.service.createMany({
-    skipDuplicates: true,
-    data: [
-      { name: "DTF-печать", type: "DTF", unit: "м²", price: 1500, equipmentId: dtfPrinter.id },
-      { name: "UV DTF наклейки", type: "UV_DTF", unit: "м²", price: 2200 },
-      { name: "UV печать планшет", type: "UV_FLATBED", unit: "м²", price: 3000, equipmentId: uvPrinter.id },
-      { name: "Лазерная резка акрил", type: "LASER_CUT", unit: "пог.м", price: 120, equipmentId: laserCutter.id },
-      { name: "Плоттерная резка", type: "PLOTTER_CUT", unit: "пог.м", price: 80 },
-      { name: "Ламинация глянцевая", type: "HIGH_PRECISION", unit: "м²", price: 400 },
-      { name: "Ламинация матовая", type: "HIGH_PRECISION", unit: "м²", price: 400 },
-    ],
-  });
-
   // Suppliers
   const supplier1 = await prisma.supplier.upsert({
     where: { id: "supplier-1" },

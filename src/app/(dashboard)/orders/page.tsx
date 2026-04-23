@@ -10,7 +10,7 @@ export default async function OrdersPage() {
     where.assignees = { some: { id: session.user.id } };
   }
 
-  const [orders, clients, users, services, equipment] = await Promise.all([
+  const [orders, clients, users, equipment] = await Promise.all([
     prisma.order.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -27,14 +27,9 @@ export default async function OrdersPage() {
       where: { isBlocked: false },
       select: { id: true, name: true, role: true },
     }),
-    prisma.service.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, unit: true, price: true },
-      orderBy: { name: "asc" },
-    }),
     prisma.equipment.findMany({
       where: { status: "ACTIVE" },
-      select: { id: true, name: true, pricePerLm: true, pricingUnit: true },
+      select: { id: true, name: true, pricePerLm: true, pricingUnit: true, wastePerJob: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -50,8 +45,7 @@ export default async function OrdersPage() {
       }))}
       clients={clients}
       users={users}
-      services={services.map((s) => ({ ...s, price: Number(s.price) }))}
-      equipment={equipment.map((e) => ({ ...e, pricePerLm: Number(e.pricePerLm ?? 0) }))}
+      equipment={equipment.map((e) => ({ ...e, pricePerLm: Number(e.pricePerLm ?? 0), wastePerJob: e.wastePerJob ? Number(e.wastePerJob) : null }))}
       currentUserId={session?.user.id || ""}
       currentRole={session?.user.role || "MANAGER"}
     />

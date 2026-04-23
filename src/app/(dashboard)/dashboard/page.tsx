@@ -75,9 +75,9 @@ async function getDashboardData() {
     prisma.orderItem.findMany({
       where: {
         order: { status: { in: ["NEW", "IN_PROGRESS", "REVIEW"] } },
-        service: { equipmentId: { not: null } },
+        equipmentId: { not: null },
       },
-      select: { service: { select: { equipmentId: true } } },
+      select: { equipmentId: true },
     }),
   ]);
 
@@ -105,11 +105,10 @@ async function getDashboardData() {
     }))
     .sort((a, b) => b.activeTasks - a.activeTasks);
 
-  // Aggregate equipment load from service items
+  // Aggregate equipment load from active order items
   const eqCountMap: Record<string, number> = {};
   equipmentOrderCounts.forEach((item) => {
-    const eqId = item.service?.equipmentId;
-    if (eqId) eqCountMap[eqId] = (eqCountMap[eqId] || 0) + 1;
+    if (item.equipmentId) eqCountMap[item.equipmentId] = (eqCountMap[item.equipmentId] || 0) + 1;
   });
   const equipmentIds = Object.keys(eqCountMap);
   const equipmentList = equipmentIds.length > 0

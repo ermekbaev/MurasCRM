@@ -4,13 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const itemSchema = z.object({
-  serviceId: z.string().optional().nullable(),
+  equipmentId: z.string().optional().nullable(),
   name: z.string().min(1),
   qty: z.number().positive(),
   unit: z.string().min(1),
   price: z.number().min(0),
   discount: z.number().min(0).max(100).default(0),
   total: z.number().min(0),
+  includeWaste: z.boolean().default(true),
 });
 
 const replaceSchema = z.object({
@@ -27,7 +28,7 @@ export async function GET(
 
   const items = await prisma.orderItem.findMany({
     where: { orderId: id },
-    include: { service: { select: { id: true, name: true } } },
+    include: { equipment: { select: { id: true, name: true } } },
     orderBy: { createdAt: "asc" },
   });
 
@@ -57,7 +58,7 @@ export async function PUT(
 
   const total = parsed.data.items.reduce((sum, i) => sum + i.total, 0);
 
-  const [, items] = await prisma.$transaction([
+  await prisma.$transaction([
     prisma.orderItem.deleteMany({ where: { orderId: id } }),
     prisma.orderItem.createMany({
       data: parsed.data.items.map((i) => ({ ...i, orderId: id })),
@@ -65,7 +66,16 @@ export async function PUT(
     prisma.order.update({ where: { id }, data: { amount: total } }),
   ]);
 
-  return NextResponse.json({ count: items.count, total });
+  const items = await prisma.orderItem.findMany({
+    where: { orderId: id },
+    include: { equipment: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return NextResponse.json({
+    items: items.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price), discount: Number(i.discount), total: Number(i.total) })),
+    amount: total,
+  });
 }
 
 export async function POST(

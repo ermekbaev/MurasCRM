@@ -62,7 +62,7 @@ export async function GET(req: Request) {
     }),
     prisma.orderItem.findMany({
       where: { order: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } } },
-      select: { total: true, service: { select: { type: true } } },
+      select: { total: true, equipment: { select: { type: true } } },
     }),
     prisma.order.groupBy({
       by: ["priority"],
@@ -97,20 +97,20 @@ export async function GET(req: Request) {
       },
       _count: true,
     }),
-    // Equipment load via services used in active order items
+    // Equipment load via active order items
     prisma.orderItem.findMany({
       where: {
         order: { status: { in: ["NEW", "IN_PROGRESS"] } },
-        service: { equipmentId: { not: null } },
+        equipmentId: { not: null },
       },
-      select: { service: { select: { equipmentId: true } } },
+      select: { equipmentId: true },
     }),
   ]);
 
-  // Aggregate items by service type
+  // Aggregate items by equipment type
   const svcTypeMap: Record<string, { count: number; revenue: number }> = {};
   ordersByServiceType.forEach((item) => {
-    const type = item.service?.type || "OTHER";
+    const type = item.equipment?.type || "OTHER";
     if (!svcTypeMap[type]) svcTypeMap[type] = { count: 0, revenue: 0 };
     svcTypeMap[type].count++;
     svcTypeMap[type].revenue += Number(item.total);
@@ -139,11 +139,10 @@ export async function GET(req: Request) {
     : [];
   const operatorMap = Object.fromEntries(operators.map((u) => [u.id, u]));
 
-  // Aggregate equipment load from service items
+  // Aggregate equipment load from active order items
   const eqCountMap: Record<string, number> = {};
   equipmentLoad.forEach((item) => {
-    const eqId = item.service?.equipmentId;
-    if (eqId) eqCountMap[eqId] = (eqCountMap[eqId] || 0) + 1;
+    if (item.equipmentId) eqCountMap[item.equipmentId] = (eqCountMap[item.equipmentId] || 0) + 1;
   });
   const equipmentIds = Object.keys(eqCountMap);
   const equipmentList = equipmentIds.length > 0

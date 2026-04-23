@@ -16,10 +16,12 @@ import {
 } from "@/lib/constants";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
+import Input from "@/components/ui/Input";
 import {
   ArrowLeft, Send, CheckSquare, Clock, User, CreditCard, AlertCircle,
   Paperclip, Download, FileText, Image as ImageIcon, Upload,
-  Pencil, Plus, Trash2, Check, X, UserPlus,
+  Pencil, Plus, Trash2, Check, X, UserPlus, ToggleLeft, ToggleRight,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 
@@ -70,7 +72,8 @@ interface OrderDetailClientProps {
       price: number;
       discount: number;
       total: number;
-      service: { name: string; unit: string } | null;
+      includeWaste: boolean;
+      equipment: { name: string } | null;
     }[];
     comments: {
       id: string;
@@ -97,7 +100,6 @@ interface OrderDetailClientProps {
     }[];
   };
   users: { id: string; name: string; role: string }[];
-  services: { id: string; name: string; unit: string; price: number; type: string | null }[];
   currentUserId: string;
   currentRole: string;
 }
@@ -111,7 +113,6 @@ function formatFileSize(bytes: number) {
 export default function OrderDetailClient({
   order: initialOrder,
   users,
-  services,
   currentUserId,
   currentRole,
 }: OrderDetailClientProps) {
@@ -127,7 +128,7 @@ export default function OrderDetailClient({
   const localPreviewsRef = useRef<Map<string, string>>(new Map());
 
   // Items edit state
-  type EditItem = { id?: string; name: string; qty: number; unit: string; price: number; discount: number };
+  type EditItem = { id?: string; name: string; qty: number; unit: string; price: number; discount: number; includeWaste: boolean };
   const [editingItems, setEditingItems] = useState(false);
   const [editItems, setEditItems] = useState<EditItem[]>([]);
   const [savingItems, setSavingItems] = useState(false);
@@ -135,6 +136,33 @@ export default function OrderDetailClient({
   // Assignees state
   const [addingAssignee, setAddingAssignee] = useState(false);
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("");
+
+  // Task creation state
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [taskSaving, setTaskSaving] = useState(false);
+  const [taskForm, setTaskForm] = useState({ title: "", type: "DESIGN", priority: "NORMAL", assigneeId: "", dueDate: "" });
+
+  async function handleCreateTask(e: React.FormEvent) {
+    e.preventDefault();
+    setTaskSaving(true);
+    const res = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...taskForm,
+        orderId: order.id,
+        assigneeId: taskForm.assigneeId || undefined,
+        dueDate: taskForm.dueDate || undefined,
+      }),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      setOrder((prev) => ({ ...prev, tasks: [{ ...created, dueDate: created.dueDate ? new Date(created.dueDate) : null }, ...prev.tasks] }));
+      setTaskModalOpen(false);
+      setTaskForm({ title: "", type: "DESIGN", priority: "NORMAL", assigneeId: "", dueDate: "" });
+    }
+    setTaskSaving(false);
+  }
 
   const canEdit = ["ADMIN", "MANAGER"].includes(currentRole);
 
@@ -243,16 +271,16 @@ export default function OrderDetailClient({
   }
 
   function startEditItems() {
-    setEditItems(order.items.map((i) => ({ id: i.id, name: i.name, qty: i.qty, unit: i.unit, price: i.price, discount: i.discount })));
+    setEditItems(order.items.map((i) => ({ id: i.id, name: i.name, qty: i.qty, unit: i.unit, price: i.price, discount: i.discount, includeWaste: i.includeWaste ?? true })));
     setEditingItems(true);
   }
 
-  function updateEditItem(idx: number, field: keyof EditItem, value: string | number) {
+  function updateEditItem(idx: number, field: keyof EditItem, value: string | number | boolean) {
     setEditItems((prev) => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
   }
 
   function addEditItem() {
-    setEditItems((prev) => [...prev, { name: "", qty: 1, unit: "шт", price: 0, discount: 0 }]);
+    setEditItems((prev) => [...prev, { name: "", qty: 1, unit: "шт", price: 0, discount: 0, includeWaste: true }]);
   }
 
   function removeEditItem(idx: number) {
@@ -264,7 +292,7 @@ export default function OrderDetailClient({
     const res = await fetch(`/api/orders/${order.id}/items`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: editItems.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price), discount: Number(i.discount) })) }),
+      body: JSON.stringify({ items: editItems.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price), discount: Number(i.discount), includeWaste: i.includeWaste })) }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -562,7 +590,7 @@ export default function OrderDetailClient({
                               />
                             </td>
                             <td className="px-2 py-2">
-                              <div className="flex gap-1">
+                              <div className="flex gap-1 items-center">
                                 <input
                                   type="number" min="0.01" step="any" value={item.qty}
                                   onChange={(e) => updateEditItem(idx, "qty", parseFloat(e.target.value) || 0)}
@@ -573,6 +601,16 @@ export default function OrderDetailClient({
                                   onChange={(e) => updateEditItem(idx, "unit", e.target.value)}
                                   className="w-12 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
                                 />
+                                <button
+                                  type="button"
+                                  title={item.includeWaste ? "Отход учтён — нажмите чтобы отключить" : "Отход не учтён — нажмите чтобы включить"}
+                                  onClick={() => updateEditItem(idx, "includeWaste", !item.includeWaste)}
+                                  className="shrink-0"
+                                >
+                                  {item.includeWaste
+                                    ? <ToggleRight size={18} className="text-emerald-500" />
+                                    : <ToggleLeft size={18} className="text-gray-300" />}
+                                </button>
                               </div>
                             </td>
                             <td className="px-2 py-2">
@@ -770,37 +808,46 @@ export default function OrderDetailClient({
 
           {/* Tasks tab */}
           {activeTab === "tasks" && (
-            <Card padding="none">
-              {order.tasks.length === 0 ? (
-                <div className="py-10 text-center text-gray-400 text-sm">
-                  <CheckSquare size={28} className="mx-auto mb-2 opacity-30" />
-                  Задач нет
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-50">
-                  {order.tasks.map((task) => (
-                    <Link
-                      key={task.id}
-                      href={`/tasks/${task.id}`}
-                      className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-800 text-sm">{task.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-gray-400">{TASK_TYPE_LABELS[task.type as keyof typeof TASK_TYPE_LABELS]}</span>
-                          {task.assignee && (
-                            <span className="text-xs text-gray-400">· {task.assignee.name}</span>
-                          )}
-                        </div>
-                      </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TASK_STATUS_COLORS[task.status as keyof typeof TASK_STATUS_COLORS]}`}>
-                        {TASK_STATUS_LABELS[task.status as keyof typeof TASK_STATUS_LABELS]}
-                      </span>
-                    </Link>
-                  ))}
+            <div className="space-y-3">
+              {canEdit && (
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => setTaskModalOpen(true)}>
+                    <Plus size={14} /> Создать задачу
+                  </Button>
                 </div>
               )}
-            </Card>
+              <Card padding="none">
+                {order.tasks.length === 0 ? (
+                  <div className="py-10 text-center text-gray-400 text-sm">
+                    <CheckSquare size={28} className="mx-auto mb-2 opacity-30" />
+                    Задач нет
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {order.tasks.map((task) => (
+                      <Link
+                        key={task.id}
+                        href={`/tasks/${task.id}`}
+                        className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-800 text-sm">{task.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-gray-400">{TASK_TYPE_LABELS[task.type as keyof typeof TASK_TYPE_LABELS]}</span>
+                            {task.assignee && (
+                              <span className="text-xs text-gray-400">· {task.assignee.name}</span>
+                            )}
+                          </div>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TASK_STATUS_COLORS[task.status as keyof typeof TASK_STATUS_COLORS]}`}>
+                          {TASK_STATUS_LABELS[task.status as keyof typeof TASK_STATUS_LABELS]}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
           )}
 
           {/* Comments tab */}
@@ -870,6 +917,50 @@ export default function OrderDetailClient({
           )}
         </div>
       </div>
+
+      {/* Create Task Modal */}
+      <Modal isOpen={taskModalOpen} onClose={() => setTaskModalOpen(false)} title="Новая задача" size="md">
+        <form onSubmit={handleCreateTask} className="space-y-4">
+          <Input
+            label="Название *"
+            required
+            value={taskForm.title}
+            onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+            placeholder="Что нужно сделать?"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Тип задачи"
+              value={taskForm.type}
+              onChange={(e) => setTaskForm({ ...taskForm, type: e.target.value })}
+              options={Object.entries(TASK_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+            />
+            <Select
+              label="Приоритет"
+              value={taskForm.priority}
+              onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
+              options={Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+            />
+          </div>
+          <Select
+            label="Исполнитель"
+            value={taskForm.assigneeId}
+            onChange={(e) => setTaskForm({ ...taskForm, assigneeId: e.target.value })}
+            placeholder="Выберите исполнителя"
+            options={users.map((u) => ({ value: u.id, label: u.name }))}
+          />
+          <Input
+            label="Срок выполнения"
+            type="datetime-local"
+            value={taskForm.dueDate}
+            onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+          />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" type="button" onClick={() => setTaskModalOpen(false)}>Отмена</Button>
+            <Button type="submit" loading={taskSaving}>Создать задачу</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -102,7 +102,6 @@ const settingsItems = [
     href: "/settings/users",
     roles: ["ADMIN"] as Role[],
   },
-  { label: "Услуги", href: "/settings/services", roles: ["ADMIN"] as Role[] },
   {
     label: "Оборудование",
     href: "/settings/equipment",

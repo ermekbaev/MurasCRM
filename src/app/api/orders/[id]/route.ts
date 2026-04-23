@@ -14,6 +14,57 @@ const updateSchema = z.object({
   managerId: z.string().optional(),
 });
 
+async function deductConsumablesForOrder(orderId: string, newStatus: string) {
+  const items = await prisma.orderItem.findMany({
+    where: { orderId, equipmentId: { not: null } },
+    include: {
+      equipment: {
+        include: {
+          equipmentConsumables: {
+            where: { autoDeduct: true, trigger: newStatus === "IN_PROGRESS" ? "ON_IN_PROGRESS" : newStatus === "READY" ? "ON_READY" : undefined },
+            include: { consumable: true },
+          },
+        },
+      },
+    },
+  });
+
+  for (const item of items) {
+    if (!item.equipment) continue;
+    const configs = item.equipment.equipmentConsumables;
+    if (!configs.length) continue;
+
+    for (const cfg of configs) {
+      const waste = item.includeWaste && item.equipment?.wastePerJob ? Number(item.equipment.wastePerJob) : 0;
+      const qty = Number(item.qty) * Number(cfg.consumptionPerUnit) + waste;
+      if (qty <= 0) continue;
+
+      // Не списывать если уже было списание по этому item + consumable
+      const already = await prisma.consumableMovement.findFirst({
+        where: { orderItemId: item.id, consumable: { id: cfg.consumableId } },
+      });
+      if (already) continue;
+
+      await prisma.$transaction([
+        prisma.consumableMovement.create({
+          data: {
+            consumableId: cfg.consumableId,
+            direction: "OUT",
+            qty,
+            orderId,
+            orderItemId: item.id,
+            note: `Авто-списание по заказу, позиция: ${item.name}`,
+          },
+        }),
+        prisma.consumable.update({
+          where: { id: cfg.consumableId },
+          data: { stock: { decrement: qty } },
+        }),
+      ]);
+    }
+  }
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -28,7 +79,7 @@ export async function GET(
       client: true,
       manager: { select: { id: true, name: true, email: true } },
       assignees: { select: { id: true, name: true, role: true } },
-      items: { include: { service: true } },
+      items: { include: { equipment: true } },
       files: { include: { file: true } },
       comments: {
         include: { user: { select: { id: true, name: true } } },
@@ -82,42 +133,8 @@ export async function PATCH(
     });
     notifyOrderStatusChanged(id, existing.status, rest.status);
 
-    // Auto write-off consumables when order is issued
-    if (rest.status === "ISSUED") {
-      const orderItems = await prisma.orderItem.findMany({
-        where: { orderId: id, serviceId: { not: null } },
-        select: { serviceId: true, qty: true },
-      });
-      const serviceIds = orderItems.map((i) => i.serviceId!).filter(Boolean);
-      if (serviceIds.length > 0) {
-        const serviceConsumables = await prisma.serviceConsumable.findMany({
-          where: { serviceId: { in: serviceIds } },
-        });
-        for (const item of orderItems) {
-          if (!item.serviceId) continue;
-          const linked = serviceConsumables.filter((sc) => sc.serviceId === item.serviceId);
-          for (const sc of linked) {
-            const qty = Number(item.qty) * Number(sc.qtyPerUnit);
-            await prisma.$transaction([
-              prisma.consumableMovement.create({
-                data: {
-                  consumableId: sc.consumableId,
-                  direction: "OUT",
-                  qty,
-                  orderId: id,
-                  note: `Авто-списание по заявке`,
-                  totalCost: null,
-                },
-              }),
-              prisma.consumable.update({
-                where: { id: sc.consumableId },
-                data: { stock: { decrement: qty } },
-              }),
-            ]);
-          }
-        }
-      }
-    }
+    // Авто-списание расходников при переходе в нужный статус
+    await deductConsumablesForOrder(id, rest.status);
   }
 
   const order = await prisma.order.update({
