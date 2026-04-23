@@ -332,7 +332,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
                 <Tooltip formatter={(v, name) => [name === "revenue" ? formatCurrency(Number(v)) : v, name === "revenue" ? "Выручка" : "Позиций"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           )}
