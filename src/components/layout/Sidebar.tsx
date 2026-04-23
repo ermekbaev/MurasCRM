@@ -13,7 +13,6 @@ import {
   FileText,
   ClipboardList,
   FolderOpen,
-  Calculator,
   Package,
   BarChart3,
   History,
@@ -75,12 +74,6 @@ const navItems: NavItem[] = [
     href: "/files",
     icon: FolderOpen,
     roles: ["ADMIN", "MANAGER", "DESIGNER"],
-  },
-  {
-    label: "Калькулятор",
-    href: "/calculator",
-    icon: Calculator,
-    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Расходники",

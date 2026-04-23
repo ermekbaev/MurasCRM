@@ -12,7 +12,6 @@ const ROLE_ROUTES: Record<Role, string[]> = {
     "/invoices",
     "/acts",
     "/files",
-    "/calculator",
     "/consumables",
     "/settings/suppliers",
     "/settings/tags",
