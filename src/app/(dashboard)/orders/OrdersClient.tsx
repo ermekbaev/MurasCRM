@@ -16,7 +16,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import { Plus, Search, ShoppingCart, AlertTriangle, Trash2, Paperclip, X, FileText } from "lucide-react";
+import { Plus, Search, ShoppingCart, AlertTriangle, Trash2, Paperclip, X, FileText, ToggleLeft, ToggleRight } from "lucide-react";
 import { Role } from "@prisma/client";
 
 interface Order {
@@ -291,8 +291,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Заявки</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{filtered.length} из {orders.length}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Заявки</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{filtered.length} из {orders.length}</p>
         </div>
         {["ADMIN", "MANAGER"].includes(currentRole) && (
           <Button onClick={() => setModalOpen(true)}>
@@ -305,19 +305,19 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       <Card padding="sm">
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-48">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Поиск по номеру или клиенту..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
           >
             <option value="">Все статусы</option>
             <option value="active">Активные</option>
@@ -332,7 +332,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
           >
             <option value="">Все приоритеты</option>
             {Object.entries(PRIORITY_LABELS).map(([val, label]) => (
@@ -347,35 +347,35 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Заявка</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Статус</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Приоритет</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Срок</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Оплата</th>
-                <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Сумма</th>
+              <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Заявка</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Приоритет</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Срок</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Оплата</th>
+                <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Сумма</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-gray-400">
+                  <td colSpan={6} className="text-center py-12 text-gray-400 dark:text-slate-500">
                     <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
                     Заявки не найдены
                   </td>
                 </tr>
               ) : (
                 filtered.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={order.id} className="hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors">
                     <td className="px-5 py-3">
                       <Link href={`/orders/${order.id}`} className="group">
-                        <p className="font-medium text-gray-800 group-hover:text-violet-600 transition-colors truncate max-w-48">
+                        <p className="font-medium text-gray-800 dark:text-slate-200 group-hover:text-violet-600 transition-colors truncate max-w-48">
                           {order.client.name}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 dark:text-slate-500">
                           {order.number}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 dark:text-slate-500">
                           {formatDate(order.createdAt)}
                         </p>
                       </Link>
@@ -392,14 +392,14 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                     </td>
                     <td className="px-4 py-3">
                       {order.deadline ? (
-                        <div className={`flex items-center gap-1 ${isOverdue(order.deadline) && !["READY", "ISSUED"].includes(order.status) ? "text-red-600" : "text-gray-600"}`}>
+                        <div className={`flex items-center gap-1 ${isOverdue(order.deadline) && !["READY", "ISSUED"].includes(order.status) ? "text-red-600" : "text-gray-600 dark:text-slate-400"}`}>
                           {isOverdue(order.deadline) && !["READY", "ISSUED"].includes(order.status) && (
                             <AlertTriangle size={12} />
                           )}
                           <span className="text-xs">{formatDate(order.deadline)}</span>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-gray-400 dark:text-slate-500">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -408,7 +408,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <span className="font-semibold text-gray-800">{formatCurrency(order.amount)}</span>
+                      <span className="font-semibold text-gray-800 dark:text-slate-200">{formatCurrency(order.amount)}</span>
                     </td>
                   </tr>
                 ))
@@ -441,7 +441,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             onChange={(e) => setForm({ ...form, deadline: e.target.value })}
           />
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">Исполнители</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-slate-300 block mb-2">Исполнители</label>
             <div className="flex flex-wrap gap-2">
               {users.map((u) => {
                 const selected = selectedAssignees.includes(u.id);
@@ -455,10 +455,10 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                       selected
                         ? "bg-violet-600 text-white border-violet-600"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-violet-400"
+                        : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:border-violet-400"
                     }`}
                   >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selected ? "bg-violet-500 text-white" : "bg-gray-100 text-gray-500"}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selected ? "bg-violet-500 text-white" : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400"}`}>
                       {u.name.charAt(0)}
                     </span>
                     {u.name}
@@ -468,50 +468,50 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Примечание</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-slate-300 block mb-1">Примечание</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="Комментарий к заявке..."
             />
           </div>
           {/* Позиции */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">Позиции</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-slate-300">Позиции</label>
               {itemsTotal > 0 && (
                 <span className="text-sm font-semibold text-violet-700">
                   Итого: {itemsTotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} сом
                 </span>
               )}
             </div>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Оборудование</th>
-                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-20">Кол-во</th>
-                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-16">Ед.</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-28">Цена</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Скидка%</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-24">Сумма</th>
+                  <tr className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-slate-400">Оборудование</th>
+                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-slate-400 w-20">Кол-во</th>
+                    <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-slate-400 w-16">Ед.</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-slate-400 w-28">Цена</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-slate-400 w-20">Скидка%</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-slate-400 w-24">Сумма</th>
                     <th className="w-8" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                   {formItems.map((item, idx) => {
                     const lineTotal = Number(item.qty) * Number(item.price) * (1 - Number(item.discount) / 100);
                     const selectedEq = equipment.find((e) => e.id === item.equipmentId);
                     const hasWaste = !!selectedEq?.wastePerJob;
                     return (
-                      <tr key={idx} className="hover:bg-gray-50/50">
+                      <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30">
                         <td className="px-3 py-1.5">
                           <select
                             value={item.equipmentId}
                             onChange={(e) => handleItemEquipment(idx, e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
+                            className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                           >
                             <option value="">— выбрать оборудование —</option>
                             {equipment.map((e) => (
@@ -524,21 +524,19 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                             <input
                               type="number" min="0.01" step="any" value={item.qty}
                               onChange={(e) => updateItem(idx, { qty: e.target.value })}
-                              className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                              className="w-full px-1 py-1 text-sm border border-gray-200 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
                             />
                             {hasWaste && (
-                              <label
-                                title={`Учитывать отход ${selectedEq.wastePerJob} м на прогон`}
-                                className="flex items-center cursor-pointer shrink-0"
+                              <button
+                                type="button"
+                                title={item.includeWaste ? `Отход +${selectedEq.wastePerJob}м учтён — нажмите чтобы отключить` : `Отход +${selectedEq.wastePerJob}м не учтён — нажмите чтобы включить`}
+                                onClick={() => updateItem(idx, { includeWaste: !item.includeWaste })}
+                                className="shrink-0"
                               >
-                                <input
-                                  type="checkbox"
-                                  checked={item.includeWaste}
-                                  onChange={(e) => updateItem(idx, { includeWaste: e.target.checked })}
-                                  className="rounded accent-emerald-500"
-                                />
-                                <span className="ml-1 text-xs text-amber-600 whitespace-nowrap">+{selectedEq.wastePerJob}м</span>
-                              </label>
+                                {item.includeWaste
+                                  ? <ToggleRight size={18} className="text-emerald-500" />
+                                  : <ToggleLeft size={18} className="text-gray-300" />}
+                              </button>
                             )}
                           </div>
                         </td>
@@ -546,24 +544,24 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                           <input
                             value={item.unit}
                             onChange={(e) => updateItem(idx, { unit: e.target.value })}
-                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            className="w-full px-1 py-1 text-sm border border-gray-200 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
                           />
                         </td>
                         <td className="px-2 py-1.5">
                           <input
                             type="number" min="0" step="any" value={item.price}
                             onChange={(e) => updateItem(idx, { price: e.target.value })}
-                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            className="w-full px-1 py-1 text-sm border border-gray-200 dark:border-slate-600 rounded text-right bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
                           />
                         </td>
                         <td className="px-2 py-1.5">
                           <input
                             type="number" min="0" max="100" step="any" value={item.discount}
                             onChange={(e) => updateItem(idx, { discount: e.target.value })}
-                            className="w-full px-1 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            className="w-full px-1 py-1 text-sm border border-gray-200 dark:border-slate-600 rounded text-right bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
                           />
                         </td>
-                        <td className="px-2 py-1.5 text-right text-sm font-medium text-gray-700 whitespace-nowrap">
+                        <td className="px-2 py-1.5 text-right text-sm font-medium text-gray-700 dark:text-slate-300 whitespace-nowrap">
                           {lineTotal > 0 ? lineTotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) : "—"}
                         </td>
                         <td className="px-2 py-1.5">
@@ -594,7 +592,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           {/* Files */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">Файлы</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-slate-300">Файлы</label>
               <button type="button" onClick={() => fileInputRef.current?.click()}
                 className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium">
                 <Paperclip size={12} /> Прикрепить
@@ -607,23 +605,23 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               onDrop={handleDropFiles}
               onClick={() => pendingFiles.length === 0 && fileInputRef.current?.click()}
               className={`rounded-lg border-2 border-dashed transition-colors ${
-                isDraggingFiles ? "border-violet-400 bg-violet-50"
-                  : pendingFiles.length === 0 ? "border-gray-200 hover:border-violet-300 cursor-pointer"
-                  : "border-gray-200"
+                isDraggingFiles ? "border-violet-400 bg-violet-50 dark:bg-violet-900/20"
+                  : pendingFiles.length === 0 ? "border-gray-200 dark:border-slate-700 hover:border-violet-300 cursor-pointer"
+                  : "border-gray-200 dark:border-slate-700"
               }`}
             >
               {pendingFiles.length > 0 ? (
                 <div className="p-2 space-y-1.5">
                   {pendingFiles.map((f, idx) => (
-                    <div key={idx} className="relative group flex items-center justify-between px-3 py-1.5 bg-white rounded-md border border-gray-100">
+                    <div key={idx} className="relative group flex items-center justify-between px-3 py-1.5 bg-white dark:bg-slate-800 rounded-md border border-gray-100 dark:border-slate-700">
                       <div className="flex items-center gap-2 min-w-0">
-                        <FileText size={13} className="text-gray-400 shrink-0" />
-                        <span className="text-xs text-gray-700 truncate">{f.name}</span>
-                        <span className="text-xs text-gray-400 shrink-0">{formatFileSize(f.size)}</span>
+                        <FileText size={13} className="text-gray-400 dark:text-slate-500 shrink-0" />
+                        <span className="text-xs text-gray-700 dark:text-slate-300 truncate">{f.name}</span>
+                        <span className="text-xs text-gray-400 dark:text-slate-500 shrink-0">{formatFileSize(f.size)}</span>
                       </div>
                       <button type="button"
                         onClick={(e) => { e.stopPropagation(); setPendingFiles((p) => p.filter((_, i) => i !== idx)); }}
-                        className="ml-2 p-0.5 text-gray-400 hover:text-red-500 transition-colors shrink-0">
+                        className="ml-2 p-0.5 text-gray-400 dark:text-slate-500 hover:text-red-500 transition-colors shrink-0">
                         <X size={13} />
                       </button>
                     </div>
@@ -635,7 +633,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                   </button>
                 </div>
               ) : (
-                <div className="py-5 flex flex-col items-center gap-1 text-gray-400 select-none">
+                <div className="py-5 flex flex-col items-center gap-1 text-gray-400 dark:text-slate-500 select-none">
                   <Paperclip size={16} className={isDraggingFiles ? "text-violet-500" : ""} />
                   <p className="text-xs">Перетащите файлы или нажмите чтобы выбрать</p>
                 </div>
@@ -647,8 +645,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           <div>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <label className="text-sm font-medium text-gray-700">Скрин-превью</label>
-                <p className="text-xs text-gray-400">Визуальная подсказка — не нужно скачивать чтобы понять что за заказ</p>
+                <label className="text-sm font-medium text-gray-700 dark:text-slate-300">Скрин-превью</label>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Визуальная подсказка — не нужно скачивать чтобы понять что за заказ</p>
               </div>
               <button type="button" onClick={() => screenshotInputRef.current?.click()}
                 className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium shrink-0 ml-2">
@@ -662,23 +660,23 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               onDrop={handleDropScreenshots}
               onClick={() => pendingScreenshots.length === 0 && screenshotInputRef.current?.click()}
               className={`rounded-lg border-2 border-dashed transition-colors ${
-                isDraggingScreenshots ? "border-violet-400 bg-violet-50"
-                  : pendingScreenshots.length === 0 ? "border-gray-200 hover:border-violet-300 cursor-pointer"
-                  : "border-gray-200"
+                isDraggingScreenshots ? "border-violet-400 bg-violet-50 dark:bg-violet-900/20"
+                  : pendingScreenshots.length === 0 ? "border-gray-200 dark:border-slate-700 hover:border-violet-300 cursor-pointer"
+                  : "border-gray-200 dark:border-slate-700"
               }`}
             >
               {pendingScreenshots.length > 0 ? (
                 <div className="p-2 space-y-2">
                   {pendingScreenshots.map((f, idx) => (
-                    <div key={idx} className="relative group rounded-md overflow-hidden border border-gray-100">
-                      <img src={getPreviewUrl(f)} alt={f.name} className="w-full max-h-52 object-contain bg-gray-50" />
+                    <div key={idx} className="relative group rounded-md overflow-hidden border border-gray-100 dark:border-slate-700">
+                      <img src={getPreviewUrl(f)} alt={f.name} className="w-full max-h-52 object-contain bg-gray-50 dark:bg-slate-800/50" />
                       <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/40 flex items-center justify-between">
                         <span className="text-xs text-white truncate">{f.name}</span>
                         <span className="text-xs text-white/70 shrink-0 ml-2">{formatFileSize(f.size)}</span>
                       </div>
                       <button type="button"
                         onClick={(e) => { e.stopPropagation(); setPendingScreenshots((p) => p.filter((_, i) => i !== idx)); }}
-                        className="absolute top-1 right-1 p-0.5 rounded bg-white/80 text-gray-500 hover:text-red-500 hover:bg-white transition-colors opacity-0 group-hover:opacity-100">
+                        className="absolute top-1 right-1 p-0.5 rounded bg-white/80 text-gray-500 dark:text-slate-500 hover:text-red-500 hover:bg-white transition-colors opacity-0 group-hover:opacity-100">
                         <X size={13} />
                       </button>
                     </div>
@@ -690,7 +688,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                   </button>
                 </div>
               ) : (
-                <div className="py-5 flex flex-col items-center gap-1 text-gray-400 select-none">
+                <div className="py-5 flex flex-col items-center gap-1 text-gray-400 dark:text-slate-500 select-none">
                   <p className="text-xs">Перетащите изображение или нажмите</p>
                   <p className="text-xs text-gray-300">Ctrl+V для вставки скриншота</p>
                 </div>

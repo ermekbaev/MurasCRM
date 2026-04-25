@@ -194,8 +194,8 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Расходники</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Расходники</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             {consumables.length} позиций
             {lowCount > 0 && (
               <span className="ml-2 text-orange-600 font-medium">
@@ -211,9 +211,9 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
 
       {/* Alert */}
       {lowCount > 0 && (
-        <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+        <div className="flex items-center gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/50 rounded-xl">
           <AlertTriangle size={18} className="text-orange-500 flex-shrink-0" />
-          <p className="text-sm text-orange-700">
+          <p className="text-sm text-orange-700 dark:text-orange-400">
             <span className="font-semibold">{lowCount} позиций</span> ниже минимального остатка — требуют пополнения
           </p>
           <button
@@ -228,13 +228,13 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
       {/* Filters */}
       <Card padding="sm">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Поиск расходников..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
       </Card>
@@ -243,81 +243,81 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
       <Card padding="none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50">
-              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Материал</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Тип</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Остаток</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Мин. остаток</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Цена закупки</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Поставщик</th>
+            <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Материал</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Тип</th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Остаток</th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Мин. остаток</th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Цена закупки</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Поставщик</th>
               <th className="px-5 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400">
+                <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-slate-500">
                   <Package size={32} className="mx-auto mb-2 opacity-30" />
                   Расходники не найдены
                 </td>
               </tr>
             ) : (
               filtered.map((c) => (
-                <tr key={c.id} className={`hover:bg-gray-50 ${c.isLow ? "bg-orange-50/40" : ""}`}>
+                <tr key={c.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 ${c.isLow ? "bg-orange-50/40" : ""}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
                       {c.isLow && <AlertTriangle size={14} className="text-orange-500 flex-shrink-0" />}
                       <div>
-                        <p className="font-medium text-gray-800">{c.name}</p>
-                        {c.article && <p className="text-xs text-gray-400">Арт: {c.article}</p>}
+                        <p className="font-medium text-gray-800 dark:text-slate-200">{c.name}</p>
+                        {c.article && <p className="text-xs text-gray-400 dark:text-slate-500">Арт: {c.article}</p>}
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-full">
                       {CONSUMABLE_TYPE_LABELS[c.type as keyof typeof CONSUMABLE_TYPE_LABELS]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={`font-semibold ${c.isLow ? "text-orange-600" : "text-gray-800"}`}>
+                    <span className={`font-semibold ${c.isLow ? "text-orange-600" : "text-gray-800 dark:text-slate-200"}`}>
                       {c.stock} {c.unit}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-500 text-sm">
+                  <td className="px-4 py-3 text-right text-gray-500 dark:text-slate-400 text-sm">
                     {c.minStock} {c.unit}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-700 text-sm">
+                  <td className="px-4 py-3 text-right text-gray-700 dark:text-slate-300 text-sm">
                     {formatCurrency(c.purchasePrice)} / {c.unit}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400">
                     {c.supplier?.name || "—"}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => { setSelectedConsumable(c); setMovementModalOpen(true); }}
-                        className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
                         title="Записать движение"
                       >
                         <RefreshCw size={13} />
                       </button>
                       <button
                         onClick={() => openHistory(c)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         title="История движений"
                       >
                         <History size={13} />
                       </button>
                       <button
                         onClick={() => openEdit(c)}
-                        className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
                         title="Редактировать"
                       >
                         <Pencil size={13} />
                       </button>
                       <button
                         onClick={() => handleDelete(c.id, c.name)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                         title="Удалить"
                       >
                         <Trash2 size={13} />
@@ -378,11 +378,11 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
       >
         <div className="space-y-2">
           {historyLoading ? (
-            <p className="text-sm text-gray-400 text-center py-6">Загрузка...</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">Загрузка...</p>
           ) : historyItems.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">Движений нет</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">Движений нет</p>
           ) : (
-            <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+            <div className="divide-y divide-gray-100 dark:divide-slate-700 max-h-96 overflow-y-auto">
               {historyItems.map((m) => (
                 <div key={m.id} className="flex items-center justify-between py-2.5">
                   <div className="flex items-center gap-3">
@@ -398,15 +398,15 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200">
                         {m.direction === "IN" ? "+" : m.direction === "OUT" ? "−" : "±"}{m.qty} {selectedConsumable?.unit}
                       </p>
-                      <p className="text-xs text-gray-400">{m.note || (m.orderId ? "Авто-списание по заявке" : "—")}</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500">{m.note || (m.orderId ? "Авто-списание по заявке" : "—")}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500">{formatDate(m.date)}</p>
-                    {m.totalCost && <p className="text-xs text-gray-400">{m.totalCost.toLocaleString("ru-RU")} сом</p>}
+                    <p className="text-xs text-gray-500 dark:text-slate-500">{formatDate(m.date)}</p>
+                    {m.totalCost && <p className="text-xs text-gray-400 dark:text-slate-500">{m.totalCost.toLocaleString("ru-RU")} сом</p>}
                   </div>
                 </div>
               ))}
@@ -422,9 +422,9 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
         title={`Движение: ${selectedConsumable?.name}`}
       >
         <form onSubmit={handleMovement} className="space-y-4">
-          <div className="p-3 bg-gray-50 rounded-lg text-sm">
-            <span className="text-gray-500">Текущий остаток: </span>
-            <span className="font-semibold text-gray-900">
+          <div className="p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg text-sm">
+            <span className="text-gray-500 dark:text-slate-500">Текущий остаток: </span>
+            <span className="font-semibold text-gray-900 dark:text-slate-100">
               {selectedConsumable?.stock} {selectedConsumable?.unit}
             </span>
           </div>
@@ -439,7 +439,7 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
                 type="button"
                 onClick={() => setMovementForm({ ...movementForm, direction: d.value })}
                 className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  movementForm.direction === d.value ? `${d.color} text-white` : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  movementForm.direction === d.value ? `${d.color} text-white` : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600"
                 }`}
               >
                 {d.icon} {d.label}

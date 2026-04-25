@@ -113,12 +113,12 @@ export default function TemplatesPage() {
     if (res.ok) setTemplates((prev) => prev.filter((t) => t.id !== id));
   }
 
-  if (loading) return <div className="p-6 text-gray-400">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
           <FileCode size={22} /> Шаблоны документов
         </h1>
         <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", body: "" }); setModalOpen(true); }}>
@@ -126,14 +126,14 @@ export default function TemplatesPage() {
         </Button>
       </div>
 
-      <p className="text-sm text-gray-500">
-        Используйте переменные в шаблонах: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{{client_name}}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{{order_number}}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{{total}}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{{date}}"}</code>
+      <p className="text-sm text-gray-500 dark:text-slate-400">
+        Используйте переменные в шаблонах: <code className="bg-gray-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs">{"{{client_name}}"}</code>, <code className="bg-gray-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs">{"{{order_number}}"}</code>, <code className="bg-gray-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs">{"{{total}}"}</code>, <code className="bg-gray-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs">{"{{date}}"}</code>
       </p>
 
       {templates.length === 0 ? (
         <Card padding="md" className="text-center py-12">
           <FileCode size={40} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400 text-sm">Шаблонов пока нет</p>
+          <p className="text-gray-400 dark:text-slate-500 text-sm">Шаблонов пока нет</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -141,8 +141,8 @@ export default function TemplatesPage() {
             <Card key={t.id} padding="md">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-gray-800">{t.name}</p>
-                  <span className="text-xs px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full mt-1 inline-block">
+                  <p className="font-semibold text-gray-800 dark:text-slate-200">{t.name}</p>
+                  <span className="text-xs px-2 py-0.5 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded-full mt-1 inline-block">
                     {TEMPLATE_TYPE_LABELS[t.type] || t.type}
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export default function TemplatesPage() {
                   >
                     <Eye size={14} />
                   </button>
-                  <button onClick={() => openEdit(t)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500">
+                  <button onClick={() => openEdit(t)} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-500">
                     <Edit3 size={14} />
                   </button>
                   <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded hover:bg-red-50 text-red-400">
@@ -165,13 +165,13 @@ export default function TemplatesPage() {
               {t.variables.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-3">
                   {t.variables.map((v) => (
-                    <code key={v} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                    <code key={v} className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 px-1.5 py-0.5 rounded">
                       {`{{${v}}}`}
                     </code>
                   ))}
                 </div>
               )}
-              <p className="text-xs text-gray-400 mt-2 line-clamp-2">{t.body.replace(/<[^>]*>/g, "")}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 line-clamp-2">{t.body.replace(/<[^>]*>/g, "")}</p>
             </Card>
           ))}
         </div>
@@ -185,45 +185,45 @@ export default function TemplatesPage() {
         size="lg"
       >
         <form onSubmit={handlePreview} className="space-y-4">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-slate-400">
             Укажите ID заявки, счёта или клиента для подстановки переменных. Все поля необязательны.
           </p>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">ID заявки</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">ID заявки</label>
               <input
                 type="text"
                 value={previewCtx.orderId}
                 onChange={(e) => setPreviewCtx({ ...previewCtx, orderId: e.target.value })}
                 placeholder="cuid..."
-                className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+                className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">ID счёта</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">ID счёта</label>
               <input
                 type="text"
                 value={previewCtx.invoiceId}
                 onChange={(e) => setPreviewCtx({ ...previewCtx, invoiceId: e.target.value })}
                 placeholder="cuid..."
-                className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+                className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">ID клиента</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">ID клиента</label>
               <input
                 type="text"
                 value={previewCtx.clientId}
                 onChange={(e) => setPreviewCtx({ ...previewCtx, clientId: e.target.value })}
                 placeholder="cuid..."
-                className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+                className="w-full px-2 py-1.5 text-xs border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
               />
             </div>
           </div>
           <div className="flex justify-between items-center">
             <Button type="submit" loading={previewLoading} size="sm">Применить</Button>
             {previewResult && (
-              <button type="button" onClick={copyResult} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors">
+              <button type="button" onClick={copyResult} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:text-slate-200 transition-colors">
                 {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
                 {copied ? "Скопировано" : "Копировать"}
               </button>
@@ -231,8 +231,8 @@ export default function TemplatesPage() {
           </div>
           {previewResult !== null && (
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Результат</label>
-              <pre className="w-full px-3 py-3 text-xs border border-gray-200 rounded-lg bg-gray-50 whitespace-pre-wrap font-mono min-h-32 max-h-96 overflow-y-auto">
+              <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">Результат</label>
+              <pre className="w-full px-3 py-3 text-xs border border-gray-200 dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-800/50 whitespace-pre-wrap font-mono min-h-32 max-h-96 overflow-y-auto">
                 {previewResult}
               </pre>
             </div>
@@ -252,13 +252,13 @@ export default function TemplatesPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Содержимое шаблона *</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-slate-300 block mb-1">Содержимое шаблона *</label>
             <textarea
               required
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
               rows={10}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
               placeholder={"Счёт на оплату №{{order_number}}\n\nКлиент: {{client_name}}\nДата: {{date}}\nСумма: {{total}} руб."}
             />
           </div>

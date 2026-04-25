@@ -133,8 +133,8 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Счета на оплату</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{filtered.length} счётов</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Счета на оплату</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{filtered.length} счётов</p>
         </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus size={16} /> Выставить счёт
@@ -144,15 +144,15 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card padding="sm">
-          <p className="text-xs text-gray-500">Всего</p>
-          <p className="text-xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+          <p className="text-xs text-gray-500 dark:text-slate-500">Всего</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-slate-100">{formatCurrency(totalRevenue)}</p>
         </Card>
         <Card padding="sm">
-          <p className="text-xs text-gray-500">Оплачено</p>
+          <p className="text-xs text-gray-500 dark:text-slate-500">Оплачено</p>
           <p className="text-xl font-bold text-green-700">{formatCurrency(paidRevenue)}</p>
         </Card>
         <Card padding="sm">
-          <p className="text-xs text-gray-500">Задолженность</p>
+          <p className="text-xs text-gray-500 dark:text-slate-500">Задолженность</p>
           <p className="text-xl font-bold text-red-700">{formatCurrency(totalRevenue - paidRevenue)}</p>
         </Card>
       </div>
@@ -161,19 +161,19 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
       <Card padding="sm">
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Поиск по номеру или клиенту..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
           <select
             value={paidFilter}
             onChange={(e) => setPaidFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none"
           >
             <option value="">Все</option>
             <option value="paid">Оплачены</option>
@@ -186,30 +186,30 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
       <Card padding="none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50">
-              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Счёт</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Клиент</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Дата</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Срок оплаты</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Сумма</th>
-              <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">Статус</th>
+            <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Счёт</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Клиент</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Дата</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Срок оплаты</th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Сумма</th>
+              <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
               <th className="px-5 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400">
+                <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-slate-500">
                   <FileText size={32} className="mx-auto mb-2 opacity-30" />
                   Счетов нет
                 </td>
               </tr>
             ) : (
               filtered.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={invoice.id} className="hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors">
                   <td className="px-5 py-3">
                     <div>
-                      <p className="font-medium text-gray-800">{invoice.number}</p>
+                      <p className="font-medium text-gray-800 dark:text-slate-200">{invoice.number}</p>
                       {invoice.order && (
                         <Link href={`/orders/${invoice.order.id}`} className="text-xs text-violet-600 hover:underline">
                           {invoice.order.number}
@@ -218,13 +218,13 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/clients/${invoice.client.id}`} className="text-sm text-gray-700 hover:text-violet-600">
+                    <Link href={`/clients/${invoice.client.id}`} className="text-sm text-gray-700 dark:text-slate-300 hover:text-violet-600">
                       {invoice.client.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{formatDate(invoice.date)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{formatDate(invoice.dueDate)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-gray-800">
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400">{formatDate(invoice.date)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400">{formatDate(invoice.dueDate)}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-gray-800 dark:text-slate-200">
                     {formatCurrency(invoice.total)}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -232,8 +232,8 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
                       onClick={() => togglePaid(invoice.id, invoice.isPaid)}
                       className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
                         invoice.isPaid
-                          ? "bg-green-100 text-green-700 hover:bg-green-200"
-                          : "bg-red-100 text-red-700 hover:bg-red-200"
+                          ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60"
+                          : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60"
                       }`}
                     >
                       {invoice.isPaid ? <CheckCircle size={11} /> : <XCircle size={11} />}
@@ -281,24 +281,24 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
           {/* Items */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">Позиции *</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-slate-300">Позиции *</label>
               <Button type="button" variant="ghost" size="sm" onClick={addItem}>
                 <Plus size={14} /> Добавить
               </Button>
             </div>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 dark:bg-slate-800/50">
                   <tr>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">Наименование</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 w-20">Кол-во</th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 w-16">Ед.</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 w-28">Цена</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 w-28">Итого</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-slate-500">Наименование</th>
+                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 dark:text-slate-500 w-20">Кол-во</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-slate-500 w-16">Ед.</th>
+                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 dark:text-slate-500 w-28">Цена</th>
+                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 dark:text-slate-500 w-28">Итого</th>
                     <th className="w-8"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                   {items.map((item, idx) => (
                     <tr key={idx}>
                       <td className="px-2 py-1.5">
@@ -306,7 +306,7 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
                           value={item.name}
                           onChange={(e) => updateItem(idx, "name", e.target.value)}
                           placeholder="Наименование услуги"
-                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
+                          className="w-full px-2 py-1 text-xs border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
                         />
                       </td>
                       <td className="px-2 py-1.5">
@@ -316,14 +316,14 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
                           step={0.001}
                           value={item.qty}
                           onChange={(e) => updateItem(idx, "qty", Number(e.target.value))}
-                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                          className="w-full px-2 py-1 text-xs border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
                         />
                       </td>
                       <td className="px-2 py-1.5">
                         <input
                           value={item.unit}
                           onChange={(e) => updateItem(idx, "unit", e.target.value)}
-                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
+                          className="w-full px-2 py-1 text-xs border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
                         />
                       </td>
                       <td className="px-2 py-1.5">
@@ -332,17 +332,17 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
                           min={0}
                           value={item.price}
                           onChange={(e) => updateItem(idx, "price", Number(e.target.value))}
-                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                          className="w-full px-2 py-1 text-xs border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
                         />
                       </td>
-                      <td className="px-3 py-1.5 text-right text-xs font-medium text-gray-700">
+                      <td className="px-3 py-1.5 text-right text-xs font-medium text-gray-700 dark:text-slate-300">
                         {formatCurrency(item.qty * item.price)}
                       </td>
                       <td className="px-2 py-1.5">
                         <button
                           type="button"
                           onClick={() => removeItem(idx)}
-                          className="text-gray-400 hover:text-red-500"
+                          className="text-gray-400 dark:text-slate-500 hover:text-red-500"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -350,22 +350,22 @@ export default function InvoicesClient({ initialInvoices, clients, orders }: Pro
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-gray-50 border-t border-gray-200">
+                <tfoot className="bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-700">
                   <tr>
-                    <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500">Подытог:</td>
+                    <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-500">Подытог:</td>
                     <td className="px-3 py-2 text-right text-sm font-medium">{formatCurrency(subtotal)}</td>
                     <td></td>
                   </tr>
                   {form.vatRate > 0 && (
                     <tr>
-                      <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500">НДС {form.vatRate}%:</td>
+                      <td colSpan={4} className="px-3 py-2 text-right text-xs text-gray-500 dark:text-slate-500">НДС {form.vatRate}%:</td>
                       <td className="px-3 py-2 text-right text-sm font-medium">{formatCurrency(vatAmount)}</td>
                       <td></td>
                     </tr>
                   )}
                   <tr>
-                    <td colSpan={4} className="px-3 py-2 text-right text-xs font-semibold text-gray-700">Итого:</td>
-                    <td className="px-3 py-2 text-right text-sm font-bold text-gray-900">{formatCurrency(total)}</td>
+                    <td colSpan={4} className="px-3 py-2 text-right text-xs font-semibold text-gray-700 dark:text-slate-300">Итого:</td>
+                    <td className="px-3 py-2 text-right text-sm font-bold text-gray-900 dark:text-slate-100">{formatCurrency(total)}</td>
                     <td></td>
                   </tr>
                 </tfoot>

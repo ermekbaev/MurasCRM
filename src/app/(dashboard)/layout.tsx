@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!session?.user) redirect("/login");
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 dark:bg-slate-900 overflow-hidden">
       <Sidebar
         role={session.user.role as Role}
         userName={session.user.name || ""}

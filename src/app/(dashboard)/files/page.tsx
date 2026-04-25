@@ -39,13 +39,13 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   PENDING_APPROVAL: <AlertCircle size={14} className="text-yellow-500" />,
   APPROVED: <Eye size={14} className="text-green-500" />,
   READY: <File size={14} className="text-violet-500" />,
-  ARCHIVE: <FolderOpen size={14} className="text-gray-400" />,
+  ARCHIVE: <FolderOpen size={14} className="text-gray-400 dark:text-slate-500" />,
 };
 
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith("image/")) return <Image size={16} className="text-blue-500" />;
   if (mimeType === "application/pdf") return <FileText size={16} className="text-red-500" />;
-  return <File size={16} className="text-gray-500" />;
+  return <File size={16} className="text-gray-500 dark:text-slate-500" />;
 }
 
 export default function FilesPage() {
@@ -240,11 +240,11 @@ export default function FilesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <FolderOpen size={24} className="text-violet-600" />
             Файловый хаб
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{files.length} файлов</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{files.length} файлов</p>
         </div>
         <div>
           <input
@@ -275,7 +275,7 @@ export default function FilesPage() {
         <button
           onClick={() => setCategoryFilter("")}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-            !categoryFilter ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            !categoryFilter ? "bg-violet-600 text-white" : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600"
           }`}
         >
           Все ({files.length})
@@ -287,7 +287,7 @@ export default function FilesPage() {
               key={key}
               onClick={() => setCategoryFilter(key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                categoryFilter === key ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                categoryFilter === key ? "bg-violet-600 text-white" : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600"
               }`}
             >
               {CATEGORY_ICONS[key]}
@@ -300,24 +300,24 @@ export default function FilesPage() {
       {/* Search */}
       <Card padding="sm">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Поиск файлов..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
       </Card>
 
       {/* Files grid / table */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Загрузка...</div>
+        <div className="text-center py-12 text-gray-400 dark:text-slate-500">Загрузка...</div>
       ) : filtered.length === 0 ? (
         <Card padding="md" className="text-center py-12">
           <FolderOpen size={40} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400 text-sm">Файлов нет</p>
+          <p className="text-gray-400 dark:text-slate-500 text-sm">Файлов нет</p>
           <p className="text-xs text-gray-300 mt-1">
             Поддерживаемые форматы: {ALLOWED_FILE_TYPES.join(", ")}
           </p>
@@ -326,24 +326,24 @@ export default function FilesPage() {
         <Card padding="none">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Файл</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Категория</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Статус</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Размер</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Загрузил</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Дата</th>
+              <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Файл</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Категория</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Размер</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Загрузил</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Дата</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {filtered.map((file) => (
-                <tr key={file.id} className="hover:bg-gray-50">
+                <tr key={file.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
                       {getFileIcon(file.mimeType)}
                       <div>
-                        <p className="font-medium text-gray-800 text-sm truncate max-w-48">
+                        <p className="font-medium text-gray-800 dark:text-slate-200 text-sm truncate max-w-48">
                           {file.originalName}
                         </p>
                         {file.version > 1 && (
@@ -353,23 +353,23 @@ export default function FilesPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="flex items-center gap-1 text-xs text-gray-600">
+                    <span className="flex items-center gap-1 text-xs text-gray-600 dark:text-slate-400">
                       {CATEGORY_ICONS[file.category]}
                       {FILE_CATEGORY_LABELS[file.category as keyof typeof FILE_CATEGORY_LABELS]}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-full">
                       {FILE_STATUS_LABELS[file.status as keyof typeof FILE_STATUS_LABELS]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-xs text-gray-500">
+                  <td className="px-4 py-3 text-right text-xs text-gray-500 dark:text-slate-400">
                     {formatFileSize(file.size)}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-600">
+                  <td className="px-4 py-3 text-xs text-gray-600 dark:text-slate-400">
                     {file.uploadedBy.name}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
+                  <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400">
                     {formatDate(file.createdAt)}
                   </td>
                   <td className="px-5 py-3">
@@ -377,7 +377,7 @@ export default function FilesPage() {
                       {canPreview(file.mimeType) && (
                         <button
                           onClick={() => previewFile(file)}
-                          className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-500 transition-colors"
                           title="Просмотр"
                         >
                           <Eye size={14} />
@@ -442,45 +442,45 @@ export default function FilesPage() {
       {commentFile && (
         <div className="fixed inset-0 z-40 flex">
           <div className="flex-1 bg-black/30" onClick={() => setCommentFile(null)} />
-          <div className="w-full max-w-sm bg-white shadow-2xl flex flex-col h-full">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-800 shadow-2xl flex flex-col h-full">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">{commentFile.originalName}</p>
-                <p className="text-xs text-gray-400">Комментарии</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-slate-200 truncate">{commentFile.originalName}</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Комментарии</p>
               </div>
-              <button onClick={() => setCommentFile(null)} className="p-1 rounded hover:bg-gray-100 text-gray-400">
+              <button onClick={() => setCommentFile(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-500">
                 <X size={16} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {commentsLoading ? (
-                <p className="text-xs text-gray-400 text-center py-8">Загрузка...</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-8">Загрузка...</p>
               ) : comments.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-8">Комментариев пока нет</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-8">Комментариев пока нет</p>
               ) : (
                 comments.map((c) => (
                   <div key={c.id} className="flex gap-2">
-                    <div className="w-7 h-7 bg-violet-100 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600">{c.user.name.charAt(0)}</span>
+                    <div className="w-7 h-7 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{c.user.name.charAt(0)}</span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-semibold text-gray-800">{c.user.name}</span>
-                        <span className="text-[11px] text-gray-400">{formatDate(c.createdAt)}</span>
+                        <span className="text-xs font-semibold text-gray-800 dark:text-slate-200">{c.user.name}</span>
+                        <span className="text-[11px] text-gray-400 dark:text-slate-500">{formatDate(c.createdAt)}</span>
                       </div>
-                      <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap">{c.text}</p>
+                      <p className="text-sm text-gray-700 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">{c.text}</p>
                     </div>
                   </div>
                 ))
               )}
             </div>
-            <form onSubmit={submitComment} className="px-4 py-3 border-t border-gray-100 flex gap-2">
+            <form onSubmit={submitComment} className="px-4 py-3 border-t border-gray-100 dark:border-slate-700 flex gap-2">
               <input
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Написать комментарий..."
-                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="flex-1 text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
               <button
                 type="submit"
@@ -498,20 +498,20 @@ export default function FilesPage() {
       <Modal isOpen={uploadModalOpen} onClose={() => { setUploadModalOpen(false); setUploadFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} title="Загрузить файл">
         <div className="space-y-4">
           {uploadFile && (
-            <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
+            <div className="p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg text-sm text-gray-700 dark:text-slate-300">
               <span className="font-medium">{uploadFile.name}</span>
-              <span className="text-gray-400 ml-2">({formatFileSize(uploadFile.size)})</span>
+              <span className="text-gray-400 dark:text-slate-500 ml-2">({formatFileSize(uploadFile.size)})</span>
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Привязать к (необязательно)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Привязать к (необязательно)</label>
             <div className="flex gap-2 mb-2">
               {[["", "Без привязки"], ["ORDER", "Заявка"], ["TASK", "Задача"]].map(([v, l]) => (
                 <button
                   key={v}
                   type="button"
                   onClick={() => { setUploadLinkedTo(v); setUploadLinkedId(""); }}
-                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${uploadLinkedTo === v ? "bg-violet-600 text-white border-violet-600" : "bg-white text-gray-600 border-gray-200 hover:border-violet-300"}`}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${uploadLinkedTo === v ? "bg-violet-600 text-white border-violet-600" : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:border-violet-300"}`}
                 >
                   {l}
                 </button>
@@ -521,7 +521,7 @@ export default function FilesPage() {
               <select
                 value={uploadLinkedId}
                 onChange={(e) => setUploadLinkedId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
                 <option value="">— выберите заявку —</option>
                 {uploadOrders.map((o) => <option key={o.id} value={o.id}>{o.number}</option>)}
@@ -531,7 +531,7 @@ export default function FilesPage() {
               <select
                 value={uploadLinkedId}
                 onChange={(e) => setUploadLinkedId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
                 <option value="">— выберите задачу —</option>
                 {uploadTasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
@@ -554,19 +554,19 @@ export default function FilesPage() {
           onClick={() => { setPreviewUrl(null); setPreviewType(null); }}
         >
           <div
-            className="bg-white rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col"
+            className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <p className="text-sm font-medium text-gray-800 truncate">{previewName}</p>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+              <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{previewName}</p>
               <button
                 onClick={() => { setPreviewUrl(null); setPreviewType(null); }}
-                className="p-1 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-500 transition-colors"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-50 min-h-64">
+            <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-50 dark:bg-slate-800/50 min-h-64">
               {previewType === "image" && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={previewUrl} alt={previewName} className="max-w-full max-h-full object-contain rounded" />

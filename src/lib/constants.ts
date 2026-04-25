@@ -24,12 +24,12 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  NEW: "bg-blue-100 text-blue-800",
-  IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-  REVIEW: "bg-purple-100 text-purple-800",
-  READY: "bg-green-100 text-green-800",
-  ISSUED: "bg-gray-100 text-gray-800",
-  CANCELLED: "bg-red-100 text-red-800",
+  NEW: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
+  IN_PROGRESS: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
+  REVIEW: "bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300",
+  READY: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300",
+  ISSUED: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300",
+  CANCELLED: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
 };
 
 export const ORDER_TYPE_LABELS: Record<OrderType, string> = {
@@ -50,10 +50,10 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
 };
 
 export const PRIORITY_COLORS: Record<Priority, string> = {
-  LOW: "bg-gray-100 text-gray-600",
-  NORMAL: "bg-blue-100 text-blue-700",
-  URGENT: "bg-orange-100 text-orange-700",
-  VERY_URGENT: "bg-red-100 text-red-700",
+  LOW: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300",
+  NORMAL: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
+  URGENT: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
+  VERY_URGENT: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
 };
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
@@ -63,9 +63,9 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 };
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-  UNPAID: "bg-red-100 text-red-700",
-  ADVANCE: "bg-yellow-100 text-yellow-700",
-  PAID: "bg-green-100 text-green-700",
+  UNPAID: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
+  ADVANCE: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300",
+  PAID: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
 };
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -76,10 +76,10 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
-  TODO: "bg-gray-100 text-gray-700",
-  IN_PROGRESS: "bg-blue-100 text-blue-700",
-  REVIEW: "bg-purple-100 text-purple-700",
-  DONE: "bg-green-100 text-green-700",
+  TODO: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
+  IN_PROGRESS: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
+  REVIEW: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
+  DONE: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
 };
 
 export const TASK_TYPE_LABELS: Record<TaskType, string> = {

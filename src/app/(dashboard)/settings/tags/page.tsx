@@ -84,14 +84,14 @@ export default function TagsPage() {
     if (res.ok) setTags((prev) => prev.filter((t) => t.id !== id));
   }
 
-  if (loading) return <div className="p-6 text-gray-400">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Теги</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Используются для задач и файлов</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Теги</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Используются для задач и файлов</p>
         </div>
         <Button onClick={openCreate}>
           <Plus size={16} /> Добавить тег
@@ -100,7 +100,7 @@ export default function TagsPage() {
 
       {tags.length === 0 ? (
         <Card padding="md">
-          <div className="py-12 text-center text-gray-400">
+          <div className="py-12 text-center text-gray-400 dark:text-slate-500">
             <Tag size={36} className="mx-auto mb-2 opacity-30" />
             <p>Тегов пока нет</p>
           </div>
@@ -153,7 +153,7 @@ export default function TagsPage() {
           />
 
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Цвет</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Цвет</p>
             <div className="flex flex-wrap gap-2 mb-3">
               {PRESET_COLORS.map((c) => (
                 <button
@@ -169,9 +169,9 @@ export default function TagsPage() {
                 type="color"
                 value={form.color}
                 onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
-                className="w-10 h-10 rounded cursor-pointer border border-gray-200"
+                className="w-10 h-10 rounded cursor-pointer border border-gray-200 dark:border-slate-700"
               />
-              <span className="text-sm text-gray-500">Свой цвет</span>
+              <span className="text-sm text-gray-500 dark:text-slate-400">Свой цвет</span>
               <span
                 className="ml-2 px-3 py-1 rounded-full text-sm font-medium"
                 style={{ background: `${form.color}20`, color: form.color }}

@@ -117,16 +117,16 @@ export default function UsersSettingsPage() {
     if (res.ok) setUsers((prev) => prev.filter((u) => u.id !== id));
   }
 
-  if (loading) return <div className="p-6 text-gray-400">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <Users size={22} /> Пользователи
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{users.length} пользователей</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{users.length} пользователей</p>
         </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus size={16} /> Добавить пользователя
@@ -136,35 +136,35 @@ export default function UsersSettingsPage() {
       <Card padding="none">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50">
-              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Пользователь</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Роль</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Telegram</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Статус</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Добавлен</th>
+            <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Пользователь</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Роль</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Telegram</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Добавлен</th>
               <th className="px-5 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
             {users.map((user) => (
-              <tr key={user.id} className={`hover:bg-gray-50 ${user.isBlocked ? "opacity-60" : ""}`}>
+              <tr key={user.id} className={`hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 ${user.isBlocked ? "opacity-60" : ""}`}>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600">{user.name.charAt(0)}</span>
+                    <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{user.name.charAt(0)}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">{user.name}</p>
-                      <p className="text-xs text-gray-400">{user.email}</p>
+                      <p className="font-medium text-gray-800 dark:text-slate-200">{user.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500">{user.email}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-xs px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full font-medium">
+                  <span className="text-xs px-2 py-0.5 bg-violet-50 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 rounded-full font-medium">
                     {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-500">
+                <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400">
                   {user.telegramChatId ? (
                     <span className="flex items-center gap-1 text-green-600">
                       <Send size={11} /> {user.telegramChatId}
@@ -172,11 +172,11 @@ export default function UsersSettingsPage() {
                   ) : "—"}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user.isBlocked ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user.isBlocked ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" : "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"}`}>
                     {user.isBlocked ? "Заблокирован" : "Активен"}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-500">
+                <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400">
                   {formatDate(user.createdAt)}
                 </td>
                 <td className="px-5 py-3">
@@ -228,8 +228,8 @@ export default function UsersSettingsPage() {
                 onChange={(e) => setEditForm({ ...editForm, telegramChatId: e.target.value })}
                 placeholder="123456789"
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Узнать ID: написать <span className="font-medium text-gray-500">@userinfobot</span> в Telegram
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+                Узнать ID: написать <span className="font-medium text-gray-500 dark:text-slate-500">@userinfobot</span> в Telegram
               </p>
             </div>
           </div>

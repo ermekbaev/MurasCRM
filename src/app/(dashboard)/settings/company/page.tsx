@@ -5,7 +5,6 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { Building2, CreditCard, Phone, Check, ImagePlus } from "lucide-react";
-import Image from "next/image";
 
 interface Settings {
   name: string; inn: string; kpp: string; ogrn: string;
@@ -25,12 +24,13 @@ interface BrandingItem {
   hint: string;
   urlKey: keyof Settings;
   size: string;
+  accept: string;
 }
 
 const BRANDING: BrandingItem[] = [
-  { field: "logoKey",      label: "Логотип",  hint: "PNG, SVG. Рекомендуется 300×100px.",   urlKey: "logoUrl",      size: "w-36 h-20" },
-  { field: "stampKey",     label: "Печать",   hint: "PNG с прозрачным фоном. 500×500px.",   urlKey: "stampUrl",     size: "w-20 h-20" },
-  { field: "signatureKey", label: "Подпись",  hint: "PNG с прозрачным фоном. 400×150px.",   urlKey: "signatureUrl", size: "w-32 h-16" },
+  { field: "logoKey",      label: "Логотип",  hint: "PNG, SVG. Рекомендуется 300×100px.",   urlKey: "logoUrl",      size: "w-full h-24", accept: "image/png,image/svg+xml,image/jpeg,image/webp" },
+  { field: "stampKey",     label: "Печать",   hint: "PNG с прозрачным фоном. 500×500px.",   urlKey: "stampUrl",     size: "w-full h-24", accept: "image/png,image/jpeg,image/webp" },
+  { field: "signatureKey", label: "Подпись",  hint: "PNG с прозрачным фоном. 400×150px.",   urlKey: "signatureUrl", size: "w-full h-24", accept: "image/png,image/jpeg,image/webp" },
 ];
 
 export default function CompanySettingsPage() {
@@ -67,14 +67,13 @@ export default function CompanySettingsPage() {
   async function handleBrandingUpload(field: BrandingField, file: File) {
     setUploading(field);
     try {
-      const res = await fetch("/api/settings/logo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mimeType: file.type, field }),
-      });
-      const { uploadUrl } = await res.json();
-      await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-      setBrandingUrls((prev) => ({ ...prev, [field]: URL.createObjectURL(file) }));
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("field", field);
+      const res = await fetch("/api/settings/logo", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Upload failed");
+      const { url } = await res.json();
+      setBrandingUrls((prev) => ({ ...prev, [field]: url || URL.createObjectURL(file) }));
     } finally {
       setUploading(null);
       const ref = inputRefs.current[field];
@@ -99,11 +98,11 @@ export default function CompanySettingsPage() {
     setLoading(false);
   }
 
-  if (fetching) return <div className="p-6 text-gray-400">Загрузка...</div>;
+  if (fetching) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   const Section = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => (
     <Card padding="md">
-      <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">{icon}{title}</h2>
+      <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">{icon}{title}</h2>
       <div className="space-y-4">{children}</div>
     </Card>
   );
@@ -111,7 +110,7 @@ export default function CompanySettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Реквизиты компании</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Реквизиты компании</h1>
         <Button onClick={handleSave} loading={loading}>
           {saved ? <><Check size={15} /> Сохранено</> : "Сохранить"}
         </Button>
@@ -153,24 +152,25 @@ export default function CompanySettingsPage() {
         </Section>
 
         <Section title="Брендинг для документов (PDF)" icon={<ImagePlus size={16} />}>
-          <p className="text-xs text-gray-500 -mt-2">Используются в PDF-версиях счетов и актов.</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400 -mt-2">Используются в PDF-версиях счетов и актов.</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {BRANDING.map((item) => {
               const url = brandingUrls[item.field];
               const isUploading = uploading === item.field;
               return (
-                <div key={item.field} className="flex flex-col gap-2">
-                  <p className="text-sm font-medium text-gray-700">{item.label}</p>
-                  <div className={`${item.size} border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden`}>
+                <div key={item.field} className="flex flex-col gap-2 justify-between">
+                  <p className="text-sm font-medium text-gray-700 dark:text-slate-300">{item.label}</p>
+                  <div className={`${item.size} border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-slate-800/50 overflow-hidden`}>
                     {url ? (
-                      <Image src={url} alt={item.label} width={140} height={80} className="object-contain p-1" unoptimized />
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={url} alt={item.label} className="max-w-full max-h-full object-contain p-2" />
                     ) : (
                       <ImagePlus size={20} className="text-gray-300" />
                     )}
                   </div>
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                    accept={item.accept}
                     className="hidden"
                     ref={(el) => { inputRefs.current[item.field] = el; }}
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleBrandingUpload(item.field, f); }}
@@ -183,7 +183,7 @@ export default function CompanySettingsPage() {
                   >
                     {url ? "Заменить" : "Загрузить"}
                   </Button>
-                  <p className="text-xs text-gray-400">{item.hint}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">{item.hint}</p>
                 </div>
               );
             })}

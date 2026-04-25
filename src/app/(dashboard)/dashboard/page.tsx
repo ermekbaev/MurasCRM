@@ -143,27 +143,27 @@ export default async function DashboardPage() {
       label: "Активных заявок",
       value: data.stats.activeOrders,
       icon: <Clock size={20} />,
-      color: "text-blue-600 bg-blue-50",
+      color: "text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400",
       href: "/orders?status=active",
     },
     {
       label: "Выручка за месяц",
       value: formatCurrency(data.stats.revenue),
       icon: <TrendingUp size={20} />,
-      color: "text-green-600 bg-green-50",
+      color: "text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400",
     },
     {
       label: "Завершено",
       value: data.stats.completedOrders,
       icon: <CheckCircle size={20} />,
-      color: "text-violet-600 bg-violet-50",
+      color: "text-violet-600 bg-violet-50 dark:bg-violet-900/30 dark:text-violet-400",
       href: "/orders?status=completed",
     },
     {
       label: "Без исполнителя",
       value: data.stats.newOrdersWithoutAssignee,
       icon: <AlertTriangle size={20} />,
-      color: "text-orange-600 bg-orange-50",
+      color: "text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400",
       href: "/orders?status=NEW",
     },
   ];
@@ -173,8 +173,8 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Дашборд</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Дашборд</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             Добро пожаловать, {session?.user.name}
           </p>
         </div>
@@ -193,8 +193,8 @@ export default async function DashboardPage() {
           <Card key={card.label} padding="md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500">{card.label}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{card.label}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{card.value}</p>
               </div>
               <div className={`p-2.5 rounded-lg ${card.color}`}>{card.icon}</div>
             </div>
@@ -218,27 +218,27 @@ export default async function DashboardPage() {
         {/* Recent orders */}
         <div className="lg:col-span-2">
           <Card padding="none">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+              <h2 className="font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-2">
                 <ShoppingCart size={16} /> Последние заявки
               </h2>
               <Link href="/orders" className="text-xs text-violet-600 hover:underline">
                 Все заявки
               </Link>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-slate-700">
               {data.recentOrders.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 py-8">Заявок пока нет</p>
+                <p className="text-center text-sm text-gray-400 dark:text-slate-500 py-8">Заявок пока нет</p>
               ) : (
                 data.recentOrders.map((order) => (
                   <Link
                     key={order.id}
                     href={`/orders/${order.id}`}
-                    className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-800">{order.number}</span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-slate-200">{order.number}</span>
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status]}`}
                         >
@@ -250,11 +250,11 @@ export default async function DashboardPage() {
                           {PRIORITY_LABELS[order.priority]}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                      <p className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
                         {order.client.name} · {formatDate(order.createdAt)}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 ml-4 shrink-0">
+                    <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 ml-4 shrink-0">
                       {formatCurrency(Number(order.amount))}
                     </span>
                   </Link>
@@ -268,29 +268,29 @@ export default async function DashboardPage() {
         <div className="space-y-4">
           {/* Top clients */}
           <Card padding="none">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+              <h2 className="font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-2">
                 <Users size={16} /> Топ клиентов
               </h2>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-slate-700">
               {data.topClients.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 py-6">Нет данных</p>
+                <p className="text-center text-sm text-gray-400 dark:text-slate-500 py-6">Нет данных</p>
               ) : (
                 data.topClients.map((client, idx) => (
                   <Link
                     key={client.id}
                     href={`/clients/${client.id}`}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors"
                   >
-                    <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-gray-400">
+                    <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-gray-400 dark:text-slate-500">
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{client.name}</p>
-                      <p className="text-xs text-gray-400">{client.ordersCount} заказ(ов)</p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{client.name}</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500">{client.ordersCount} заказ(ов)</p>
                     </div>
-                    <span className="text-xs font-semibold text-gray-700">
+                    <span className="text-xs font-semibold text-gray-700 dark:text-slate-200">
                       {formatCurrency(client.totalAmount)}
                     </span>
                   </Link>
@@ -302,26 +302,26 @@ export default async function DashboardPage() {
           {/* Operator load */}
           {data.operatorLoad.length > 0 && (
             <Card padding="none">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
                 <Users size={16} className="text-violet-500" />
-                <h2 className="font-semibold text-gray-800">Загруженность</h2>
+                <h2 className="font-semibold text-gray-800 dark:text-slate-100">Загруженность</h2>
               </div>
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-slate-700">
                 {data.operatorLoad.map((op) => (
                   <div key={op.id} className="flex items-center gap-3 px-5 py-3">
-                    <div className="w-7 h-7 bg-violet-100 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600">{op.name.charAt(0)}</span>
+                    <div className="w-7 h-7 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{op.name.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{op.name}</p>
-                      <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{op.name}</p>
+                      <div className="mt-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-violet-500 rounded-full"
                           style={{ width: `${Math.min((op.activeTasks / 10) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-gray-600 ml-2 shrink-0">
+                    <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 ml-2 shrink-0">
                       {op.activeTasks} задач
                     </span>
                   </div>
@@ -333,30 +333,30 @@ export default async function DashboardPage() {
           {/* Equipment load */}
           {data.equipmentLoad.length > 0 && (
             <Card padding="none">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
                 <Cpu size={16} className="text-blue-500" />
-                <h2 className="font-semibold text-gray-800">Загруженность оборудования</h2>
+                <h2 className="font-semibold text-gray-800 dark:text-slate-100">Загруженность оборудования</h2>
               </div>
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-slate-700">
                 {data.equipmentLoad.map((eq) => (
                   <div key={eq.id} className="flex items-center gap-3 px-5 py-3">
                     <div className={`w-2 h-2 rounded-full shrink-0 ${eq.status === "MAINTENANCE" ? "bg-orange-400" : "bg-green-400"}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{eq.name}</p>
-                      <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{eq.name}</p>
+                      <div className="mt-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-blue-500 rounded-full"
                           style={{ width: `${Math.min((eq.activeOrders / 5) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-gray-600 ml-2 shrink-0">
+                    <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 ml-2 shrink-0">
                       {eq.activeOrders} зак.
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-3 border-t border-gray-100">
+              <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-700">
                 <a href="/settings/equipment" className="text-xs text-violet-600 hover:underline">
                   Управление оборудованием →
                 </a>
@@ -367,21 +367,21 @@ export default async function DashboardPage() {
           {/* Low stock alert */}
           {data.lowStock.length > 0 && (
             <Card padding="none">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
                 <Package size={16} className="text-orange-500" />
-                <h2 className="font-semibold text-gray-800">Заканчиваются расходники</h2>
+                <h2 className="font-semibold text-gray-800 dark:text-slate-100">Заканчиваются расходники</h2>
               </div>
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-slate-700">
                 {data.lowStock.map((item) => (
                   <div key={item.id} className="flex items-center justify-between px-5 py-3">
-                    <p className="text-sm text-gray-700 truncate flex-1">{item.name}</p>
-                    <span className="text-xs text-orange-600 font-medium ml-2">
+                    <p className="text-sm text-gray-700 dark:text-slate-300 truncate flex-1">{item.name}</p>
+                    <span className="text-xs text-orange-600 dark:text-orange-400 font-medium ml-2">
                       {item.stock} {item.unit}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-3 border-t border-gray-100">
+              <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-700">
                 <Link
                   href="/consumables"
                   className="text-xs text-violet-600 hover:underline"

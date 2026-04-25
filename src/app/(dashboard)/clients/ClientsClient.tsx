@@ -259,12 +259,12 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
           </>
         )}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Примечания</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Примечания</label>
           <textarea
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
             rows={2}
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
           />
         </div>
         <div className="flex justify-end gap-3 pt-2">
@@ -286,8 +286,8 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Клиенты</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{clients.length} клиент(ов) в базе</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Клиенты</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{clients.length} клиент(ов) в базе</p>
         </div>
         <Button onClick={openCreate}>
           <Plus size={16} /> Добавить клиента
@@ -298,19 +298,19 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
       <Card padding="sm">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Поиск по имени, телефону, email, ИНН..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
           >
             <option value="">Все типы</option>
             <option value="INDIVIDUAL">Физическое лицо</option>
@@ -325,76 +325,76 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Клиент</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Тип</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Контакты</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Источник</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Заказов</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Оборот</th>
+              <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Клиент</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Тип</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Контакты</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Источник</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Заказов</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Оборот</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                  <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-slate-500">
                     <Users size={32} className="mx-auto mb-2 opacity-30" />
                     Клиенты не найдены
                   </td>
                 </tr>
               ) : (
                 filtered.map((client) => (
-                  <tr key={client.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={client.id} className="hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors">
                     <td className="px-5 py-3">
                       <Link href={`/clients/${client.id}`} className="flex items-center gap-3 group">
-                        <div className="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-xs font-bold text-violet-600">
+                        <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
                             {client.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800 group-hover:text-violet-600 transition-colors">
+                          <p className="font-medium text-gray-800 dark:text-slate-200 group-hover:text-violet-600 transition-colors">
                             {client.name}
                           </p>
                           {client.inn && (
-                            <p className="text-xs text-gray-400">ИНН: {client.inn}</p>
+                            <p className="text-xs text-gray-400 dark:text-slate-500">ИНН: {client.inn}</p>
                           )}
                         </div>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-full">
                         {CLIENT_TYPE_LABELS[client.type as keyof typeof CLIENT_TYPE_LABELS]}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="space-y-0.5">
                         {client.phone && (
-                          <p className="text-xs text-gray-600 flex items-center gap-1">
+                          <p className="text-xs text-gray-600 dark:text-slate-400 flex items-center gap-1">
                             <Phone size={11} /> {client.phone}
                           </p>
                         )}
                         {client.email && (
-                          <p className="text-xs text-gray-600 flex items-center gap-1">
+                          <p className="text-xs text-gray-600 dark:text-slate-400 flex items-center gap-1">
                             <Mail size={11} /> {client.email}
                           </p>
                         )}
                         {!client.phone && !client.email && (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="text-xs text-gray-400 dark:text-slate-500">—</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-gray-600 dark:text-slate-400">
                         {CLIENT_SOURCE_LABELS[client.source as keyof typeof CLIENT_SOURCE_LABELS]}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-medium text-gray-700">{client.ordersCount}</span>
+                      <span className="font-medium text-gray-700 dark:text-slate-200">{client.ordersCount}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-gray-800 dark:text-slate-200">
                         {formatCurrency(client.totalAmount)}
                       </span>
                     </td>

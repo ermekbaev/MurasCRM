@@ -14,6 +14,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import { TrendingUp, TrendingDown, Minus, ShoppingCart, DollarSign, BarChart3, FileDown, FileText } from "lucide-react";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 
@@ -43,6 +44,14 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const gridColor = isDark ? "#334155" : "#f0f0f0";
+  const tickColor = isDark ? "#94a3b8" : "#6b7280";
+  const tooltipStyle = isDark
+    ? { background: "#1e293b", border: "1px solid #334155", color: "#f1f5f9", fontSize: 12, borderRadius: 8 }
+    : { border: "1px solid #e5e7eb", fontSize: 12, borderRadius: 8 };
+
   const [period, setPeriod] = useState("month");
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -195,7 +204,7 @@ export default function AnalyticsPage() {
   if (loading || !data) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-gray-400">Загрузка данных...</div>
+        <div className="text-gray-400 dark:text-slate-500">Загрузка данных...</div>
       </div>
     );
   }
@@ -203,7 +212,7 @@ export default function AnalyticsPage() {
   const { summary } = data;
 
   const GrowthIndicator = ({ value }: { value: number | null }) => {
-    if (value === null) return <span className="text-gray-400 text-xs">—</span>;
+    if (value === null) return <span className="text-gray-400 dark:text-slate-500 text-xs">—</span>;
     if (value > 0) return (
       <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
         <TrendingUp size={12} /> +{value.toFixed(1)}%
@@ -214,7 +223,7 @@ export default function AnalyticsPage() {
         <TrendingDown size={12} /> {value.toFixed(1)}%
       </span>
     );
-    return <span className="flex items-center gap-1 text-gray-400 text-xs"><Minus size={12} /> 0%</span>;
+    return <span className="flex items-center gap-1 text-gray-400 dark:text-slate-500 text-xs"><Minus size={12} /> 0%</span>;
   };
 
   return (
@@ -222,7 +231,7 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <BarChart3 size={24} className="text-violet-600" />
             Аналитика
           </h1>
@@ -234,7 +243,7 @@ export default function AnalyticsPage() {
           <Button variant="outline" onClick={handleExportPDF} loading={exportingPdf}>
             <FileText size={15} /> PDF
           </Button>
-        <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+        <div className="flex border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
           {PERIODS.map((p) => (
             <button
               key={p.value}
@@ -242,7 +251,7 @@ export default function AnalyticsPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 period === p.value
                   ? "bg-violet-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
+                  : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50"
               }`}
             >
               {p.label}
@@ -257,13 +266,13 @@ export default function AnalyticsPage() {
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500">Выручка</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(summary.revenue)}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Выручка</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.revenue)}</p>
               <div className="mt-1">
                 <GrowthIndicator value={summary.revGrowth} />
               </div>
             </div>
-            <div className="p-2.5 bg-violet-50 rounded-lg text-violet-600">
+            <div className="p-2.5 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
               <DollarSign size={20} />
             </div>
           </div>
@@ -271,13 +280,13 @@ export default function AnalyticsPage() {
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500">Заказов</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{summary.ordersCount}</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 dark:text-slate-400">Заказов</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{summary.ordersCount}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                 было: {summary.prevOrdersCount}
               </p>
             </div>
-            <div className="p-2.5 bg-green-50 rounded-lg text-green-600">
+            <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
               <ShoppingCart size={20} />
             </div>
           </div>
@@ -285,10 +294,10 @@ export default function AnalyticsPage() {
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500">Средний чек</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(summary.avgCheck)}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Средний чек</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.avgCheck)}</p>
             </div>
-            <div className="p-2.5 bg-purple-50 rounded-lg text-purple-600">
+            <div className="p-2.5 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
               <TrendingUp size={20} />
             </div>
           </div>
@@ -297,7 +306,7 @@ export default function AnalyticsPage() {
 
       {/* Revenue chart */}
       <Card padding="md">
-        <h2 className="font-semibold text-gray-800 mb-4">Выручка по месяцам (12 мес.)</h2>
+        <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Выручка по месяцам (12 мес.)</h2>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={data.monthlyRevenue}>
             <defs>
@@ -306,10 +315,10 @@ export default function AnalyticsPage() {
                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
-            <Tooltip formatter={(v) => [formatCurrency(Number(v)), "Выручка"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
+            <Tooltip formatter={(v) => [formatCurrency(Number(v)), "Выручка"]} contentStyle={tooltipStyle} />
             <Area type="monotone" dataKey="amount" stroke="#6366f1" strokeWidth={2} fill="url(#grad)" />
           </AreaChart>
         </ResponsiveContainer>
@@ -318,9 +327,9 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by type */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 mb-4">Выручка по типам услуг</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Выручка по типам услуг</h2>
           {data.ordersByType.length === 0 ? (
-            <div className="h-40 flex items-center justify-center text-gray-400 text-sm">Нет данных</div>
+            <div className="h-40 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
           ) : (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={data.ordersByType.map((d) => ({
@@ -328,10 +337,10 @@ export default function AnalyticsPage() {
                 revenue: d.revenue,
                 count: d.count,
               }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
-                <Tooltip formatter={(v, name) => [name === "revenue" ? formatCurrency(Number(v)) : v, name === "revenue" ? "Выручка" : "Позиций"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: tickColor }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
+                <Tooltip formatter={(v, name) => [name === "revenue" ? formatCurrency(Number(v)) : v, name === "revenue" ? "Выручка" : "Позиций"]} contentStyle={tooltipStyle} />
                 <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
@@ -340,9 +349,9 @@ export default function AnalyticsPage() {
 
         {/* Orders by status */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 mb-4">Заявки по статусам</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Заявки по статусам</h2>
           {data.ordersByStatus.length === 0 ? (
-            <div className="h-40 flex items-center justify-center text-gray-400 text-sm">Нет данных</div>
+            <div className="h-40 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
           ) : (
             <div className="flex items-center gap-4">
               <ResponsiveContainer width="50%" height={180}>
@@ -362,7 +371,7 @@ export default function AnalyticsPage() {
                       <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                  <Tooltip contentStyle={tooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex-1 space-y-1.5">
@@ -370,11 +379,11 @@ export default function AnalyticsPage() {
                   <div key={d.status} className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[idx % COLORS.length] }} />
-                      <span className="text-gray-600 text-xs">
+                      <span className="text-gray-600 dark:text-slate-400 text-xs">
                         {ORDER_STATUS_LABELS[d.status as keyof typeof ORDER_STATUS_LABELS] || d.status}
                       </span>
                     </span>
-                    <span className="font-medium text-gray-800">{d.count}</span>
+                    <span className="font-medium text-gray-800 dark:text-slate-200">{d.count}</span>
                   </div>
                 ))}
               </div>
@@ -384,18 +393,18 @@ export default function AnalyticsPage() {
 
         {/* Top services */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 mb-4">Топ-5 услуг по выручке</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Топ-5 услуг по выручке</h2>
           {data.topServices.length === 0 ? (
-            <div className="h-32 flex items-center justify-center text-gray-400 text-sm">Нет данных</div>
+            <div className="h-32 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
           ) : (
             <div className="space-y-3">
               {data.topServices.map((s, idx) => (
                 <div key={idx}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 truncate flex-1">{s.name}</span>
-                    <span className="font-semibold text-gray-900 ml-2">{formatCurrency(s.revenue)}</span>
+                    <span className="text-gray-700 dark:text-slate-300 truncate flex-1">{s.name}</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-100 ml-2">{formatCurrency(s.revenue)}</span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-violet-500 rounded-full"
                       style={{
@@ -412,9 +421,9 @@ export default function AnalyticsPage() {
 
         {/* Orders by priority */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 mb-4">Заявки по приоритетам</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Заявки по приоритетам</h2>
           {data.ordersByPriority.length === 0 ? (
-            <div className="h-32 flex items-center justify-center text-gray-400 text-sm">Нет данных</div>
+            <div className="h-32 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
           ) : (
             <div className="space-y-2">
               {data.ordersByPriority
@@ -428,14 +437,14 @@ export default function AnalyticsPage() {
                   return (
                     <div key={d.priority}>
                       <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-700">
+                        <span className="text-gray-700 dark:text-slate-300">
                           {PRIORITY_LABELS[d.priority as keyof typeof PRIORITY_LABELS] || d.priority}
                         </span>
-                        <span className="font-medium text-gray-800">
+                        <span className="font-medium text-gray-800 dark:text-slate-200">
                           {d.count} ({pct.toFixed(0)}%)
                         </span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${pct}%`, background: "#6366f1" }}
@@ -452,7 +461,7 @@ export default function AnalyticsPage() {
       {/* Equipment load */}
       {data.equipmentLoad && data.equipmentLoad.length > 0 && (
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
             <BarChart3 size={16} className="text-violet-600" />
             Загруженность оборудования (активные заявки)
           </h2>
@@ -464,13 +473,13 @@ export default function AnalyticsPage() {
               return (
                 <div key={idx}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 font-medium">{eq.name}</span>
+                    <span className="text-gray-700 dark:text-slate-300 font-medium">{eq.name}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{eq.type}</span>
-                      <span className="font-semibold text-gray-900">{eq.orders} заявок</span>
+                      <span className="text-xs text-gray-400 dark:text-slate-500">{eq.type}</span>
+                      <span className="font-semibold text-gray-900 dark:text-slate-100">{eq.orders} заявок</span>
                     </div>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
                   </div>
                 </div>
@@ -483,7 +492,7 @@ export default function AnalyticsPage() {
       {/* Operator load */}
       {data.operatorLoad && data.operatorLoad.length > 0 && (
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
             <BarChart3 size={16} className="text-violet-600" />
             Загруженность сотрудников (задачи за период)
           </h2>
@@ -494,10 +503,10 @@ export default function AnalyticsPage() {
               return (
                 <div key={idx}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 font-medium">{op.name}</span>
-                    <span className="text-gray-500 font-semibold">{op.tasks} задач</span>
+                    <span className="text-gray-700 dark:text-slate-300 font-medium">{op.name}</span>
+                    <span className="text-gray-500 dark:text-slate-500 font-semibold">{op.tasks} задач</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{ width: `${pct}%`, background: COLORS[idx % COLORS.length] }}

@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { generateUploadUrl } from "@/lib/s3";
+import { putObject, generateDownloadUrl } from "@/lib/s3";
 import { randomUUID } from "crypto";
-import { z } from "zod";
 
-const schema = z.object({
-  mimeType: z.string(),
-  field: z.enum(["logoKey", "stampKey", "signatureKey"]).default("logoKey"),
-});
+const ALLOWED_TYPES: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/svg+xml": "svg",
+};
+
+const ALLOWED_FIELDS = ["logoKey", "stampKey", "signatureKey"] as const;
+type BrandingField = typeof ALLOWED_FIELDS[number];
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -16,17 +20,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const formData = await req.formData();
+  const file = formData.get("file") as File | null;
+  const field = formData.get("field") as string | null;
 
-  const { mimeType, field } = parsed.data;
-  const ext = mimeType.split("/")[1] || "png";
+  if (!file || !field || !ALLOWED_FIELDS.includes(field as BrandingField)) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const ext = ALLOWED_TYPES[file.type];
+  if (!ext) {
+    return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
+  }
+
   const key = `branding/${field}/${randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
 
-  const uploadUrl = await generateUploadUrl(key, mimeType);
+  await putObject(key, buffer, file.type);
 
-  // Save key to settings
   let settings = await prisma.companySettings.findFirst();
   if (settings) {
     await prisma.companySettings.update({ where: { id: settings.id }, data: { [field]: key } });
@@ -34,5 +45,6 @@ export async function POST(req: Request) {
     await prisma.companySettings.create({ data: { id: "default", [field]: key } });
   }
 
-  return NextResponse.json({ uploadUrl, key });
+  const url = await generateDownloadUrl(key);
+  return NextResponse.json({ url });
 }

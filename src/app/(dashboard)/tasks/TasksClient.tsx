@@ -132,20 +132,20 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Задачи</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{tasks.length} задач(и)</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Задачи</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{tasks.length} задач(и)</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+          <div className="flex border border-gray-200 dark:border-slate-600 rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode("board")}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-violet-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-violet-600 text-white" : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700"}`}
             >
               Kanban
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-violet-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-violet-600 text-white" : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700"}`}
             >
               Список
             </button>
@@ -159,19 +159,19 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Поиск задач..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
+          className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
         >
           <option value="">Все типы</option>
           {Object.entries(TASK_TYPE_LABELS).map(([v, l]) => (
@@ -188,8 +188,8 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
             return (
               <div key={col.key} className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-700">{col.label}</h3>
-                  <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">{col.label}</h3>
+                  <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 rounded-full px-2 py-0.5">
                     {colTasks.length}
                   </span>
                 </div>
@@ -200,17 +200,17 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                     return (
                       <div
                         key={task.id}
-                        className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
+                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
                       >
                         <Link href={`/tasks/${task.id}`} className="block">
-                          <p className="text-sm font-medium text-gray-800 mb-1.5 line-clamp-2">
+                          <p className="text-sm font-medium text-gray-800 dark:text-slate-200 mb-1.5 line-clamp-2">
                             {task.title}
                           </p>
                           <div className="flex flex-wrap gap-1 mb-2">
                             <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS]}`}>
                               {PRIORITY_LABELS[task.priority as keyof typeof PRIORITY_LABELS]}
                             </span>
-                            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                            <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded">
                               {TASK_TYPE_LABELS[task.type as keyof typeof TASK_TYPE_LABELS]}
                             </span>
                           </div>
@@ -237,25 +237,25 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                           )}
                           {total > 0 && (
                             <div className="flex items-center gap-1.5 mb-1">
-                              <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="flex-1 h-1 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-green-500 rounded-full"
                                   style={{ width: `${(done / total) * 100}%` }}
                                 />
                               </div>
-                              <span className="text-xs text-gray-400">{done}/{total}</span>
+                              <span className="text-xs text-gray-400 dark:text-slate-500">{done}/{total}</span>
                             </div>
                           )}
                           {task.assignee && (
-                            <p className="text-xs text-gray-400 truncate">{task.assignee.name}</p>
+                            <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{task.assignee.name}</p>
                           )}
                         </Link>
                         {col.key !== "DONE" && (
-                          <div className="mt-2 pt-2 border-t border-gray-100">
+                          <div className="mt-2 pt-2 border-t border-gray-100 dark:border-slate-700">
                             <select
                               value={task.status}
                               onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                              className="w-full text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none"
+                              className="w-full text-xs border border-gray-200 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {Object.entries(TASK_STATUS_LABELS).map(([v, l]) => (
@@ -268,8 +268,8 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                     );
                   })}
                   {colTasks.length === 0 && (
-                    <div className="border-2 border-dashed border-gray-200 rounded-lg h-20 flex items-center justify-center">
-                      <span className="text-xs text-gray-400">Пусто</span>
+                    <div className="border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg h-20 flex items-center justify-center">
+                      <span className="text-xs text-gray-400 dark:text-slate-500">Пусто</span>
                     </div>
                   )}
                 </div>
@@ -284,32 +284,32 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
         <Card padding="none">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Задача</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Тип</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Статус</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Приоритет</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Срок</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Исполнитель</th>
+              <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Задача</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Тип</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Приоритет</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Срок</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Исполнитель</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-10 text-gray-400">Задач нет</td>
+                  <td colSpan={6} className="text-center py-10 text-gray-400 dark:text-slate-500">Задач нет</td>
                 </tr>
               ) : (
                 filtered.map((task) => (
-                  <tr key={task.id} className="hover:bg-gray-50">
+                  <tr key={task.id} className="hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50">
                     <td className="px-5 py-3">
                       <Link href={`/tasks/${task.id}`} className="group">
-                        <p className="font-medium text-gray-800 group-hover:text-violet-600">{task.title}</p>
+                        <p className="font-medium text-gray-800 dark:text-slate-200 group-hover:text-violet-600">{task.title}</p>
                         {task.order && (
-                          <p className="text-xs text-gray-400">{task.order.number} · {task.order.client.name}</p>
+                          <p className="text-xs text-gray-400 dark:text-slate-500">{task.order.number} · {task.order.client.name}</p>
                         )}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">
+                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-slate-400">
                       {TASK_TYPE_LABELS[task.type as keyof typeof TASK_TYPE_LABELS]}
                     </td>
                     <td className="px-4 py-3">
@@ -322,8 +322,8 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                         {PRIORITY_LABELS[task.priority as keyof typeof PRIORITY_LABELS]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">{formatDate(task.dueDate)}</td>
-                    <td className="px-5 py-3 text-xs text-gray-600">{task.assignee?.name || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-slate-400">{formatDate(task.dueDate)}</td>
+                    <td className="px-5 py-3 text-xs text-gray-600 dark:text-slate-400">{task.assignee?.name || "—"}</td>
                   </tr>
                 ))
               )}
@@ -377,18 +377,18 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
             onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
           />
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Описание</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-slate-300 block mb-1">Описание</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="Описание задачи..."
             />
           </div>
           {availableTags.length > 0 && (
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Теги</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-slate-300 block mb-2">Теги</label>
               <div className="flex flex-wrap gap-2">
                 {availableTags.map((tag) => {
                   const isSelected = selectedTags.includes(tag.name);
@@ -397,8 +397,8 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                       key={tag.id}
                       type="button"
                       onClick={() => toggleTag(tag.name)}
-                      className={`text-xs px-2.5 py-1 rounded-full font-medium border-2 transition-all ${
-                        isSelected ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                      className={`text-xs px-2.5 py-1 rounded-full font-medium border-2 transition-all dark:border-slate-600 ${
+                        isSelected ? "text-white border-transparent" : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-gray-300"
                       }`}
                       style={isSelected ? { backgroundColor: tag.color, borderColor: tag.color } : {}}
                     >

@@ -11,8 +11,12 @@ export async function GET() {
   if (!settings) {
     settings = await prisma.companySettings.create({ data: { id: "default" } });
   }
-  const logoUrl = settings.logoKey ? await generateDownloadUrl(settings.logoKey).catch(() => null) : null;
-  return NextResponse.json({ ...settings, logoUrl });
+  const [logoUrl, stampUrl, signatureUrl] = await Promise.all([
+    settings.logoKey       ? generateDownloadUrl(settings.logoKey).catch(() => null)       : null,
+    settings.stampKey      ? generateDownloadUrl(settings.stampKey).catch(() => null)      : null,
+    settings.signatureKey  ? generateDownloadUrl(settings.signatureKey).catch(() => null)  : null,
+  ]);
+  return NextResponse.json({ ...settings, logoUrl, stampUrl, signatureUrl });
 }
 
 export async function PATCH(req: Request) {

@@ -17,7 +17,7 @@ export default function Card({ children, className, padding = "md" }: CardProps)
   return (
     <div
       className={cn(
-        "bg-white rounded-xl border border-slate-200 shadow-sm",
+        "bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm",
         paddings[padding],
         className
       )}
