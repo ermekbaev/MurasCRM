@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notifyOrderStatusChanged } from "@/lib/telegram";
@@ -15,19 +15,31 @@ const updateSchema = z.object({
 });
 
 async function deductConsumablesForOrder(orderId: string, newStatus: string) {
+  const trigger = newStatus === "IN_PROGRESS" ? "ON_IN_PROGRESS" : newStatus === "READY" ? "ON_READY" : undefined;
+  if (!trigger) return;
+
   const items = await prisma.orderItem.findMany({
     where: { orderId, equipmentId: { not: null } },
     include: {
       equipment: {
         include: {
           equipmentConsumables: {
-            where: { autoDeduct: true, trigger: newStatus === "IN_PROGRESS" ? "ON_IN_PROGRESS" : newStatus === "READY" ? "ON_READY" : undefined },
-            include: { consumable: true },
+            where: { autoDeduct: true, trigger },
           },
         },
       },
     },
   });
+
+  const itemIds = items.map((i) => i.id);
+  if (!itemIds.length) return;
+
+  // Batch-check already deducted: one query instead of N×M
+  const existing = await prisma.consumableMovement.findMany({
+    where: { orderItemId: { in: itemIds } },
+    select: { orderItemId: true, consumableId: true },
+  });
+  const deducted = new Set(existing.map((m) => `${m.orderItemId}:${m.consumableId}`));
 
   for (const item of items) {
     if (!item.equipment) continue;
@@ -35,15 +47,11 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
     if (!configs.length) continue;
 
     for (const cfg of configs) {
-      const waste = item.includeWaste && item.equipment?.wastePerJob ? Number(item.equipment.wastePerJob) : 0;
+      if (deducted.has(`${item.id}:${cfg.consumableId}`)) continue;
+
+      const waste = item.includeWaste && item.equipment.wastePerJob ? Number(item.equipment.wastePerJob) : 0;
       const qty = Number(item.qty) * Number(cfg.consumptionPerUnit) + waste;
       if (qty <= 0) continue;
-
-      // Не списывать если уже было списание по этому item + consumable
-      const already = await prisma.consumableMovement.findFirst({
-        where: { orderItemId: item.id, consumable: { id: cfg.consumableId } },
-      });
-      if (already) continue;
 
       await prisma.$transaction([
         prisma.consumableMovement.create({
@@ -65,16 +73,28 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
   }
 }
 
+function orderAccessFilter(userId: string, role: string) {
+  if (["ADMIN", "MANAGER", "ACCOUNTANT"].includes(role)) return {};
+  if (role === "OPERATOR") return { assignees: { some: { id: userId } } };
+  if (role === "DESIGNER") return {
+    OR: [
+      { assignees: { some: { id: userId } } },
+      { tasks: { some: { assigneeId: userId } } },
+    ],
+  };
+  return { assignees: { some: { id: userId } } };
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { id },
+  const order = await prisma.order.findFirst({
+    where: { id, ...orderAccessFilter(session.user.id, session.user.role) },
     include: {
       client: true,
       manager: { select: { id: true, name: true, email: true } },
@@ -105,8 +125,8 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
   const existing = await prisma.order.findUnique({ where: { id } });
@@ -131,7 +151,7 @@ export async function PATCH(
         userId: session.user.id,
       },
     });
-    notifyOrderStatusChanged(id, existing.status, rest.status);
+    notifyOrderStatusChanged(id, existing.status, rest.status).catch(console.error);
 
     // Авто-списание расходников при переходе в нужный статус
     await deductConsumablesForOrder(id, rest.status);
@@ -159,8 +179,8 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!["ADMIN", "MANAGER"].includes(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

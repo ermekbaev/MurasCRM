@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
-  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
 } from "@/lib/constants";
 import Card from "@/components/ui/Card";
@@ -13,7 +12,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, Minus, ShoppingCart, DollarSign, BarChart3, FileDown, FileText } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ShoppingCart, DollarSign, BarChart3, FileDown, FileText, Wallet, ArrowDownCircle } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
@@ -33,6 +32,12 @@ interface AnalyticsData {
     ordersCount: number;
     prevOrdersCount: number;
     avgCheck: number;
+    materialCosts: number;
+    operatorWages: number;
+    totalExpenses: number;
+    profit: number;
+    prevProfit: number;
+    profitGrowth: number | null;
   };
   ordersByStatus: { status: string; count: number }[];
   ordersByType: { type: string; count: number; revenue: number }[];
@@ -41,6 +46,7 @@ interface AnalyticsData {
   monthlyRevenue: { month: string; amount: number }[];
   operatorLoad: { name: string; role: string; tasks: number }[];
   equipmentLoad: { name: string; type: string; orders: number }[];
+  operatorEarnings: { name: string; earnings: number; qty: number }[];
 }
 
 export default function AnalyticsPage() {
@@ -77,11 +83,17 @@ export default function AnalyticsPage() {
       // Sheet 1: Summary
       const summarySheet = utils.aoa_to_sheet([
         ["Период", periodLabel],
-        ["Выручка", data.summary.revenue],
+        ["Оборот (выручка)", data.summary.revenue],
+        ["Расходы (всего)", data.summary.totalExpenses],
+        ["  в т.ч. материалы", data.summary.materialCosts],
+        ["  в т.ч. ЗП операторов", data.summary.operatorWages],
+        ["Прибыль", data.summary.profit],
         ["Заказов", data.summary.ordersCount],
         ["Средний чек", data.summary.avgCheck],
         ["Выручка (пред. период)", data.summary.prevRevenue],
         ["Рост выручки %", data.summary.revGrowth ?? "—"],
+        ["Прибыль (пред. период)", data.summary.prevProfit],
+        ["Рост прибыли %", data.summary.profitGrowth ?? "—"],
       ]);
       utils.book_append_sheet(wb, summarySheet, "Сводка");
 
@@ -95,11 +107,7 @@ export default function AnalyticsPage() {
       // Sheet 3: By type
       const typeSheet = utils.aoa_to_sheet([
         ["Тип работ", "Заказов", "Выручка"],
-        ...data.ordersByType.map((r) => [
-          ORDER_TYPE_LABELS[r.type as keyof typeof ORDER_TYPE_LABELS] || r.type,
-          r.count,
-          r.revenue,
-        ]),
+        ...data.ordersByType.map((r) => [r.type, r.count, r.revenue]),
       ]);
       utils.book_append_sheet(wb, typeSheet, "По типам");
 
@@ -139,11 +147,16 @@ export default function AnalyticsPage() {
         startY: 42,
         head: [["Показатель", "Значение"]],
         body: [
-          ["Выручка", `${data.summary.revenue.toLocaleString("ru-RU")} руб.`],
-          ["Выручка (пред. период)", `${data.summary.prevRevenue.toLocaleString("ru-RU")} руб.`],
+          ["Оборот (выручка)", `${data.summary.revenue.toLocaleString("ru-RU")} сом`],
+          ["Расходы (всего)", `${data.summary.totalExpenses.toLocaleString("ru-RU")} сом`],
+          ["  в т.ч. материалы", `${data.summary.materialCosts.toLocaleString("ru-RU")} сом`],
+          ["  в т.ч. ЗП операторов", `${data.summary.operatorWages.toLocaleString("ru-RU")} сом`],
+          ["Прибыль", `${data.summary.profit.toLocaleString("ru-RU")} сом`],
+          ["Выручка (пред. период)", `${data.summary.prevRevenue.toLocaleString("ru-RU")} сом`],
           ["Заказов", String(data.summary.ordersCount)],
-          ["Средний чек", `${data.summary.avgCheck.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} руб.`],
+          ["Средний чек", `${data.summary.avgCheck.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} сом`],
           ["Рост выручки", data.summary.revGrowth !== null ? `${data.summary.revGrowth.toFixed(1)}%` : "—"],
+          ["Рост прибыли", data.summary.profitGrowth !== null ? `${data.summary.profitGrowth.toFixed(1)}%` : "—"],
         ],
         styles: { fontSize: 9 },
         headStyles: { fillColor: [99, 102, 241] },
@@ -262,18 +275,45 @@ export default function AnalyticsPage() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Выручка</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.revenue)}</p>
-              <div className="mt-1">
-                <GrowthIndicator value={summary.revGrowth} />
+              <p className="text-sm text-gray-500 dark:text-slate-400">Оборот</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.revenue)}</p>
+              <div className="mt-1"><GrowthIndicator value={summary.revGrowth} /></div>
+            </div>
+            <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+              <DollarSign size={18} />
+            </div>
+          </div>
+        </Card>
+        <Card padding="md">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Расходы</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.totalExpenses)}</p>
+              <div className="mt-1 space-y-0.5">
+                <p className="text-xs text-gray-400 dark:text-slate-500">Материалы: {formatCurrency(summary.materialCosts)}</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">ЗП: {formatCurrency(summary.operatorWages)}</p>
               </div>
             </div>
-            <div className="p-2.5 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
-              <DollarSign size={20} />
+            <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-lg text-red-500 dark:text-red-400">
+              <ArrowDownCircle size={18} />
+            </div>
+          </div>
+        </Card>
+        <Card padding="md">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Прибыль</p>
+              <p className={`text-xl font-bold mt-1 ${summary.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                {formatCurrency(summary.profit)}
+              </p>
+              <div className="mt-1"><GrowthIndicator value={summary.profitGrowth} /></div>
+            </div>
+            <div className={`p-2 rounded-lg ${summary.profit >= 0 ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" : "bg-red-50 dark:bg-red-900/30 text-red-500"}`}>
+              <TrendingUp size={18} />
             </div>
           </div>
         </Card>
@@ -281,13 +321,11 @@ export default function AnalyticsPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-slate-400">Заказов</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{summary.ordersCount}</p>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-                было: {summary.prevOrdersCount}
-              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{summary.ordersCount}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">было: {summary.prevOrdersCount}</p>
             </div>
-            <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
-              <ShoppingCart size={20} />
+            <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
+              <ShoppingCart size={18} />
             </div>
           </div>
         </Card>
@@ -295,10 +333,10 @@ export default function AnalyticsPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-slate-400">Средний чек</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.avgCheck)}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.avgCheck)}</p>
             </div>
-            <div className="p-2.5 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
-              <TrendingUp size={20} />
+            <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+              <Wallet size={18} />
             </div>
           </div>
         </Card>
@@ -325,23 +363,28 @@ export default function AnalyticsPage() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue by type */}
+        {/* Revenue by equipment */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Выручка по типам услуг</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Выручка по оборудованию</h2>
           {data.ordersByType.length === 0 ? (
             <div className="h-40 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
           ) : (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={Math.max(180, data.ordersByType.length * 32)}>
               <BarChart data={data.ordersByType.map((d) => ({
-                name: (ORDER_TYPE_LABELS[d.type as keyof typeof ORDER_TYPE_LABELS] ?? d.type).slice(0, 10),
+                name: d.type.length > 16 ? d.type.slice(0, 16) + "…" : d.type,
+                fullName: d.type,
                 revenue: d.revenue,
                 count: d.count,
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: tickColor }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
-                <Tooltip formatter={(v, name) => [name === "revenue" ? formatCurrency(Number(v)) : v, name === "revenue" ? "Выручка" : "Позиций"]} contentStyle={tooltipStyle} />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={60} />
+              }))} layout="vertical" margin={{ left: 8, right: 16 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: tickColor }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: tickColor }} tickLine={false} axisLine={false} />
+                <Tooltip
+                  formatter={(v, name) => [name === "revenue" ? formatCurrency(Number(v)) : v, name === "revenue" ? "Выручка" : "Позиций"]}
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ""}
+                  contentStyle={tooltipStyle}
+                />
+                <Bar dataKey="revenue" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={22} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -510,6 +553,39 @@ export default function AnalyticsPage() {
                     <div
                       className="h-full rounded-full transition-all"
                       style={{ width: `${pct}%`, background: COLORS[idx % COLORS.length] }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Operator earnings */}
+      {data.operatorEarnings && data.operatorEarnings.length > 0 && (
+        <Card padding="md">
+          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+            <Wallet size={16} className="text-emerald-600" />
+            ЗП операторов за период
+          </h2>
+          <div className="space-y-3">
+            {data.operatorEarnings.map((op, idx) => {
+              const max = data.operatorEarnings[0]?.earnings || 1;
+              const pct = (op.earnings / max) * 100;
+              return (
+                <div key={idx}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-gray-700 dark:text-slate-300 font-medium">{op.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400 dark:text-slate-500">{op.qty.toFixed(2)} ед.</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(op.earnings)}</span>
+                    </div>
+                  </div>
+                  <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all bg-emerald-500"
+                      style={{ width: `${pct}%` }}
                     />
                   </div>
                 </div>

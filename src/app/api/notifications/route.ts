@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/api";
 import { sendMessage } from "@/lib/telegram";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -12,8 +12,8 @@ const schema = z.object({
 
 // Ручная отправка уведомления (только Admin)
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const session = await requireAuth();
+  if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -47,8 +47,8 @@ export async function POST(req: Request) {
 
 // Получить список пользователей с/без Telegram (для настроек)
 export async function GET() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const session = await requireAuth();
+  if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

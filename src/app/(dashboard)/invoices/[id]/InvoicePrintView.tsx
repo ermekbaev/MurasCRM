@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatDate } from "@/lib/utils";
 import { numberToWords } from "@/lib/invoice-pdf";
 import Button from "@/components/ui/Button";
+import { useLineItems } from "@/hooks/useLineItems";
 import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X } from "lucide-react";
 
 interface InvoiceItem {
@@ -57,8 +58,6 @@ interface Props {
   } | null;
 }
 
-type EditItem = { id?: string; name: string; qty: number; unit: string; price: number };
-
 function fmt(n: number) {
   return n.toLocaleString("ru", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -69,35 +68,8 @@ function fmtDateLong(d: string): string {
 
 export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
   const [downloading, setDownloading] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editItems, setEditItems] = useState<EditItem[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  function startEditing() {
-    setEditItems(invoice.items.map((i) => ({ id: i.id, name: i.name, qty: i.qty, unit: i.unit, price: i.price })));
-    setEditing(true);
-  }
-
-  function cancelEditing() { setEditing(false); setEditItems([]); }
-
-  function updateItem(idx: number, field: keyof EditItem, value: string | number) {
-    setEditItems((prev) => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
-  }
-
-  function addItem() { setEditItems((prev) => [...prev, { name: "", qty: 1, unit: "шт", price: 0 }]); }
-  function removeItem(idx: number) { setEditItems((prev) => prev.filter((_, i) => i !== idx)); }
-
-  async function saveItems() {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/invoices/${invoice.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: editItems.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price) })) }),
-      });
-      if (res.ok) window.location.reload();
-    } finally { setSaving(false); }
-  }
+  const { editing, editItems, saving, subtotal: editSubtotal, startEditing, cancelEditing, updateItem, addItem, removeItem, saveItems } =
+    useLineItems(invoice.items);
 
   async function handleDownloadPDF() {
     setDownloading(true);
@@ -107,7 +79,6 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
     } finally { setDownloading(false); }
   }
 
-  const editSubtotal = editItems.reduce((s, i) => s + Number(i.qty) * Number(i.price), 0);
   const editVat = (editSubtotal * invoice.vatRate) / 100;
   const editTotal = editSubtotal + editVat;
 
@@ -142,7 +113,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
           {editing ? (
             <>
               <Button variant="outline" onClick={cancelEditing}><X size={16} /> Отмена</Button>
-              <Button onClick={saveItems} loading={saving}><Check size={16} /> Сохранить</Button>
+              <Button onClick={() => saveItems(`/api/invoices/${invoice.id}`)} loading={saving}><Check size={16} /> Сохранить</Button>
             </>
           ) : (
             <>

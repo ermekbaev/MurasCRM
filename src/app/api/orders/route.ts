@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth, retryOnDuplicate } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { generateOrderNumber } from "@/lib/utils";
@@ -22,49 +22,57 @@ const orderSchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const search = searchParams.get("search") || "";
-  const status = searchParams.get("status") || "";
-  const type = searchParams.get("type") || "";
-  const priority = searchParams.get("priority") || "";
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "25");
+  const queryParsed = z.object({
+    search: z.string().default(""),
+    status: z.string().default(""),
+    type: z.string().default(""),
+    priority: z.string().default(""),
+    page: z.coerce.number().int().positive().max(10000).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(25),
+  }).safeParse(Object.fromEntries(searchParams));
+  if (!queryParsed.success) return NextResponse.json({ error: queryParsed.error.flatten() }, { status: 400 });
+  const { search, status, type, priority, page, limit } = queryParsed.data;
   const skip = (page - 1) * limit;
 
-  const where: Record<string, unknown> = {};
+  // Build conditions with AND so role filters are never overwritten by search OR
+  const AND: Record<string, unknown>[] = [];
 
-  // Operators only see their assigned orders
   if (session.user.role === "OPERATOR") {
-    where.assignees = { some: { id: session.user.id } };
-  }
-  // Designers see assigned + orders they have tasks on
-  if (session.user.role === "DESIGNER") {
-    where.OR = [
-      { assignees: { some: { id: session.user.id } } },
-      { tasks: { some: { assigneeId: session.user.id } } },
-    ];
+    AND.push({ assignees: { some: { id: session.user.id } } });
+  } else if (session.user.role === "DESIGNER") {
+    AND.push({
+      OR: [
+        { assignees: { some: { id: session.user.id } } },
+        { tasks: { some: { assigneeId: session.user.id } } },
+      ],
+    });
   }
 
   if (search) {
-    where.OR = [
-      { number: { contains: search, mode: "insensitive" } },
-      { client: { name: { contains: search, mode: "insensitive" } } },
-    ];
+    AND.push({
+      OR: [
+        { number: { contains: search, mode: "insensitive" } },
+        { client: { name: { contains: search, mode: "insensitive" } } },
+      ],
+    });
   }
 
   if (status === "active") {
-    where.status = { in: ["NEW", "IN_PROGRESS", "REVIEW"] };
+    AND.push({ status: { in: ["NEW", "IN_PROGRESS", "REVIEW"] } });
   } else if (status === "completed") {
-    where.status = { in: ["READY", "ISSUED"] };
-  } else if (status && status !== "active" && status !== "completed") {
-    where.status = status;
+    AND.push({ status: { in: ["READY", "ISSUED"] } });
+  } else if (status) {
+    AND.push({ status });
   }
 
-  if (type) where.type = type;
-  if (priority) where.priority = priority;
+  if (type) AND.push({ type });
+  if (priority) AND.push({ priority });
+
+  const where = AND.length ? { AND } : {};
 
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
@@ -86,8 +94,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const parsed = orderSchema.safeParse(body);
@@ -97,38 +105,36 @@ export async function POST(req: Request) {
 
   const { items = [], assigneeIds = [], deadline, ...rest } = parsed.data;
 
-  // Generate order number — count only current year
-  const yearStart = new Date(new Date().getFullYear(), 0, 1);
-  const count = await prisma.order.count({ where: { createdAt: { gte: yearStart } } });
-  const number = generateOrderNumber(count);
-
-  // Calculate totals
   const calculatedItems = items.map((item) => {
     const total = item.qty * item.price * (1 - item.discount / 100);
     return { ...item, total };
   });
   const amount = calculatedItems.reduce((sum, i) => sum + i.total, 0);
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
-  const order = await prisma.order.create({
-    data: {
-      ...rest,
-      number,
-      amount,
-      deadline: deadline ? new Date(deadline) : undefined,
-      managerId: session.user.id,
-      assignees: assigneeIds.length ? { connect: assigneeIds.map((id) => ({ id })) } : undefined,
-      items: calculatedItems.length ? { create: calculatedItems } : undefined,
-    },
-    include: {
-      client: { select: { name: true } },
-      manager: { select: { name: true } },
-      assignees: { select: { id: true, name: true } },
-      items: true,
-    },
+  const order = await retryOnDuplicate(async (attempt) => {
+    const count = await prisma.order.count({ where: { createdAt: { gte: yearStart } } });
+    const number = generateOrderNumber(count + attempt);
+    return prisma.order.create({
+      data: {
+        ...rest,
+        number,
+        amount,
+        deadline: deadline ? new Date(deadline) : undefined,
+        managerId: session.user.id,
+        assignees: assigneeIds.length ? { connect: assigneeIds.map((id) => ({ id })) } : undefined,
+        items: calculatedItems.length ? { create: calculatedItems } : undefined,
+      },
+      include: {
+        client: { select: { name: true } },
+        manager: { select: { name: true } },
+        assignees: { select: { id: true, name: true } },
+        items: true,
+      },
+    });
   });
 
-  // fire-and-forget
-  notifyNewOrder(order.id);
+  notifyNewOrder(order.id).catch(console.error);
 
   return NextResponse.json(order, { status: 201 });
 }

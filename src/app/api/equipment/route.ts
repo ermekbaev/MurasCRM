@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -10,13 +10,14 @@ const schema = z.object({
   pricePerLm: z.number().nullable().optional(),
   pricingUnit: z.enum(["LM", "SQM", "PCS", "CUT"]).default("LM"),
   wastePerJob: z.number().nullable().optional(),
+  operatorRate: z.number().nullable().optional(),
   materials: z.array(z.string()).default([]),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).default("ACTIVE"),
 });
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const equipment = await prisma.equipment.findMany({
     orderBy: { name: "asc" },
@@ -28,13 +29,14 @@ export async function GET() {
     workWidth: e.workWidth ? Number(e.workWidth) : null,
     pricePerLm: e.pricePerLm ? Number(e.pricePerLm) : null,
     wastePerJob: e.wastePerJob ? Number(e.wastePerJob) : null,
+    operatorRate: e.operatorRate ? Number(e.operatorRate) : null,
     pricingUnit: e.pricingUnit || "LM",
   })));
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();

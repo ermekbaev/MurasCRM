@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { putObject, generateDownloadUrl } from "@/lib/s3";
 import { randomUUID } from "crypto";
@@ -15,8 +15,8 @@ const ALLOWED_FIELDS = ["logoKey", "stampKey", "signatureKey"] as const;
 type BrandingField = typeof ALLOWED_FIELDS[number];
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const session = await requireAuth();
+  if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

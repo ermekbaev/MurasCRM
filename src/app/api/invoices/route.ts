@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth, retryOnDuplicate } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { generateInvoiceNumber } from "@/lib/utils";
@@ -24,8 +24,8 @@ const invoiceSchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
@@ -62,8 +62,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -74,40 +74,37 @@ export async function POST(req: Request) {
 
   const { items, date, dueDate, vatRate, number: numberOverride, ...rest } = parsed.data;
 
-  let number: string;
-  if (numberOverride?.trim()) {
-    number = numberOverride.trim();
-  } else {
-    const yearStart = new Date(new Date().getFullYear(), 0, 1);
-    const count = await prisma.invoice.count({ where: { createdAt: { gte: yearStart } } });
-    number = generateInvoiceNumber(count);
-  }
-
   const subtotal = items.reduce((sum, i) => sum + i.qty * i.price, 0);
   const vatAmount = (subtotal * vatRate) / 100;
   const total = subtotal + vatAmount;
-
   const calculatedItems = items.map((i) => ({ ...i, total: i.qty * i.price }));
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      ...rest,
-      number,
-      vatRate,
-      subtotal,
-      vatAmount,
-      total,
-      date: date ? new Date(date) : new Date(),
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      items: { create: calculatedItems },
-    },
-    include: {
-      client: { select: { name: true } },
-      items: true,
-    },
+  const invoice = await retryOnDuplicate(async (attempt) => {
+    let number: string;
+    if (numberOverride?.trim()) {
+      number = numberOverride.trim();
+    } else {
+      const count = await prisma.invoice.count({ where: { createdAt: { gte: yearStart } } });
+      number = generateInvoiceNumber(count + attempt);
+    }
+    return prisma.invoice.create({
+      data: {
+        ...rest,
+        number,
+        vatRate,
+        subtotal,
+        vatAmount,
+        total,
+        date: date ? new Date(date) : new Date(),
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        items: { create: calculatedItems },
+      },
+      include: { client: { select: { name: true } }, items: true },
+    });
   });
 
-  notifyInvoiceCreated(invoice.id);
+  notifyInvoiceCreated(invoice.id).catch(console.error);
 
   return NextResponse.json(invoice, { status: 201 });
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notifyLowStock } from "@/lib/telegram";
@@ -14,8 +14,8 @@ const movementSchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const consumableId = searchParams.get("consumableId") || "";
@@ -39,8 +39,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const parsed = movementSchema.safeParse(body);
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   ]);
 
   if (direction === "OUT" || direction === "ADJUSTMENT") {
-    notifyLowStock(consumableId);
+    notifyLowStock(consumableId).catch(console.error);
   }
 
   return NextResponse.json(movement, { status: 201 });

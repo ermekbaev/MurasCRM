@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { startOfWeek, startOfMonth, startOfQuarter, startOfYear, subMonths, format } from "date-fns";
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") || "month";
@@ -42,6 +42,9 @@ export async function GET(req: Request) {
     revenueByMonth,
     operatorLoad,
     equipmentLoad,
+    operatorEarningsItems,
+    materialCostsAgg,
+    prevMaterialCostsAgg,
   ] = await Promise.all([
     prisma.order.aggregate({
       where: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } },
@@ -62,7 +65,7 @@ export async function GET(req: Request) {
     }),
     prisma.orderItem.findMany({
       where: { order: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } } },
-      select: { total: true, equipment: { select: { type: true } } },
+      select: { total: true, equipmentId: true, equipment: { select: { name: true, type: true } } },
     }),
     prisma.order.groupBy({
       by: ["priority"],
@@ -105,19 +108,49 @@ export async function GET(req: Request) {
       },
       select: { equipmentId: true },
     }),
+    // Operator earnings: items linked to equipment in period
+    prisma.orderItem.findMany({
+      where: {
+        order: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } },
+        equipmentId: { not: null },
+      },
+      select: {
+        qty: true,
+        equipment: { select: { operatorRate: true, pricingUnit: true } },
+        order: { select: { assignees: { select: { id: true, name: true } } } },
+      },
+    }),
+    // Material costs: consumable write-offs in period
+    prisma.consumableMovement.aggregate({
+      where: {
+        direction: "OUT",
+        date: { gte: startDate },
+        totalCost: { not: null },
+      },
+      _sum: { totalCost: true },
+    }),
+    // Previous period material costs
+    prisma.consumableMovement.aggregate({
+      where: {
+        direction: "OUT",
+        date: { gte: prevStartDate, lt: startDate },
+        totalCost: { not: null },
+      },
+      _sum: { totalCost: true },
+    }),
   ]);
 
-  // Aggregate items by equipment type
-  const svcTypeMap: Record<string, { count: number; revenue: number }> = {};
+  // Revenue by equipment
+  const eqRevenueMap: Record<string, { name: string; type: string; count: number; revenue: number }> = {};
   ordersByServiceType.forEach((item) => {
-    const type = item.equipment?.type || "OTHER";
-    if (!svcTypeMap[type]) svcTypeMap[type] = { count: 0, revenue: 0 };
-    svcTypeMap[type].count++;
-    svcTypeMap[type].revenue += Number(item.total);
+    const key = item.equipmentId || "__none__";
+    const label = item.equipment?.name || "Прочее";
+    const type = item.equipment?.type || "";
+    if (!eqRevenueMap[key]) eqRevenueMap[key] = { name: label, type, count: 0, revenue: 0 };
+    eqRevenueMap[key].count++;
+    eqRevenueMap[key].revenue += Number(item.total);
   });
-  const serviceTypeData = Object.entries(svcTypeMap)
-    .map(([type, d]) => ({ type, count: d.count, revenue: d.revenue }))
-    .sort((a, b) => b.revenue - a.revenue);
+  const serviceTypeData = Object.values(eqRevenueMap).sort((a, b) => b.revenue - a.revenue);
 
   // Process monthly revenue
   const monthlyMap: Record<string, number> = {};
@@ -150,10 +183,35 @@ export async function GET(req: Request) {
     : [];
   const equipmentMap = Object.fromEntries(equipmentList.map((e) => [e.id, e]));
 
+  // Aggregate operator earnings per operator (only items where equipment has operatorRate set)
+  const earningsMap: Record<string, { name: string; earnings: number; qty: number }> = {};
+  for (const item of operatorEarningsItems) {
+    const rate = item.equipment?.operatorRate ? Number(item.equipment.operatorRate) : 0;
+    if (rate === 0) continue;
+    const qty = Number(item.qty);
+    for (const op of item.order.assignees) {
+      if (!earningsMap[op.id]) earningsMap[op.id] = { name: op.name, earnings: 0, qty: 0 };
+      earningsMap[op.id].earnings += qty * rate;
+      earningsMap[op.id].qty += qty;
+    }
+  }
+  const operatorEarnings = Object.values(earningsMap).sort((a, b) => b.earnings - a.earnings);
+
   const currentRev = Number(currentRevenue._sum.amount || 0);
   const prevRev = Number(prevRevenue._sum.amount || 0);
   const revGrowth = prevRev > 0 ? ((currentRev - prevRev) / prevRev) * 100 : null;
   const avgCheck = currentRevenue._count > 0 ? currentRev / currentRevenue._count : 0;
+
+  const totalOperatorWages = Object.values(earningsMap).reduce((s, o) => s + o.earnings, 0);
+  const materialCosts = Number(materialCostsAgg._sum.totalCost || 0);
+  const prevMaterialCosts = Number(prevMaterialCostsAgg._sum.totalCost || 0);
+
+  // Previous period operator wages (approximate via same query pattern — calculated inline)
+  const totalExpenses = materialCosts + totalOperatorWages;
+  const profit = currentRev - totalExpenses;
+  const prevExpenses = prevMaterialCosts; // prev operator wages not tracked separately, use materials only for prev period
+  const prevProfit = prevRev - prevExpenses;
+  const profitGrowth = prevProfit !== 0 ? ((profit - prevProfit) / Math.abs(prevProfit)) * 100 : null;
 
   return NextResponse.json({
     summary: {
@@ -163,6 +221,12 @@ export async function GET(req: Request) {
       ordersCount: currentRevenue._count,
       prevOrdersCount: prevRevenue._count,
       avgCheck,
+      materialCosts,
+      operatorWages: totalOperatorWages,
+      totalExpenses,
+      profit,
+      prevProfit,
+      profitGrowth,
     },
     ordersByStatus: ordersByStatus.map((o) => ({ status: o.status, count: o._count })),
     ordersByType: serviceTypeData,
@@ -189,5 +253,6 @@ export async function GET(req: Request) {
         orders: eqCountMap[id],
       }))
       .sort((a, b) => b.orders - a.orders),
+    operatorEarnings,
   });
 }

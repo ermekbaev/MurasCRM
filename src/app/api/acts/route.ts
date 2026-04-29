@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAuth, retryOnDuplicate } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { generateActNumber } from "@/lib/utils";
 import { z } from "zod";
@@ -17,8 +17,8 @@ const schema = z.object({
 });
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const acts = await prisma.act.findMany({
     orderBy: { date: "desc" },
@@ -32,8 +32,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -43,21 +43,22 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { items, date, ...rest } = parsed.data;
-  const yearStart = new Date(new Date().getFullYear(), 0, 1);
-  const count = await prisma.act.count({ where: { createdAt: { gte: yearStart } } });
-  const number = generateActNumber(count);
-
   const calculatedItems = items.map((i) => ({ ...i, total: i.qty * i.price }));
   const total = calculatedItems.reduce((sum, i) => sum + i.total, 0);
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
-  const act = await prisma.act.create({
-    data: {
-      ...rest,
-      number,
-      total,
-      date: date ? new Date(date) : new Date(),
-      items: { create: calculatedItems },
-    },
+  const act = await retryOnDuplicate(async (attempt) => {
+    const count = await prisma.act.count({ where: { createdAt: { gte: yearStart } } });
+    const number = generateActNumber(count + attempt);
+    return prisma.act.create({
+      data: {
+        ...rest,
+        number,
+        total,
+        date: date ? new Date(date) : new Date(),
+        items: { create: calculatedItems },
+      },
+    });
   });
 
   return NextResponse.json(act, { status: 201 });

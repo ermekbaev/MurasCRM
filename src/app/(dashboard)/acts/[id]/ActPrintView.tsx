@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Button from "@/components/ui/Button";
+import { useLineItems } from "@/hooks/useLineItems";
 import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X } from "lucide-react";
 
 interface ActItem {
@@ -46,53 +47,10 @@ interface Props {
   } | null;
 }
 
-type EditItem = { id?: string; name: string; qty: number; unit: string; price: number };
-
 export default function ActPrintView({ act, company, logoUrl }: Props) {
-  const printRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
-
-  const [editing, setEditing] = useState(false);
-  const [editItems, setEditItems] = useState<EditItem[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  function startEditing() {
-    setEditItems(act.items.map((i) => ({ id: i.id, name: i.name, qty: i.qty, unit: i.unit, price: i.price })));
-    setEditing(true);
-  }
-
-  function cancelEditing() {
-    setEditing(false);
-    setEditItems([]);
-  }
-
-  function updateItem(idx: number, field: keyof EditItem, value: string | number) {
-    setEditItems((prev) => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
-  }
-
-  function addItem() {
-    setEditItems((prev) => [...prev, { name: "", qty: 1, unit: "шт", price: 0 }]);
-  }
-
-  function removeItem(idx: number) {
-    setEditItems((prev) => prev.filter((_, i) => i !== idx));
-  }
-
-  async function saveItems() {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/acts/${act.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: editItems.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price) })) }),
-      });
-      if (res.ok) {
-        window.location.reload();
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
+  const { editing, editItems, saving, subtotal: editSubtotal, startEditing, cancelEditing, updateItem, addItem, removeItem, saveItems } =
+    useLineItems(act.items);
 
   async function handleDownloadPDF() {
     setDownloading(true);
@@ -103,8 +61,6 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
       setDownloading(false);
     }
   }
-
-  const editSubtotal = editItems.reduce((s, i) => s + Number(i.qty) * Number(i.price), 0);
   const client = act.invoice?.client;
 
   return (
@@ -119,7 +75,7 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
               <Button variant="outline" onClick={cancelEditing}>
                 <X size={16} /> Отмена
               </Button>
-              <Button onClick={saveItems} loading={saving}>
+              <Button onClick={() => saveItems(`/api/acts/${act.id}`)} loading={saving}>
                 <Check size={16} /> Сохранить
               </Button>
             </>
@@ -140,8 +96,7 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
       </div>
 
       <div
-        ref={printRef}
-        className="bg-white max-w-3xl mx-auto p-10 border border-gray-200 rounded-xl print:border-0 print:p-0 print:max-w-full"
+className="bg-white max-w-3xl mx-auto p-10 border border-gray-200 rounded-xl print:border-0 print:p-0 print:max-w-full"
       >
         {/* Заголовок */}
         <div className="flex items-start justify-between mb-8">
