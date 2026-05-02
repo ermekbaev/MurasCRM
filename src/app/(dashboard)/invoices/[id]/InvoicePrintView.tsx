@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { numberToWords } from "@/lib/invoice-pdf";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
-import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X } from "lucide-react";
+import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X, XCircle, CheckCircle } from "lucide-react";
 
 interface InvoiceItem {
   id: string;
