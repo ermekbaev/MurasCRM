@@ -29,7 +29,7 @@ export default async function OrdersPage() {
     }),
     prisma.equipment.findMany({
       where: { status: "ACTIVE" },
-      select: { id: true, name: true, pricePerLm: true, pricingUnit: true, wastePerJob: true },
+      select: { id: true, name: true, pricePerLm: true, pricingUnit: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -45,7 +45,7 @@ export default async function OrdersPage() {
       }))}
       clients={clients}
       users={users}
-      equipment={equipment.map((e) => ({ ...e, pricePerLm: Number(e.pricePerLm ?? 0), wastePerJob: e.wastePerJob ? Number(e.wastePerJob) : null }))}
+      equipment={equipment.map((e) => ({ ...e, pricePerLm: Number(e.pricePerLm ?? 0) }))}
       currentUserId={session?.user.id || ""}
       currentRole={session?.user.role || "MANAGER"}
     />

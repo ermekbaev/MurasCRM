@@ -9,7 +9,7 @@ const updateSchema = z.object({
   workWidth: z.number().nullable().optional(),
   pricePerLm: z.number().nullable().optional(),
   pricingUnit: z.enum(["LM", "SQM", "PCS", "CUT"]).optional(),
-  wastePerJob: z.number().nullable().optional(),
+  costPerLm: z.number().nullable().optional(),
   operatorRate: z.number().nullable().optional(),
   materials: z.array(z.string()).optional(),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).optional(),
@@ -38,7 +38,7 @@ export async function PATCH(
     ...equipment,
     workWidth: equipment.workWidth ? Number(equipment.workWidth) : null,
     pricePerLm: equipment.pricePerLm ? Number(equipment.pricePerLm) : null,
-    wastePerJob: equipment.wastePerJob ? Number(equipment.wastePerJob) : null,
+    costPerLm: equipment.costPerLm ? Number(equipment.costPerLm) : null,
     operatorRate: equipment.operatorRate ? Number(equipment.operatorRate) : null,
     pricingUnit: equipment.pricingUnit || "LM",
   });

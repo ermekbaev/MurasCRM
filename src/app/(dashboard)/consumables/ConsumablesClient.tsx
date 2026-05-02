@@ -190,9 +190,9 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
   }
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Расходники</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
@@ -241,6 +241,7 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
 
       {/* Table */}
       <Card padding="none">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
@@ -329,13 +330,14 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
             )}
           </tbody>
         </table>
+        </div>
       </Card>
 
       {/* Create/Edit Modal */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)} title={editingConsumable ? "Редактировать расходник" : "Добавить расходник"} size="md">
         <form onSubmit={handleCreate} className="space-y-4">
           <Input label="Название *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Тип"
               value={form.type}
@@ -344,15 +346,15 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
             />
             <Input label="Единица измерения" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} placeholder="м², пог.м, шт, л" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Текущий остаток" type="number" min={0} step={0.001} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
             <Input label="Мин. остаток" type="number" min={0} step={0.001} value={form.minStock} onChange={(e) => setForm({ ...form, minStock: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Цена закупки (сом)" type="number" min={0} value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} />
             <Input label="Цена списания (сом)" type="number" min={0} value={form.writeoffPrice} onChange={(e) => setForm({ ...form, writeoffPrice: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Поставщик"
               value={form.supplierId}

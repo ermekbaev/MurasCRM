@@ -116,8 +116,8 @@ export default function TemplatesPage() {
   if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
           <FileCode size={22} /> Шаблоны документов
         </h1>
@@ -188,7 +188,7 @@ export default function TemplatesPage() {
           <p className="text-xs text-gray-500 dark:text-slate-400">
             Укажите ID заявки, счёта или клиента для подстановки переменных. Все поля необязательны.
           </p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">ID заявки</label>
               <input
@@ -242,7 +242,7 @@ export default function TemplatesPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title={editingTemplate ? "Редактировать шаблон" : "Новый шаблон"} size="lg">
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Название *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Select
               label="Тип"
@@ -258,7 +258,7 @@ export default function TemplatesPage() {
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
               rows={10}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
               placeholder={"Счёт на оплату №{{order_number}}\n\nКлиент: {{client_name}}\nДата: {{date}}\nСумма: {{total}} руб."}
             />
           </div>

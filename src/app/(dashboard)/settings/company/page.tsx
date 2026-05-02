@@ -108,8 +108,8 @@ export default function CompanySettingsPage() {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Реквизиты компании</h1>
         <Button onClick={handleSave} loading={loading}>
           {saved ? <><Check size={15} /> Сохранено</> : "Сохранить"}
@@ -119,7 +119,7 @@ export default function CompanySettingsPage() {
       <form onSubmit={handleSave} className="space-y-5">
         <Section title="Основная информация" icon={<Building2 size={16} />}>
           <Input label="Название организации" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="ООО «МурасПринт»" />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="ИНН" value={form.inn} onChange={(e) => update("inn", e.target.value)} />
             <Input label="КПП" value={form.kpp} onChange={(e) => update("kpp", e.target.value)} />
             <Input label="ОГРН" value={form.ogrn} onChange={(e) => update("ogrn", e.target.value)} />
@@ -128,7 +128,7 @@ export default function CompanySettingsPage() {
         </Section>
 
         <Section title="Контактные данные" icon={<Phone size={16} />}>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="Телефон" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
             <Input label="Email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
             <Input label="Сайт" value={form.website} onChange={(e) => update("website", e.target.value)} />
@@ -137,7 +137,7 @@ export default function CompanySettingsPage() {
 
         <Section title="Банковские реквизиты" icon={<CreditCard size={16} />}>
           <Input label="Наименование банка" value={form.bankName} onChange={(e) => update("bankName", e.target.value)} />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="Расчётный счёт" value={form.bankAccount} onChange={(e) => update("bankAccount", e.target.value)} />
             <Input label="БИК" value={form.bankBik} onChange={(e) => update("bankBik", e.target.value)} />
             <Input label="Корр. счёт" value={form.corrAccount} onChange={(e) => update("corrAccount", e.target.value)} />
@@ -145,7 +145,7 @@ export default function CompanySettingsPage() {
         </Section>
 
         <Section title="Ответственные лица" icon={<Building2 size={16} />}>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Руководитель (ФИО)" value={form.director} onChange={(e) => update("director", e.target.value)} placeholder="Иванов Иван Иванович" />
             <Input label="Главный бухгалтер (ФИО)" value={form.accountant} onChange={(e) => update("accountant", e.target.value)} placeholder="Петрова Мария Ивановна" />
           </div>

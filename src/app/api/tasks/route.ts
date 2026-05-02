@@ -21,9 +21,18 @@ export async function GET(req: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status") || "";
-  const type = searchParams.get("type") || "";
-  const orderId = searchParams.get("orderId") || "";
+  const q = z.object({
+    status: z.string().default(""),
+    type: z.string().default(""),
+    orderId: z.string().default(""),
+    search: z.string().default(""),
+    page: z.coerce.number().int().positive().max(10000).default(1),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+  }).safeParse(Object.fromEntries(searchParams));
+  if (!q.success) return NextResponse.json({ error: q.error.flatten() }, { status: 400 });
+
+  const { status, type, orderId, search, page, limit } = q.data;
+  const skip = (page - 1) * limit;
 
   const where: Record<string, unknown> = {};
 
@@ -34,19 +43,25 @@ export async function GET(req: Request) {
   if (status) where.status = status;
   if (type) where.type = type;
   if (orderId) where.orderId = orderId;
+  if (search) where.title = { contains: search, mode: "insensitive" };
 
-  const tasks = await prisma.task.findMany({
-    where,
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    include: {
-      assignee: { select: { id: true, name: true } },
-      order: { select: { id: true, number: true, client: { select: { name: true } } } },
-      _count: { select: { checklistItems: true, comments: true } },
-      checklistItems: { select: { id: true, isCompleted: true } },
-    },
-  });
+  const [tasks, total] = await Promise.all([
+    prisma.task.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      include: {
+        assignee: { select: { id: true, name: true } },
+        order: { select: { id: true, number: true, client: { select: { name: true } } } },
+        _count: { select: { checklistItems: true, comments: true } },
+        checklistItems: { select: { id: true, isCompleted: true } },
+      },
+    }),
+    prisma.task.count({ where }),
+  ]);
 
-  return NextResponse.json(tasks);
+  return NextResponse.json({ tasks, total, page, pages: Math.ceil(total / limit) });
 }
 
 export async function POST(req: Request) {

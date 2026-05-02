@@ -47,7 +47,7 @@ export default async function ClientDetailPage({
     .reduce((sum, o) => sum + Number(o.amount), 0);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Back + Header */}
       <div>
         <Link

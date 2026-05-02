@@ -120,8 +120,8 @@ export default function UsersSettingsPage() {
   if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <Users size={22} /> Пользователи
@@ -134,6 +134,7 @@ export default function UsersSettingsPage() {
       </div>
 
       <Card padding="none">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
@@ -208,6 +209,7 @@ export default function UsersSettingsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
 
       <Modal isOpen={!!editUser} onClose={() => setEditUser(null)} title="Редактировать пользователя" size="md">
@@ -219,7 +221,7 @@ export default function UsersSettingsPage() {
             onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
             options={Object.entries(ROLE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Телефон" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
             <div>
               <Input
@@ -251,7 +253,7 @@ export default function UsersSettingsPage() {
             onChange={(e) => setForm({ ...form, role: e.target.value })}
             options={Object.entries(ROLE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Телефон" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <Input label="Telegram Chat ID" value={form.telegramChatId} onChange={(e) => setForm({ ...form, telegramChatId: e.target.value })} />
           </div>

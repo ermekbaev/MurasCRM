@@ -31,27 +31,52 @@ export async function GET(req: Request) {
     ];
   }
 
-  const consumables = await prisma.consumable.findMany({
-    where,
-    orderBy: { name: "asc" },
-    include: {
-      supplier: { select: { id: true, name: true } },
-      _count: { select: { movements: true } },
-    },
-  });
+  const q = z.object({
+    page: z.coerce.number().int().positive().max(10000).default(1),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+  }).parse(Object.fromEntries(searchParams));
+  const skip = (q.page - 1) * q.limit;
 
-  const result = consumables
-    .map((c) => ({
-      ...c,
-      stock: Number(c.stock),
-      minStock: Number(c.minStock),
-      purchasePrice: Number(c.purchasePrice),
-      writeoffPrice: Number(c.writeoffPrice),
-      isLow: Number(c.stock) < Number(c.minStock),
-    }))
-    .filter((c) => !lowStock || c.isLow);
+  // lowStock filter can't be done at DB level without raw SQL — fetch all and paginate in-memory
+  if (lowStock) {
+    const all = await prisma.consumable.findMany({
+      where,
+      orderBy: { name: "asc" },
+      include: {
+        supplier: { select: { id: true, name: true } },
+        _count: { select: { movements: true } },
+      },
+    });
+    const result = all
+      .map((c) => ({ ...c, stock: Number(c.stock), minStock: Number(c.minStock), purchasePrice: Number(c.purchasePrice), writeoffPrice: Number(c.writeoffPrice), isLow: Number(c.stock) < Number(c.minStock) }))
+      .filter((c) => c.isLow);
+    return NextResponse.json({ consumables: result, total: result.length, page: 1, pages: 1 });
+  }
 
-  return NextResponse.json(result);
+  const [rows, total] = await Promise.all([
+    prisma.consumable.findMany({
+      where,
+      skip,
+      take: q.limit,
+      orderBy: { name: "asc" },
+      include: {
+        supplier: { select: { id: true, name: true } },
+        _count: { select: { movements: true } },
+      },
+    }),
+    prisma.consumable.count({ where }),
+  ]);
+
+  const result = rows.map((c) => ({
+    ...c,
+    stock: Number(c.stock),
+    minStock: Number(c.minStock),
+    purchasePrice: Number(c.purchasePrice),
+    writeoffPrice: Number(c.writeoffPrice),
+    isLow: Number(c.stock) < Number(c.minStock),
+  }));
+
+  return NextResponse.json({ consumables: result, total, page: q.page, pages: Math.ceil(total / q.limit) });
 }
 
 export async function POST(req: Request) {

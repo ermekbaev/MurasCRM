@@ -18,12 +18,11 @@ import {
   History,
   Settings,
   LogOut,
-  ChevronDown,
   ChevronRight,
   Sun,
   Moon,
+  AlertTriangle,
 } from "lucide-react";
-import { useState } from "react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import Image from "next/image";
 
@@ -91,6 +90,12 @@ const navItems: NavItem[] = [
     roles: ["ADMIN", "ACCOUNTANT"],
   },
   {
+    label: "Журнал брака",
+    href: "/defects",
+    icon: AlertTriangle,
+    roles: ["ADMIN", "MANAGER", "OPERATOR"],
+  },
+  {
     label: "Журнал изменений",
     href: "/changelog",
     icon: History,
@@ -120,20 +125,23 @@ const settingsItems = [
     href: "/settings/tags",
     roles: ["ADMIN", "MANAGER"] as Role[],
   },
+  {
+    label: "Шаблоны",
+    href: "/settings/templates",
+    roles: ["ADMIN", "ACCOUNTANT"] as Role[],
+  },
 ];
 
 interface SidebarProps {
   role: Role;
   userName: string;
   userEmail: string;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
+export default function Sidebar({ role, userName, userEmail, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
-  const [settingsOpen, setSettingsOpen] = useState(
-    pathname.startsWith("/settings"),
-  );
 
   const filteredNav = navItems.filter((item) => item.roles.includes(role));
   const filteredSettings = settingsItems.filter((item) =>
@@ -142,7 +150,7 @@ export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
   const showSettings = filteredSettings.length > 0;
 
   return (
-    <aside className="flex flex-col w-60 min-h-screen bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shrink-0">
+    <aside className="flex flex-col w-60 h-full min-h-screen bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 shrink-0">
       {/* Logo */}
       <div className="flex h-16 items-center gap-2.5 px-4 border-b border-slate-200 dark:border-slate-700">
         <Image
@@ -168,6 +176,7 @@ export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                 active
@@ -206,6 +215,7 @@ export default function Sidebar({ role, userName, userEmail }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onClose}
                     className={cn(
                       "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                       active

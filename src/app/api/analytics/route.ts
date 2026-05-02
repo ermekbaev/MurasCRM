@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
-import { startOfWeek, startOfMonth, startOfQuarter, startOfYear, subMonths, format } from "date-fns";
+import { startOfWeek, startOfMonth, startOfQuarter, startOfYear, subMonths, subWeeks, format } from "date-fns";
 
 export async function GET(req: Request) {
   const session = await requireAuth();
@@ -12,24 +12,34 @@ export async function GET(req: Request) {
 
   const now = new Date();
   let startDate: Date;
+  let endDate: Date = now;
   let prevStartDate: Date;
 
-  switch (period) {
-    case "week":
-      startDate = startOfWeek(now, { weekStartsOn: 1 });
-      prevStartDate = startOfWeek(subMonths(now, 0.25), { weekStartsOn: 1 });
-      break;
-    case "quarter":
-      startDate = startOfQuarter(now);
-      prevStartDate = startOfQuarter(subMonths(now, 3));
-      break;
-    case "year":
-      startDate = startOfYear(now);
-      prevStartDate = startOfYear(subMonths(now, 12));
-      break;
-    default:
-      startDate = startOfMonth(now);
-      prevStartDate = startOfMonth(subMonths(now, 1));
+  if (period === "custom") {
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+    startDate = fromParam ? new Date(fromParam) : startOfMonth(now);
+    endDate = toParam ? new Date(toParam + "T23:59:59.999") : now;
+    const rangeMs = endDate.getTime() - startDate.getTime();
+    prevStartDate = new Date(startDate.getTime() - rangeMs);
+  } else {
+    switch (period) {
+      case "week":
+        startDate = startOfWeek(now, { weekStartsOn: 1 });
+        prevStartDate = subWeeks(startDate, 1);
+        break;
+      case "quarter":
+        startDate = startOfQuarter(now);
+        prevStartDate = startOfQuarter(subMonths(now, 3));
+        break;
+      case "year":
+        startDate = startOfYear(now);
+        prevStartDate = startOfYear(subMonths(now, 12));
+        break;
+      default:
+        startDate = startOfMonth(now);
+        prevStartDate = startOfMonth(subMonths(now, 1));
+    }
   }
 
   const [
@@ -45,9 +55,10 @@ export async function GET(req: Request) {
     operatorEarningsItems,
     materialCostsAgg,
     prevMaterialCostsAgg,
+    prevEarningsItems,
   ] = await Promise.all([
     prisma.order.aggregate({
-      where: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } },
+      where: { createdAt: { gte: startDate, lte: endDate }, status: { not: "CANCELLED" } },
       _sum: { amount: true },
       _count: true,
     }),
@@ -61,21 +72,22 @@ export async function GET(req: Request) {
     }),
     prisma.order.groupBy({
       by: ["status"],
+      where: { createdAt: { gte: startDate, lte: endDate } },
       _count: true,
     }),
     prisma.orderItem.findMany({
-      where: { order: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } } },
+      where: { order: { createdAt: { gte: startDate, lte: endDate }, status: { not: "CANCELLED" } } },
       select: { total: true, equipmentId: true, equipment: { select: { name: true, type: true } } },
     }),
     prisma.order.groupBy({
       by: ["priority"],
-      where: { createdAt: { gte: startDate } },
+      where: { createdAt: { gte: startDate, lte: endDate } },
       _count: true,
     }),
     prisma.orderItem.groupBy({
       by: ["name"],
       where: {
-        order: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } },
+        order: { createdAt: { gte: startDate, lte: endDate }, status: { not: "CANCELLED" } },
       },
       _sum: { total: true },
       _count: true,
@@ -86,7 +98,7 @@ export async function GET(req: Request) {
     prisma.order.groupBy({
       by: ["createdAt"],
       where: {
-        createdAt: { gte: subMonths(now, 11) },
+        createdAt: { gte: subMonths(endDate, 11), lte: endDate },
         status: { not: "CANCELLED" },
       },
       _sum: { amount: true },
@@ -95,7 +107,7 @@ export async function GET(req: Request) {
     prisma.task.groupBy({
       by: ["assigneeId"],
       where: {
-        createdAt: { gte: startDate },
+        createdAt: { gte: startDate, lte: endDate },
         assigneeId: { not: null },
       },
       _count: true,
@@ -111,12 +123,12 @@ export async function GET(req: Request) {
     // Operator earnings: items linked to equipment in period
     prisma.orderItem.findMany({
       where: {
-        order: { createdAt: { gte: startDate }, status: { not: "CANCELLED" } },
+        order: { createdAt: { gte: startDate, lte: endDate }, status: { not: "CANCELLED" } },
         equipmentId: { not: null },
       },
       select: {
         qty: true,
-        equipment: { select: { operatorRate: true, pricingUnit: true } },
+        equipment: { select: { operatorRate: true, costPerLm: true, pricingUnit: true } },
         order: { select: { assignees: { select: { id: true, name: true } } } },
       },
     }),
@@ -124,8 +136,7 @@ export async function GET(req: Request) {
     prisma.consumableMovement.aggregate({
       where: {
         direction: "OUT",
-        date: { gte: startDate },
-        totalCost: { not: null },
+        date: { gte: startDate, lte: endDate },
       },
       _sum: { totalCost: true },
     }),
@@ -134,9 +145,19 @@ export async function GET(req: Request) {
       where: {
         direction: "OUT",
         date: { gte: prevStartDate, lt: startDate },
-        totalCost: { not: null },
       },
       _sum: { totalCost: true },
+    }),
+    // Previous period operator earnings items (for correct prevExpenses)
+    prisma.orderItem.findMany({
+      where: {
+        order: { createdAt: { gte: prevStartDate, lt: startDate }, status: { not: "CANCELLED" } },
+        equipmentId: { not: null },
+      },
+      select: {
+        qty: true,
+        equipment: { select: { operatorRate: true, costPerLm: true } },
+      },
     }),
   ]);
 
@@ -152,10 +173,10 @@ export async function GET(req: Request) {
   });
   const serviceTypeData = Object.values(eqRevenueMap).sort((a, b) => b.revenue - a.revenue);
 
-  // Process monthly revenue
+  // Process monthly revenue (relative to endDate)
   const monthlyMap: Record<string, number> = {};
   for (let i = 11; i >= 0; i--) {
-    const key = format(subMonths(now, i), "MM.yyyy");
+    const key = format(subMonths(endDate, i), "MM.yyyy");
     monthlyMap[key] = 0;
   }
   revenueByMonth.forEach((r) => {
@@ -206,10 +227,25 @@ export async function GET(req: Request) {
   const materialCosts = Number(materialCostsAgg._sum.totalCost || 0);
   const prevMaterialCosts = Number(prevMaterialCostsAgg._sum.totalCost || 0);
 
-  // Previous period operator wages (approximate via same query pattern — calculated inline)
-  const totalExpenses = materialCosts + totalOperatorWages;
+  // Production cost (себестоимость): costPerLm × qty for each order item
+  let productionCost = 0;
+  for (const item of operatorEarningsItems) {
+    const cost = item.equipment?.costPerLm ? Number(item.equipment.costPerLm) : 0;
+    productionCost += Number(item.qty) * cost;
+  }
+
+  let prevProductionCost = 0;
+  let prevOperatorWages = 0;
+  for (const item of prevEarningsItems) {
+    const cost = item.equipment?.costPerLm ? Number(item.equipment.costPerLm) : 0;
+    prevProductionCost += Number(item.qty) * cost;
+    const rate = item.equipment?.operatorRate ? Number(item.equipment.operatorRate) : 0;
+    prevOperatorWages += Number(item.qty) * rate;
+  }
+
+  const totalExpenses = materialCosts + totalOperatorWages + productionCost;
   const profit = currentRev - totalExpenses;
-  const prevExpenses = prevMaterialCosts; // prev operator wages not tracked separately, use materials only for prev period
+  const prevExpenses = prevMaterialCosts + prevOperatorWages + prevProductionCost;
   const prevProfit = prevRev - prevExpenses;
   const profitGrowth = prevProfit !== 0 ? ((profit - prevProfit) / Math.abs(prevProfit)) * 100 : null;
 
@@ -223,6 +259,7 @@ export async function GET(req: Request) {
       avgCheck,
       materialCosts,
       operatorWages: totalOperatorWages,
+      productionCost,
       totalExpenses,
       profit,
       prevProfit,

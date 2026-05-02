@@ -69,6 +69,7 @@ interface Invoice {
   date: string;
   dueDate?: string | null;
   basis?: string | null;
+  isPaid?: boolean;
   vatRate: number;
   subtotal: number;
   vatAmount: number;
@@ -215,8 +216,15 @@ export async function generateInvoicePDF(invoice: Invoice, company: Company | nu
     </table>
 
     <p style="margin:8px 0 2px 0;font-size:10px;">Всего наименований ${invoice.items.length}, на сумму <strong>${fmt(total)} сом</strong></p>
-    <p style="margin:0 0 ${invoice.dueDate ? "4" : "16"}px 0;font-size:10px;font-weight:700;">${numberToWords(total)}</p>
-    ${invoice.dueDate ? `<p style="margin:0 0 16px 0;font-size:10px;">Оплатить не позднее ${fmtDate(invoice.dueDate)}</p>` : ""}
+    <p style="margin:0 0 ${invoice.dueDate ? "4" : "8"}px 0;font-size:10px;font-weight:700;">${numberToWords(total)}</p>
+    ${invoice.dueDate ? `<p style="margin:0 0 8px 0;font-size:10px;">Оплатить не позднее ${fmtDate(invoice.dueDate)}</p>` : ""}
+
+    <div style="margin:8px 0 14px 0;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:10px;color:#555;">Статус оплаты:</span>
+      <span style="font-size:11px;font-weight:700;color:${invoice.isPaid ? "#15803d" : "#b91c1c"};border:2px solid ${invoice.isPaid ? "#15803d" : "#b91c1c"};padding:2px 10px;border-radius:4px;letter-spacing:0.5px;">
+        ${invoice.isPaid ? "ОПЛАЧЕН" : "НЕ ОПЛАЧЕН"}
+      </span>
+    </div>
 
     <hr style="border:none;border-top:1px dashed #999;margin:0 0 14px 0;"/>
 

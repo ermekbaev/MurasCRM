@@ -13,11 +13,12 @@ const ROLE_ROUTES: Record<Role, string[]> = {
     "/acts",
     "/files",
     "/consumables",
+    "/defects",
     "/settings/suppliers",
     "/settings/tags",
   ],
   DESIGNER: ["/dashboard", "/tasks", "/files"],
-  OPERATOR: ["/dashboard", "/tasks"],
+  OPERATOR: ["/dashboard", "/tasks", "/defects"],
   ACCOUNTANT: [
     "/dashboard",
     "/invoices",
@@ -38,6 +39,20 @@ export const authConfig = {
   session: { strategy: "jwt" },
   providers: [],
   callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        token.role = (user as { role: Role }).role;
+        token.id = user.id;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role;
+      }
+      return session;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const pathname = nextUrl.pathname;

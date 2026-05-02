@@ -53,6 +53,147 @@ const EMPTY_FORM = {
   notes: "",
 };
 
+interface ClientFormProps {
+  form: typeof EMPTY_FORM;
+  setForm: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>;
+  loading: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  submitLabel: string;
+  onCancel: () => void;
+}
+
+function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }: ClientFormProps) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Select
+          label="Тип клиента"
+          value={form.type}
+          onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+          options={[
+            { value: "INDIVIDUAL", label: "Физическое лицо" },
+            { value: "LEGAL", label: "Юридическое лицо" },
+            { value: "IP", label: "ИП" },
+          ]}
+        />
+        <Select
+          label="Источник"
+          value={form.source}
+          onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
+          options={[
+            { value: "REFERRAL", label: "Рекомендация" },
+            { value: "ADVERTISING", label: "Реклама" },
+            { value: "COLD_CALL", label: "Звонок" },
+            { value: "SOCIAL_MEDIA", label: "Соцсети" },
+            { value: "OTHER", label: "Другое" },
+          ]}
+        />
+      </div>
+      <Input
+        label="Имя / Название *"
+        required
+        value={form.name}
+        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+        placeholder="ООО «Пример» или Иванов Иван"
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Телефон"
+          value={form.phone}
+          onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+          placeholder="+7 (999) 000-00-00"
+        />
+        <Input
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+          placeholder="email@example.com"
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Telegram"
+          value={form.telegram}
+          onChange={(e) => setForm((f) => ({ ...f, telegram: e.target.value }))}
+          placeholder="@username"
+        />
+        <Input
+          label="WhatsApp"
+          value={form.whatsapp}
+          onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value }))}
+          placeholder="+7..."
+        />
+      </div>
+      {form.type !== "INDIVIDUAL" && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Input
+              label="ИНН"
+              value={form.inn}
+              onChange={(e) => setForm((f) => ({ ...f, inn: e.target.value }))}
+            />
+            <Input
+              label="КПП"
+              value={form.kpp}
+              onChange={(e) => setForm((f) => ({ ...f, kpp: e.target.value }))}
+            />
+            <Input
+              label="ОГРН"
+              value={form.ogrn}
+              onChange={(e) => setForm((f) => ({ ...f, ogrn: e.target.value }))}
+            />
+          </div>
+          <Input
+            label="Юридический адрес"
+            value={form.legalAddress}
+            onChange={(e) => setForm((f) => ({ ...f, legalAddress: e.target.value }))}
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Банк"
+              value={form.bankName}
+              onChange={(e) => setForm((f) => ({ ...f, bankName: e.target.value }))}
+            />
+            <Input
+              label="БИК"
+              value={form.bankBik}
+              onChange={(e) => setForm((f) => ({ ...f, bankBik: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Расчётный счёт"
+              value={form.bankAccount}
+              onChange={(e) => setForm((f) => ({ ...f, bankAccount: e.target.value }))}
+            />
+            <Input
+              label="Корр. счёт"
+              value={form.corrAccount}
+              onChange={(e) => setForm((f) => ({ ...f, corrAccount: e.target.value }))}
+            />
+          </div>
+        </>
+      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Примечания</label>
+        <textarea
+          value={form.notes}
+          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+          rows={2}
+          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+        />
+      </div>
+      <div className="flex justify-end gap-3 pt-2">
+        <Button variant="outline" type="button" onClick={onCancel}>
+          Отмена
+        </Button>
+        <Button type="submit" loading={loading}>{submitLabel}</Button>
+      </div>
+    </form>
+  );
+}
+
 export default function ClientsClient({ initialData }: { initialData: ClientRow[] }) {
   const [clients, setClients] = useState(initialData);
   const [search, setSearch] = useState("");
@@ -145,146 +286,10 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
     if (res.ok) setClients((prev) => prev.filter((c) => c.id !== client.id));
   }
 
-  function ClientForm({ onSubmit, submitLabel }: { onSubmit: (e: React.FormEvent) => void; submitLabel: string }) {
-    return (
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Select
-            label="Тип клиента"
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            options={[
-              { value: "INDIVIDUAL", label: "Физическое лицо" },
-              { value: "LEGAL", label: "Юридическое лицо" },
-              { value: "IP", label: "ИП" },
-            ]}
-          />
-          <Select
-            label="Источник"
-            value={form.source}
-            onChange={(e) => setForm({ ...form, source: e.target.value })}
-            options={[
-              { value: "REFERRAL", label: "Рекомендация" },
-              { value: "ADVERTISING", label: "Реклама" },
-              { value: "COLD_CALL", label: "Звонок" },
-              { value: "SOCIAL_MEDIA", label: "Соцсети" },
-              { value: "OTHER", label: "Другое" },
-            ]}
-          />
-        </div>
-        <Input
-          label="Имя / Название *"
-          required
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="ООО «Пример» или Иванов Иван"
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Телефон"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            placeholder="+7 (999) 000-00-00"
-          />
-          <Input
-            label="Email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            placeholder="email@example.com"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Telegram"
-            value={form.telegram}
-            onChange={(e) => setForm({ ...form, telegram: e.target.value })}
-            placeholder="@username"
-          />
-          <Input
-            label="WhatsApp"
-            value={form.whatsapp}
-            onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-            placeholder="+7..."
-          />
-        </div>
-        {form.type !== "INDIVIDUAL" && (
-          <>
-            <div className="grid grid-cols-3 gap-3">
-              <Input
-                label="ИНН"
-                value={form.inn}
-                onChange={(e) => setForm({ ...form, inn: e.target.value })}
-              />
-              <Input
-                label="КПП"
-                value={form.kpp}
-                onChange={(e) => setForm({ ...form, kpp: e.target.value })}
-              />
-              <Input
-                label="ОГРН"
-                value={form.ogrn}
-                onChange={(e) => setForm({ ...form, ogrn: e.target.value })}
-              />
-            </div>
-            <Input
-              label="Юридический адрес"
-              value={form.legalAddress}
-              onChange={(e) => setForm({ ...form, legalAddress: e.target.value })}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Банк"
-                value={form.bankName}
-                onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-              />
-              <Input
-                label="БИК"
-                value={form.bankBik}
-                onChange={(e) => setForm({ ...form, bankBik: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Расчётный счёт"
-                value={form.bankAccount}
-                onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}
-              />
-              <Input
-                label="Корр. счёт"
-                value={form.corrAccount}
-                onChange={(e) => setForm({ ...form, corrAccount: e.target.value })}
-              />
-            </div>
-          </>
-        )}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Примечания</label>
-          <textarea
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            rows={2}
-            className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
-          />
-        </div>
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => { setCreateOpen(false); setEditingClient(null); }}
-          >
-            Отмена
-          </Button>
-          <Button type="submit" loading={loading}>{submitLabel}</Button>
-        </div>
-      </form>
-    );
-  }
-
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Клиенты</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{clients.length} клиент(ов) в базе</p>
@@ -426,12 +431,26 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
 
       {/* Create Modal */}
       <Modal isOpen={isCreateOpen} onClose={() => setCreateOpen(false)} title="Новый клиент">
-        <ClientForm onSubmit={handleCreate} submitLabel="Создать клиента" />
+        <ClientForm
+          form={form}
+          setForm={setForm}
+          loading={loading}
+          onSubmit={handleCreate}
+          submitLabel="Создать клиента"
+          onCancel={() => setCreateOpen(false)}
+        />
       </Modal>
 
       {/* Edit Modal */}
       <Modal isOpen={!!editingClient} onClose={() => setEditingClient(null)} title="Редактировать клиента">
-        <ClientForm onSubmit={handleUpdate} submitLabel="Сохранить" />
+        <ClientForm
+          form={form}
+          setForm={setForm}
+          loading={loading}
+          onSubmit={handleUpdate}
+          submitLabel="Сохранить"
+          onCancel={() => setEditingClient(null)}
+        />
       </Modal>
     </div>
   );

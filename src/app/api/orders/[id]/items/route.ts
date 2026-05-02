@@ -11,7 +11,6 @@ const itemSchema = z.object({
   price: z.number().min(0),
   discount: z.number().min(0).max(100).default(0),
   total: z.number().min(0),
-  includeWaste: z.boolean().default(true),
 });
 
 const replaceSchema = z.object({

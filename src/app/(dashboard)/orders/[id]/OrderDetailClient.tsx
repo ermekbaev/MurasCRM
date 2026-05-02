@@ -6,6 +6,7 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
+  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   PAYMENT_STATUS_LABELS,
@@ -21,7 +22,7 @@ import Input from "@/components/ui/Input";
 import {
   ArrowLeft, Send, CheckSquare, Clock, User, CreditCard, AlertCircle,
   Paperclip, Download, FileText, Image as ImageIcon, Upload,
-  Pencil, Plus, Trash2, Check, X, UserPlus, ToggleLeft, ToggleRight,
+  Pencil, Plus, Trash2, Check, X, UserPlus,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 
@@ -48,6 +49,7 @@ interface OrderDetailClientProps {
     id: string;
     number: string;
     status: string;
+    type: string;
     priority: string;
     paymentStatus: string;
     amount: number;
@@ -72,7 +74,6 @@ interface OrderDetailClientProps {
       price: number;
       discount: number;
       total: number;
-      includeWaste: boolean;
       equipment: { name: string } | null;
     }[];
     comments: {
@@ -128,7 +129,7 @@ export default function OrderDetailClient({
   const localPreviewsRef = useRef<Map<string, string>>(new Map());
 
   // Items edit state
-  type EditItem = { id?: string; name: string; qty: number; unit: string; price: number; discount: number; includeWaste: boolean };
+  type EditItem = { id?: string; name: string; qty: number; unit: string; price: number; discount: number };
   const [editingItems, setEditingItems] = useState(false);
   const [editItems, setEditItems] = useState<EditItem[]>([]);
   const [savingItems, setSavingItems] = useState(false);
@@ -271,7 +272,7 @@ export default function OrderDetailClient({
   }
 
   function startEditItems() {
-    setEditItems(order.items.map((i) => ({ id: i.id, name: i.name, qty: i.qty, unit: i.unit, price: i.price, discount: i.discount, includeWaste: i.includeWaste ?? true })));
+    setEditItems(order.items.map((i) => ({ id: i.id, name: i.name, qty: i.qty, unit: i.unit, price: i.price, discount: i.discount })));
     setEditingItems(true);
   }
 
@@ -280,7 +281,7 @@ export default function OrderDetailClient({
   }
 
   function addEditItem() {
-    setEditItems((prev) => [...prev, { name: "", qty: 1, unit: "шт", price: 0, discount: 0, includeWaste: true }]);
+    setEditItems((prev) => [...prev, { name: "", qty: 1, unit: "шт", price: 0, discount: 0 }]);
   }
 
   function removeEditItem(idx: number) {
@@ -292,7 +293,7 @@ export default function OrderDetailClient({
     const res = await fetch(`/api/orders/${order.id}/items`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: editItems.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price), discount: Number(i.discount), includeWaste: i.includeWaste })) }),
+      body: JSON.stringify({ items: editItems.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price), discount: Number(i.discount) })) }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -332,11 +333,12 @@ export default function OrderDetailClient({
   const editTotal = editItems.reduce((s, i) => s + Number(i.qty) * Number(i.price) * (1 - Number(i.discount) / 100), 0);
 
   const statusOptions = Object.entries(ORDER_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
+  const typeOptions = Object.entries(ORDER_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }));
   const priorityOptions = Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }));
   const paymentOptions = Object.entries(PAYMENT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Back + Header */}
       <div>
         <Link
@@ -400,6 +402,14 @@ export default function OrderDetailClient({
               {canEdit ? (
                 <>
                   <div>
+                    <dt className="text-xs text-gray-500 dark:text-slate-400 mb-1">Тип заявки</dt>
+                    <Select
+                      value={order.type}
+                      onChange={(e) => updateField("type", e.target.value)}
+                      options={typeOptions}
+                    />
+                  </div>
+                  <div>
                     <dt className="text-xs text-gray-500 dark:text-slate-400 mb-1">Приоритет</dt>
                     <Select
                       value={order.priority}
@@ -413,12 +423,16 @@ export default function OrderDetailClient({
                       type="datetime-local"
                       value={order.deadline ? order.deadline.slice(0, 16) : ""}
                       onChange={(e) => updateField("deadline", e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                     />
                   </div>
                 </>
               ) : (
                 <>
+                  <div className="flex justify-between text-sm">
+                    <dt className="text-gray-500 dark:text-slate-500">Тип</dt>
+                    <dd className="text-gray-800 dark:text-slate-200">{ORDER_TYPE_LABELS[order.type as keyof typeof ORDER_TYPE_LABELS] ?? order.type}</dd>
+                  </div>
                   <div className="flex justify-between text-sm">
                     <dt className="text-gray-500 dark:text-slate-500">Приоритет</dt>
                     <dd className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[order.priority as keyof typeof PRIORITY_COLORS]}`}>
@@ -488,7 +502,7 @@ export default function OrderDetailClient({
                 <select
                   value={selectedAssigneeId}
                   onChange={(e) => setSelectedAssigneeId(e.target.value)}
-                  className="flex-1 text-sm border border-gray-200 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="flex-1 text-sm border border-gray-200 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 >
                   <option value="">— выбрать —</option>
                   {users.filter((u) => !order.assignees.some((a) => a.id === u.id)).map((u) => (
@@ -585,7 +599,7 @@ export default function OrderDetailClient({
                               <input
                                 value={item.name}
                                 onChange={(e) => updateEditItem(idx, "name", e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                                 placeholder="Наименование"
                               />
                             </td>
@@ -594,37 +608,27 @@ export default function OrderDetailClient({
                                 <input
                                   type="number" min="0.01" step="any" value={item.qty}
                                   onChange={(e) => updateEditItem(idx, "qty", parseFloat(e.target.value) || 0)}
-                                  className="w-16 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                  className="w-16 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                                 />
                                 <input
                                   value={item.unit}
                                   onChange={(e) => updateEditItem(idx, "unit", e.target.value)}
-                                  className="w-12 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                  className="w-12 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                                 />
-                                <button
-                                  type="button"
-                                  title={item.includeWaste ? "Отход учтён — нажмите чтобы отключить" : "Отход не учтён — нажмите чтобы включить"}
-                                  onClick={() => updateEditItem(idx, "includeWaste", !item.includeWaste)}
-                                  className="shrink-0"
-                                >
-                                  {item.includeWaste
-                                    ? <ToggleRight size={18} className="text-emerald-500" />
-                                    : <ToggleLeft size={18} className="text-gray-300" />}
-                                </button>
                               </div>
                             </td>
                             <td className="px-2 py-2">
                               <input
                                 type="number" min="0" step="any" value={item.price}
                                 onChange={(e) => updateEditItem(idx, "price", parseFloat(e.target.value) || 0)}
-                                className="w-28 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                className="w-28 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                               />
                             </td>
                             <td className="px-2 py-2">
                               <input
                                 type="number" min="0" max="100" step="any" value={item.discount}
                                 onChange={(e) => updateEditItem(idx, "discount", parseFloat(e.target.value) || 0)}
-                                className="w-16 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                className="w-16 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                               />
                             </td>
                             <td className="px-3 py-2 text-right font-medium text-gray-700 dark:text-slate-300">
@@ -876,7 +880,7 @@ export default function OrderDetailClient({
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Написать комментарий..."
-                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 />
                 <Button type="submit" loading={commentLoading} disabled={!commentText.trim()}>
                   <Send size={14} />

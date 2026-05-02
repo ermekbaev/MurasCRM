@@ -127,6 +127,12 @@ enum DocumentTemplateType {
   OTHER
 }
 
+enum DefectStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -141,14 +147,16 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  managedOrders  Order[]        @relation("OrderManager")
-  assignedOrders Order[]        @relation("OrderAssignees")
-  tasks          Task[]
-  orderComments  OrderComment[]
-  changeLogs     ChangeLog[]
-  uploadedFiles  File[]
-  taskComments   TaskComment[]
-  fileComments   FileComment[]
+  managedOrders   Order[]        @relation("OrderManager")
+  assignedOrders  Order[]        @relation("OrderAssignees")
+  tasks           Task[]
+  orderComments   OrderComment[]
+  changeLogs      ChangeLog[]
+  uploadedFiles   File[]
+  taskComments    TaskComment[]
+  fileComments    FileComment[]
+  defectsAsOperator DefectRecord[] @relation("DefectOperator")
+  defectsApproved   DefectRecord[] @relation("DefectApprover")
 }
 
 // ─── Client ───────────────────────────────────────────────────────────────────
@@ -185,6 +193,7 @@ model Order {
   id            String        @id @default(cuid())
   number        String        @unique
   status        OrderStatus   @default(NEW)
+  type          OrderType     @default(DTF)
   priority      Priority      @default(NORMAL)
   deadline      DateTime?
   clientId      String
@@ -195,16 +204,17 @@ model Order {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  client     Client         @relation(fields: [clientId], references: [id])
-  manager    User?          @relation("OrderManager", fields: [managerId], references: [id])
-  assignees  User[]         @relation("OrderAssignees")
-  items      OrderItem[]
-  files      OrderFile[]
-  comments   OrderComment[]
-  changeLogs ChangeLog[]
-  tasks      Task[]
-  invoices   Invoice[]
-  acts       Act[]
+  client      Client         @relation(fields: [clientId], references: [id])
+  manager     User?          @relation("OrderManager", fields: [managerId], references: [id])
+  assignees   User[]         @relation("OrderAssignees")
+  items       OrderItem[]
+  files       OrderFile[]
+  comments    OrderComment[]
+  changeLogs  ChangeLog[]
+  tasks       Task[]
+  invoices    Invoice[]
+  acts        Act[]
+  defects     DefectRecord[]
 
   @@index([clientId])
   @@index([managerId])
@@ -213,17 +223,16 @@ model Order {
 }
 
 model OrderItem {
-  id           String   @id @default(cuid())
-  orderId      String
-  equipmentId  String?
-  name         String
-  qty          Decimal  @db.Decimal(10, 3)
-  unit         String
-  price        Decimal  @db.Decimal(12, 2)
-  discount     Decimal  @default(0) @db.Decimal(5, 2)
-  total        Decimal  @db.Decimal(12, 2)
-  includeWaste Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  orderId     String
+  equipmentId String?
+  name        String
+  qty         Decimal  @db.Decimal(10, 3)
+  unit        String
+  price       Decimal  @db.Decimal(12, 2)
+  discount    Decimal  @default(0) @db.Decimal(5, 2)
+  total       Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
 
   order               Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
   equipment           Equipment?          @relation(fields: [equipmentId], references: [id])
@@ -511,7 +520,7 @@ model Equipment {
   workWidth    Decimal?        @db.Decimal(8, 3)
   pricePerLm   Decimal?        @db.Decimal(12, 2)
   pricingUnit  String          @default("LM")
-  wastePerJob  Decimal?        @db.Decimal(8, 3) // отход на прогон (необязательно, только для нужных станков)
+  costPerLm    Decimal?        @db.Decimal(12, 2) // себестоимость за единицу работы (сом)
   operatorRate Decimal?        @db.Decimal(12, 2) // ставка оператора за единицу работы (сом)
   materials    String[]
   status       EquipmentStatus @default(ACTIVE)
@@ -520,6 +529,35 @@ model Equipment {
 
   orderItems           OrderItem[]
   equipmentConsumables EquipmentConsumable[]
+  defects              DefectRecord[]
+}
+
+// ─── Defect Record ────────────────────────────────────────────────────────────
+
+model DefectRecord {
+  id           String       @id @default(cuid())
+  equipmentId  String
+  operatorId   String
+  orderId      String?
+  qty          Decimal      @db.Decimal(10, 3)
+  unit         String
+  reason       String?
+  cost         Decimal      @default(0) @db.Decimal(12, 2)
+  status       DefectStatus @default(PENDING)
+  approvedById String?
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  equipment  Equipment @relation(fields: [equipmentId], references: [id])
+  operator   User      @relation("DefectOperator", fields: [operatorId], references: [id])
+  approvedBy User?     @relation("DefectApprover", fields: [approvedById], references: [id])
+  order      Order?    @relation(fields: [orderId], references: [id])
+
+  @@index([operatorId])
+  @@index([equipmentId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ─── Supplier ─────────────────────────────────────────────────────────────────

@@ -68,6 +68,8 @@ function fmtDateLong(d: string): string {
 
 export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
   const [downloading, setDownloading] = useState(false);
+  const [isPaid, setIsPaid] = useState(invoice.isPaid);
+  const [togglingPaid, setTogglingPaid] = useState(false);
   const { editing, editItems, saving, subtotal: editSubtotal, startEditing, cancelEditing, updateItem, addItem, removeItem, saveItems } =
     useLineItems(invoice.items);
 
@@ -75,8 +77,20 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
     setDownloading(true);
     try {
       const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
-      await generateInvoicePDF(invoice, company ? { ...company, phone: company.phone } : null);
+      await generateInvoicePDF({ ...invoice, isPaid }, company ? { ...company, phone: company.phone } : null);
     } finally { setDownloading(false); }
+  }
+
+  async function handleTogglePaid() {
+    setTogglingPaid(true);
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPaid: !isPaid }),
+      });
+      if (res.ok) setIsPaid((v) => !v);
+    } finally { setTogglingPaid(false); }
   }
 
   const editVat = (editSubtotal * invoice.vatRate) / 100;
@@ -118,6 +132,14 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
           ) : (
             <>
               <Button variant="outline" onClick={startEditing}><Pencil size={16} /> Редактировать позиции</Button>
+              <Button
+                variant="outline"
+                onClick={handleTogglePaid}
+                loading={togglingPaid}
+              >
+                {isPaid ? <XCircle size={16} /> : <CheckCircle size={16} />}
+                {isPaid ? "Снять оплату" : "Отметить оплаченным"}
+              </Button>
               <Button variant="outline" onClick={() => window.print()}><Printer size={16} /> Печать</Button>
               <Button onClick={handleDownloadPDF} loading={downloading}><Download size={16} /> Скачать PDF</Button>
             </>
@@ -319,6 +341,20 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
             </p>
           )}
 
+          {/* Payment status */}
+          <div style={{ margin: "8px 0 14px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "10px", color: "#555" }}>Статус оплаты:</span>
+            <span style={{
+              fontSize: "11px", fontWeight: 700,
+              color: isPaid ? "#15803d" : "#b91c1c",
+              border: `2px solid ${isPaid ? "#15803d" : "#b91c1c"}`,
+              padding: "2px 10px", borderRadius: "4px",
+              letterSpacing: "0.5px",
+            }}>
+              {isPaid ? "ОПЛАЧЕН" : "НЕ ОПЛАЧЕН"}
+            </span>
+          </div>
+
           {/* Divider */}
           <div style={{ borderTop: "1px dashed #999", margin: "0 0 14px 0" }} />
 
@@ -347,12 +383,6 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
         </div>
       </div>
 
-      {/* Payment status badge — screen only */}
-      <div className="max-w-3xl mx-auto mt-3 flex justify-end print:hidden">
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${invoice.isPaid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-          {invoice.isPaid ? "✓ Оплачен" : "Ожидает оплаты"}
-        </span>
-      </div>
     </div>
   );
 }

@@ -128,9 +128,9 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
   }
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Задачи</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{tasks.length} задач(и)</p>
@@ -187,7 +187,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
             const colTasks = filtered.filter((t) => t.status === col.key);
             return (
               <div key={col.key} className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300">{col.label}</h3>
                   <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 rounded-full px-2 py-0.5">
                     {colTasks.length}
@@ -216,7 +216,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                           </div>
                           {task.order && (
                             <p className="text-xs text-violet-600 mb-1 truncate">
-                              {task.order.number} · {task.order.client.name}
+                              {task.order.number}{task.order.client ? ` · ${task.order.client.name}` : ''}
                             </p>
                           )}
                           {task.tags?.length > 0 && (
@@ -282,6 +282,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
       {/* List view */}
       {viewMode === "list" && (
         <Card padding="none">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
@@ -329,6 +330,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
               )}
             </tbody>
           </table>
+          </div>
         </Card>
       )}
 
@@ -342,7 +344,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             placeholder="Что нужно сделать?"
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Тип задачи"
               value={form.type}

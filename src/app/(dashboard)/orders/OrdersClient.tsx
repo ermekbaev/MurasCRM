@@ -6,6 +6,7 @@ import { formatCurrency, formatDate, formatFileSize } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
+  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   PAYMENT_STATUS_LABELS,
@@ -16,13 +17,14 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import { Plus, Search, ShoppingCart, AlertTriangle, Trash2, Paperclip, X, FileText, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Search, ShoppingCart, AlertTriangle, Trash2, Paperclip, X, FileText } from "lucide-react";
 import { Role } from "@prisma/client";
 
 interface Order {
   id: string;
   number: string;
   status: string;
+  type: string;
   priority: string;
   paymentStatus: string;
   amount: number;
@@ -50,7 +52,6 @@ interface Equipment {
   name: string;
   pricePerLm: number;
   pricingUnit: string;
-  wastePerJob: number | null;
 }
 
 interface FormItem {
@@ -60,7 +61,6 @@ interface FormItem {
   unit: string;
   price: string;
   discount: string;
-  includeWaste: boolean;
 }
 
 interface Props {
@@ -76,18 +76,20 @@ const PRICING_UNIT_SHORT: Record<string, string> = {
   LM: "пог.м", SQM: "м²", PCS: "шт", CUT: "мм",
 };
 
-const emptyItem = (): FormItem => ({ equipmentId: "", name: "", qty: "", unit: "шт", price: "", discount: "", includeWaste: true });
+const emptyItem = (): FormItem => ({ equipmentId: "", name: "", qty: "", unit: "шт", price: "", discount: "" });
 
 export default function OrdersClient({ initialOrders, clients, users, equipment, currentUserId, currentRole }: Props) {
   const [orders, setOrders] = useState(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [isModalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formItems, setFormItems] = useState<FormItem[]>([emptyItem()]);
   const [form, setForm] = useState({
     clientId: "",
+    type: "DTF",
     priority: "NORMAL",
     deadline: "",
     notes: "",
@@ -171,7 +173,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
 
   function closeModal() {
     setModalOpen(false);
-    setForm({ clientId: "", priority: "NORMAL", deadline: "", notes: "" });
+    setForm({ clientId: "", type: "DTF", priority: "NORMAL", deadline: "", notes: "" });
     setFormItems([emptyItem()]);
     setSelectedAssignees([]);
     setPendingFiles([]);
@@ -206,7 +208,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       (statusFilter === "completed" && ["READY", "ISSUED"].includes(o.status)) ||
       o.status === statusFilter;
     const matchPriority = !priorityFilter || o.priority === priorityFilter;
-    return matchSearch && matchStatus && matchPriority;
+    const matchType = !typeFilter || o.type === typeFilter;
+    return matchSearch && matchStatus && matchPriority && matchType;
   });
 
   async function handleCreate(e: React.FormEvent) {
@@ -225,7 +228,6 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           name: i.name,
           qty: Number(i.qty),
           unit: i.unit,
-          includeWaste: i.includeWaste,
           price: Number(i.price),
           discount: Number(i.discount),
         })),
@@ -287,9 +289,9 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   };
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Заявки</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{filtered.length} из {orders.length}</p>
@@ -336,6 +338,16 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           >
             <option value="">Все приоритеты</option>
             {Object.entries(PRIORITY_LABELS).map(([val, label]) => (
+              <option key={val} value={val}>{label}</option>
+            ))}
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+          >
+            <option value="">Все типы</option>
+            {Object.entries(ORDER_TYPE_LABELS).map(([val, label]) => (
               <option key={val} value={val}>{label}</option>
             ))}
           </select>
@@ -421,12 +433,20 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       {/* Create Modal */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Новая заявка" size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
-          <Select
-            label="Приоритет"
-            value={form.priority}
-            onChange={(e) => setForm({ ...form, priority: e.target.value })}
-            options={Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Тип заявки"
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              options={Object.entries(ORDER_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+            />
+            <Select
+              label="Приоритет"
+              value={form.priority}
+              onChange={(e) => setForm({ ...form, priority: e.target.value })}
+              options={Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+            />
+          </div>
           <Select
             label="Клиент *"
             value={form.clientId}
@@ -503,8 +523,6 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                 <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                   {formItems.map((item, idx) => {
                     const lineTotal = Number(item.qty) * Number(item.price) * (1 - Number(item.discount) / 100);
-                    const selectedEq = equipment.find((e) => e.id === item.equipmentId);
-                    const hasWaste = !!selectedEq?.wastePerJob;
                     return (
                       <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30">
                         <td className="px-3 py-1.5">
@@ -520,25 +538,11 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                           </select>
                         </td>
                         <td className="px-2 py-1.5">
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number" min="0.01" step="any" value={item.qty}
-                              onChange={(e) => updateItem(idx, { qty: e.target.value })}
-                              className="w-full px-1 py-1 text-sm border border-gray-200 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                            />
-                            {hasWaste && (
-                              <button
-                                type="button"
-                                title={item.includeWaste ? `Отход +${selectedEq.wastePerJob}м учтён — нажмите чтобы отключить` : `Отход +${selectedEq.wastePerJob}м не учтён — нажмите чтобы включить`}
-                                onClick={() => updateItem(idx, { includeWaste: !item.includeWaste })}
-                                className="shrink-0"
-                              >
-                                {item.includeWaste
-                                  ? <ToggleRight size={18} className="text-emerald-500" />
-                                  : <ToggleLeft size={18} className="text-gray-300" />}
-                              </button>
-                            )}
-                          </div>
+                          <input
+                            type="number" min="0.01" step="any" value={item.qty}
+                            onChange={(e) => updateItem(idx, { qty: e.target.value })}
+                            className="w-full px-1 py-1 text-sm border border-gray-200 dark:border-slate-600 rounded text-center bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          />
                         </td>
                         <td className="px-2 py-1.5">
                           <input

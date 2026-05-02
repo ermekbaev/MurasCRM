@@ -16,19 +16,36 @@ const schema = z.object({
   })).min(1),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const acts = await prisma.act.findMany({
-    orderBy: { date: "desc" },
-    include: {
-      invoice: { include: { client: { select: { id: true, name: true } } } },
-      order: { select: { id: true, number: true } },
-    },
-  });
+  const { searchParams } = new URL(req.url);
+  const q = z.object({
+    page: z.coerce.number().int().positive().max(10000).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+  }).parse(Object.fromEntries(searchParams));
+  const skip = (q.page - 1) * q.limit;
 
-  return NextResponse.json(acts.map((a) => ({ ...a, total: Number(a.total) })));
+  const [acts, total] = await Promise.all([
+    prisma.act.findMany({
+      skip,
+      take: q.limit,
+      orderBy: { date: "desc" },
+      include: {
+        invoice: { include: { client: { select: { id: true, name: true } } } },
+        order: { select: { id: true, number: true } },
+      },
+    }),
+    prisma.act.count(),
+  ]);
+
+  return NextResponse.json({
+    acts: acts.map((a) => ({ ...a, total: Number(a.total) })),
+    total,
+    page: q.page,
+    pages: Math.ceil(total / q.limit),
+  });
 }
 
 export async function POST(req: Request) {

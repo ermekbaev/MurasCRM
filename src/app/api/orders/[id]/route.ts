@@ -6,6 +6,7 @@ import { notifyOrderStatusChanged } from "@/lib/telegram";
 
 const updateSchema = z.object({
   status: z.enum(["NEW", "IN_PROGRESS", "REVIEW", "READY", "ISSUED", "CANCELLED"]).optional(),
+  type: z.enum(["DTF", "UV_DTF", "UV_FLATBED", "LASER_CUT", "PLOTTER_CUT", "HIGH_PRECISION", "COMBO"]).optional(),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).optional(),
   deadline: z.string().nullable().optional(),
   paymentStatus: z.enum(["UNPAID", "ADVANCE", "PAID"]).optional(),
@@ -25,6 +26,7 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
         include: {
           equipmentConsumables: {
             where: { autoDeduct: true, trigger },
+            include: { consumable: { select: { writeoffPrice: true, purchasePrice: true } } },
           },
         },
       },
@@ -49,9 +51,11 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
     for (const cfg of configs) {
       if (deducted.has(`${item.id}:${cfg.consumableId}`)) continue;
 
-      const waste = item.includeWaste && item.equipment.wastePerJob ? Number(item.equipment.wastePerJob) : 0;
-      const qty = Number(item.qty) * Number(cfg.consumptionPerUnit) + waste;
+      const qty = Number(item.qty) * Number(cfg.consumptionPerUnit);
       if (qty <= 0) continue;
+
+      const unitPrice = Number(cfg.consumable.writeoffPrice) || Number(cfg.consumable.purchasePrice) || 0;
+      const totalCost = unitPrice > 0 ? qty * unitPrice : null;
 
       await prisma.$transaction([
         prisma.consumableMovement.create({
@@ -62,6 +66,7 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
             orderId,
             orderItemId: item.id,
             note: `Авто-списание по заказу, позиция: ${item.name}`,
+            totalCost,
           },
         }),
         prisma.consumable.update({

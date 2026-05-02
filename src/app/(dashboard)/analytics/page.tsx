@@ -12,7 +12,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, Minus, ShoppingCart, DollarSign, BarChart3, FileDown, FileText, Wallet, ArrowDownCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ShoppingCart, DollarSign, BarChart3, FileDown, FileText, Wallet, ArrowDownCircle, Calendar } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
@@ -22,6 +22,7 @@ const PERIODS = [
   { value: "month", label: "Месяц" },
   { value: "quarter", label: "Квартал" },
   { value: "year", label: "Год" },
+  { value: "custom", label: "Период" },
 ];
 
 interface AnalyticsData {
@@ -34,6 +35,7 @@ interface AnalyticsData {
     avgCheck: number;
     materialCosts: number;
     operatorWages: number;
+    productionCost: number;
     totalExpenses: number;
     profit: number;
     prevProfit: number;
@@ -59,25 +61,35 @@ export default function AnalyticsPage() {
     : { border: "1px solid #e5e7eb", fontSize: 12, borderRadius: 8 };
 
   const [period, setPeriod] = useState("month");
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const firstOfMonthStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+  const [dateFrom, setDateFrom] = useState(firstOfMonthStr);
+  const [dateTo, setDateTo] = useState(todayStr);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
 
   useEffect(() => {
+    if (period === "custom" && (!dateFrom || !dateTo)) return;
     setLoading(true);
-    fetch(`/api/analytics?period=${period}`)
+    const url = period === "custom"
+      ? `/api/analytics?period=custom&from=${dateFrom}&to=${dateTo}`
+      : `/api/analytics?period=${period}`;
+    fetch(url)
       .then((r) => r.json())
       .then(setData)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, dateFrom, dateTo]);
 
   async function handleExportExcel() {
     if (!data) return;
     setExporting(true);
     try {
       const { utils, writeFile } = await import("xlsx");
-      const periodLabel = PERIODS.find((p) => p.value === period)?.label || period;
+      const periodLabel = period === "custom"
+        ? `${dateFrom} – ${dateTo}`
+        : (PERIODS.find((p) => p.value === period)?.label || period);
       const wb = utils.book_new();
 
       // Sheet 1: Summary
@@ -86,6 +98,7 @@ export default function AnalyticsPage() {
         ["Оборот (выручка)", data.summary.revenue],
         ["Расходы (всего)", data.summary.totalExpenses],
         ["  в т.ч. материалы", data.summary.materialCosts],
+        ["  в т.ч. себестоимость", data.summary.productionCost],
         ["  в т.ч. ЗП операторов", data.summary.operatorWages],
         ["Прибыль", data.summary.profit],
         ["Заказов", data.summary.ordersCount],
@@ -130,7 +143,9 @@ export default function AnalyticsPage() {
     try {
       const { default: jsPDF } = await import("jspdf");
       const { default: autoTable } = await import("jspdf-autotable");
-      const periodLabel = PERIODS.find((p) => p.value === period)?.label || period;
+      const periodLabel = period === "custom"
+        ? `${dateFrom} – ${dateTo}`
+        : (PERIODS.find((p) => p.value === period)?.label || period);
       const doc = new jsPDF();
 
       doc.setFont("helvetica", "bold");
@@ -150,6 +165,7 @@ export default function AnalyticsPage() {
           ["Оборот (выручка)", `${data.summary.revenue.toLocaleString("ru-RU")} сом`],
           ["Расходы (всего)", `${data.summary.totalExpenses.toLocaleString("ru-RU")} сом`],
           ["  в т.ч. материалы", `${data.summary.materialCosts.toLocaleString("ru-RU")} сом`],
+          ["  в т.ч. себестоимость", `${data.summary.productionCost.toLocaleString("ru-RU")} сом`],
           ["  в т.ч. ЗП операторов", `${data.summary.operatorWages.toLocaleString("ru-RU")} сом`],
           ["Прибыль", `${data.summary.profit.toLocaleString("ru-RU")} сом`],
           ["Выручка (пред. период)", `${data.summary.prevRevenue.toLocaleString("ru-RU")} сом`],
@@ -240,42 +256,64 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <BarChart3 size={24} className="text-violet-600" />
             Аналитика
           </h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
           <Button variant="outline" onClick={handleExportExcel} loading={exporting}>
             <FileDown size={15} /> Excel
           </Button>
           <Button variant="outline" onClick={handleExportPDF} loading={exportingPdf}>
             <FileText size={15} /> PDF
           </Button>
-        <div className="flex border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
-          {PERIODS.map((p) => (
-            <button
-              key={p.value}
-              onClick={() => setPeriod(p.value)}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                period === p.value
-                  ? "bg-violet-600 text-white"
-                  : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+          {period === "custom" && (
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-gray-400 dark:text-slate-500" />
+              <input
+                type="date"
+                value={dateFrom}
+                max={dateTo}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="px-2 py-1.5 text-sm border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              />
+              <span className="text-gray-400 dark:text-slate-500 text-sm">—</span>
+              <input
+                type="date"
+                value={dateTo}
+                min={dateFrom}
+                max={todayStr}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="px-2 py-1.5 text-sm border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              />
+            </div>
+          )}
+          <div className="flex border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            {PERIODS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setPeriod(p.value)}
+                className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  period === p.value
+                    ? "bg-violet-600 text-white"
+                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50"
+                }`}
+              >
+                {p.value === "custom" && <Calendar size={13} />}
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
@@ -295,6 +333,7 @@ export default function AnalyticsPage() {
               <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.totalExpenses)}</p>
               <div className="mt-1 space-y-0.5">
                 <p className="text-xs text-gray-400 dark:text-slate-500">Материалы: {formatCurrency(summary.materialCosts)}</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Себест.: {formatCurrency(summary.productionCost)}</p>
                 <p className="text-xs text-gray-400 dark:text-slate-500">ЗП: {formatCurrency(summary.operatorWages)}</p>
               </div>
             </div>

@@ -9,7 +9,7 @@ const schema = z.object({
   workWidth: z.number().nullable().optional(),
   pricePerLm: z.number().nullable().optional(),
   pricingUnit: z.enum(["LM", "SQM", "PCS", "CUT"]).default("LM"),
-  wastePerJob: z.number().nullable().optional(),
+  costPerLm: z.number().nullable().optional(),
   operatorRate: z.number().nullable().optional(),
   materials: z.array(z.string()).default([]),
   status: z.enum(["ACTIVE", "MAINTENANCE"]).default("ACTIVE"),
@@ -28,7 +28,7 @@ export async function GET() {
     ...e,
     workWidth: e.workWidth ? Number(e.workWidth) : null,
     pricePerLm: e.pricePerLm ? Number(e.pricePerLm) : null,
-    wastePerJob: e.wastePerJob ? Number(e.wastePerJob) : null,
+    costPerLm: e.costPerLm ? Number(e.costPerLm) : null,
     operatorRate: e.operatorRate ? Number(e.operatorRate) : null,
     pricingUnit: e.pricingUnit || "LM",
   })));

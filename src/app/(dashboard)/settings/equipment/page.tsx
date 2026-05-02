@@ -16,7 +16,7 @@ interface Equipment {
   workWidth: number | null;
   pricePerLm: number | null;
   pricingUnit: string;
-  wastePerJob: number | null;
+  costPerLm: number | null;
   operatorRate: number | null;
   materials: string[];
   status: string;
@@ -34,7 +34,6 @@ interface EquipmentConsumable {
   id: string;
   consumableId: string;
   consumptionPerUnit: number;
-  wastePerJob: number;
   autoDeduct: boolean;
   trigger: string;
   consumable: Consumable;
@@ -67,7 +66,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   ON_READY: "При «Готово»",
 };
 
-const EMPTY_FORM = { name: "", type: "DTF", workWidth: "", pricePerLm: "", pricingUnit: "LM", wastePerJob: "", operatorRate: "", materials: "", status: "ACTIVE" };
+const EMPTY_FORM = { name: "", type: "DTF", workWidth: "", pricePerLm: "", pricingUnit: "LM", costPerLm: "", operatorRate: "", materials: "", status: "ACTIVE" };
 const EMPTY_CONS_FORM = { consumableId: "", consumptionPerUnit: "1", autoDeduct: true, trigger: "ON_IN_PROGRESS" };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -116,7 +115,7 @@ export default function EquipmentSettingsPage() {
       workWidth: eq.workWidth?.toString() || "",
       pricePerLm: eq.pricePerLm?.toString() || "",
       pricingUnit: eq.pricingUnit || "LM",
-      wastePerJob: eq.wastePerJob?.toString() || "",
+      costPerLm: eq.costPerLm?.toString() || "",
       operatorRate: eq.operatorRate?.toString() || "",
       materials: eq.materials.join(", "),
       status: eq.status,
@@ -132,7 +131,7 @@ export default function EquipmentSettingsPage() {
       ...form,
       workWidth: form.workWidth ? Number(form.workWidth) : null,
       pricePerLm: form.pricePerLm ? Number(form.pricePerLm) : null,
-      wastePerJob: form.wastePerJob ? Number(form.wastePerJob) : null,
+      costPerLm: form.costPerLm ? Number(form.costPerLm) : null,
       operatorRate: form.operatorRate ? Number(form.operatorRate) : null,
       materials: form.materials.split(",").map((m) => m.trim()).filter(Boolean),
     };
@@ -255,8 +254,8 @@ export default function EquipmentSettingsPage() {
   if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
           <Cpu size={22} /> Оборудование
         </h1>
@@ -285,7 +284,7 @@ export default function EquipmentSettingsPage() {
                   {EQUIPMENT_STATUS_LABELS[eq.status as keyof typeof EQUIPMENT_STATUS_LABELS]}
                 </span>
               </div>
-              {(eq.workWidth || eq.pricePerLm || eq.wastePerJob || eq.operatorRate) && (
+              {(eq.workWidth || eq.pricePerLm || eq.costPerLm || eq.operatorRate) && (
                 <div className="flex gap-3 mt-2 flex-wrap">
                   {eq.workWidth && (
                     <p className="text-xs text-gray-500 dark:text-slate-400">Ширина: <span className="font-medium text-gray-700 dark:text-slate-300">{eq.workWidth} м</span></p>
@@ -293,8 +292,8 @@ export default function EquipmentSettingsPage() {
                   {eq.pricePerLm && (
                     <p className="text-xs text-gray-500 dark:text-slate-400">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
                   )}
-                  {eq.wastePerJob && (
-                    <p className="text-xs text-gray-500 dark:text-slate-400">Отход: <span className="font-medium text-amber-600">{eq.wastePerJob} м/прогон</span></p>
+                  {eq.costPerLm && (
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Себест.: <span className="font-medium text-amber-600">{eq.costPerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
                   )}
                   {eq.operatorRate && (
                     <p className="text-xs text-gray-500 dark:text-slate-400">Ставка оператора: <span className="font-medium text-emerald-600">{eq.operatorRate} сом/{PRICING_UNIT_MEASURE[eq.pricingUnit] || "ед"}</span></p>
@@ -370,7 +369,7 @@ export default function EquipmentSettingsPage() {
               { value: "CUT", label: "Длина реза (мм/пог.м)" },
             ]}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(form.pricingUnit === "LM" || form.pricingUnit === "SQM") && (
               <Input
                 label="Рабочая ширина (м)"
@@ -393,13 +392,13 @@ export default function EquipmentSettingsPage() {
             />
           </div>
           <Input
-            label="Отход на прогон (м) — необязательно"
+            label={`Себестоимость (сом/${PRICING_UNIT_MEASURE[form.pricingUnit] || "ед"}) — необязательно`}
             type="number"
             min={0}
             step={0.01}
-            value={form.wastePerJob}
-            onChange={(e) => setForm({ ...form, wastePerJob: e.target.value })}
-            placeholder="0.50"
+            value={form.costPerLm}
+            onChange={(e) => setForm({ ...form, costPerLm: e.target.value })}
+            placeholder="500"
           />
           <Input
             label={`Ставка оператора (сом/${PRICING_UNIT_MEASURE[form.pricingUnit] || "ед"}) — необязательно`}

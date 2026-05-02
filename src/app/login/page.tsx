@@ -119,7 +119,7 @@ export default function LoginPage() {
                   placeholder="admin@muras.com"
                   autoComplete="email"
                   required
-                  className="w-full px-4 py-2.5 pl-10 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 pl-10 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-all bg-white text-slate-900 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400"
                 />
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               </div>

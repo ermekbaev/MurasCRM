@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { notifyFilePendingApproval } from "@/lib/telegram";
 
 const patchSchema = z.object({
   status: z.enum(["UPLOADED", "PENDING_APPROVAL", "APPROVED", "REVISION"]).optional(),
@@ -35,6 +36,10 @@ export async function PATCH(
     data: parsed.data,
     include: { uploadedBy: { select: { id: true, name: true } } },
   });
+
+  if (parsed.data.status === "PENDING_APPROVAL" && existing.status !== "PENDING_APPROVAL") {
+    notifyFilePendingApproval(file.id).catch(() => {});
+  }
 
   return NextResponse.json(file);
 }

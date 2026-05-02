@@ -42,23 +42,38 @@ export async function GET(req: Request) {
     where.isPaid = isPaid === "true";
   }
 
-  const invoices = await prisma.invoice.findMany({
-    where,
-    orderBy: { date: "desc" },
-    include: {
-      client: { select: { id: true, name: true } },
-      order: { select: { id: true, number: true } },
-      _count: { select: { items: true } },
-    },
-    take: 100,
-  });
+  const pageQ = z.object({
+    page: z.coerce.number().int().positive().max(10000).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+  }).parse(Object.fromEntries(searchParams));
+  const skip = (pageQ.page - 1) * pageQ.limit;
 
-  return NextResponse.json(invoices.map((i) => ({
-    ...i,
-    subtotal: Number(i.subtotal),
-    vatAmount: Number(i.vatAmount),
-    total: Number(i.total),
-  })));
+  const [invoices, total] = await Promise.all([
+    prisma.invoice.findMany({
+      where,
+      skip,
+      take: pageQ.limit,
+      orderBy: { date: "desc" },
+      include: {
+        client: { select: { id: true, name: true } },
+        order: { select: { id: true, number: true } },
+        _count: { select: { items: true } },
+      },
+    }),
+    prisma.invoice.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    invoices: invoices.map((i) => ({
+      ...i,
+      subtotal: Number(i.subtotal),
+      vatAmount: Number(i.vatAmount),
+      total: Number(i.total),
+    })),
+    total,
+    page: pageQ.page,
+    pages: Math.ceil(total / pageQ.limit),
+  });
 }
 
 export async function POST(req: Request) {

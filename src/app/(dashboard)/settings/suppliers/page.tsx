@@ -98,8 +98,8 @@ export default function SuppliersPage() {
   if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Поставщики</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Справочник поставщиков расходных материалов</p>
@@ -188,7 +188,7 @@ export default function SuppliersPage() {
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
             placeholder="ООО «ПолиграфМатериалы»"
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
               label="Телефон"
               value={form.phone}
@@ -215,7 +215,7 @@ export default function SuppliersPage() {
               value={form.notes}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
               placeholder="Условия работы, контактное лицо и т.д."
             />
           </div>

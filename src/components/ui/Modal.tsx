@@ -21,6 +21,7 @@ const sizes = {
 
 export default function Modal({ isOpen, onClose, title, children, size = "md" }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const mouseDownOnOverlay = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -47,8 +48,12 @@ export default function Modal({ isOpen, onClose, title, children, size = "md" }:
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
+      onMouseDown={(e) => {
+        mouseDownOnOverlay.current = e.target === overlayRef.current;
+      }}
+      onMouseUp={(e) => {
+        if (mouseDownOnOverlay.current && e.target === overlayRef.current) onClose();
+        mouseDownOnOverlay.current = false;
       }}
     >
       <div className={cn("bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full flex flex-col max-h-[90vh]", sizes[size])}>

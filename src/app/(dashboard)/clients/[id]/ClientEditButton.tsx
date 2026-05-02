@@ -76,7 +76,7 @@ export default function ClientEditButton({ client }: { client: Client }) {
 
       <Modal isOpen={open} onClose={() => setOpen(false)} title="Редактировать клиента" size="lg">
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Тип клиента"
               value={form.type}
@@ -101,28 +101,28 @@ export default function ClientEditButton({ client }: { client: Client }) {
             />
           </div>
           <Input label="Имя / Название *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Телефон" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Telegram" value={form.telegram} onChange={(e) => setForm({ ...form, telegram: e.target.value })} placeholder="@username" />
             <Input label="WhatsApp" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
           </div>
           {form.type !== "INDIVIDUAL" && (
             <>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Input label="ИНН" value={form.inn} onChange={(e) => setForm({ ...form, inn: e.target.value })} />
                 <Input label="КПП" value={form.kpp} onChange={(e) => setForm({ ...form, kpp: e.target.value })} />
                 <Input label="ОГРН" value={form.ogrn} onChange={(e) => setForm({ ...form, ogrn: e.target.value })} />
               </div>
               <Input label="Юридический адрес" value={form.legalAddress} onChange={(e) => setForm({ ...form, legalAddress: e.target.value })} />
               <Input label="Почтовый адрес" value={form.postalAddress} onChange={(e) => setForm({ ...form, postalAddress: e.target.value })} />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Банк" value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} />
                 <Input label="БИК" value={form.bankBik} onChange={(e) => setForm({ ...form, bankBik: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Расчётный счёт" value={form.bankAccount} onChange={(e) => setForm({ ...form, bankAccount: e.target.value })} />
                 <Input label="Корр. счёт" value={form.corrAccount} onChange={(e) => setForm({ ...form, corrAccount: e.target.value })} />
               </div>
@@ -134,7 +134,7 @@ export default function ClientEditButton({ client }: { client: Client }) {
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">

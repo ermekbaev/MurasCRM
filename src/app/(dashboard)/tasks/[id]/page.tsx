@@ -173,7 +173,7 @@ export default function TaskDetailPage() {
   const doneItems = task.checklistItems.filter((i) => i.isCompleted).length;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <div>
         <Link href="/tasks" className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-500 hover:text-gray-700 dark:text-slate-300 mb-3">
           <ArrowLeft size={14} /> Все задачи
@@ -329,7 +329,7 @@ export default function TaskDetailPage() {
                   value={checklistText}
                   onChange={(e) => setChecklistText(e.target.value)}
                   placeholder="Добавить пункт..."
-                  className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 />
                 <Button type="submit" size="sm" disabled={!checklistText.trim()}>
                   <Plus size={14} />
@@ -427,7 +427,7 @@ export default function TaskDetailPage() {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Написать комментарий..."
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   />
                   <Button type="submit" disabled={!commentText.trim()}>
                     <Send size={14} />

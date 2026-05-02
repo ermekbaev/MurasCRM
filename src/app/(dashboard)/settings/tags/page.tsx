@@ -87,8 +87,8 @@ export default function TagsPage() {
   if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Теги</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Используются для задач и файлов</p>
