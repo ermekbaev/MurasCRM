@@ -184,11 +184,12 @@ export default function EquipmentSettingsPage() {
 
     const [cfgRes, allRes] = await Promise.all([
       fetch(`/api/equipment/${eq.id}/consumables`),
-      fetch("/api/consumables"),
+      fetch("/api/consumables?limit=200"),
     ]);
     const [cfgData, allData] = await Promise.all([cfgRes.json(), allRes.json()]);
     setConsConfigs(Array.isArray(cfgData) ? cfgData : []);
-    setAllConsumables(Array.isArray(allData) ? allData : []);
+    // /api/consumables возвращает { consumables, total, ... }, а не массив
+    setAllConsumables(Array.isArray(allData?.consumables) ? allData.consumables : Array.isArray(allData) ? allData : []);
     setConsLoading(false);
   }
 
