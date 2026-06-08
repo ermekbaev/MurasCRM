@@ -33,6 +33,17 @@ const BRANDING: BrandingItem[] = [
   { field: "signatureKey", label: "Подпись",  hint: "PNG с прозрачным фоном. 400×150px.",   urlKey: "signatureUrl", size: "w-full h-24", accept: "image/png,image/jpeg,image/webp" },
 ];
 
+// Defined at module scope — if declared inside the page component it would be a new
+// function identity on every render, remounting its inputs and losing focus after one keystroke.
+function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <Card padding="md">
+      <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">{icon}{title}</h2>
+      <div className="space-y-4">{children}</div>
+    </Card>
+  );
+}
+
 export default function CompanySettingsPage() {
   const [form, setForm] = useState<Settings>({
     name: "", inn: "", kpp: "", ogrn: "", legalAddress: "",
@@ -99,13 +110,6 @@ export default function CompanySettingsPage() {
   }
 
   if (fetching) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
-
-  const Section = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => (
-    <Card padding="md">
-      <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">{icon}{title}</h2>
-      <div className="space-y-4">{children}</div>
-    </Card>
-  );
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
