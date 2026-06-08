@@ -23,6 +23,12 @@ export default async function ActDetailPage({
 
   if (!act) notFound();
 
+  // Источник реквизитов: выбранная доп.компания, иначе основная (CompanySettings)
+  const chosenCompany = act.companyId
+    ? await prisma.company.findUnique({ where: { id: act.companyId } })
+    : null;
+  const company = chosenCompany ?? settings;
+
   return (
     <ActPrintView
       act={{
@@ -36,7 +42,7 @@ export default async function ActDetailPage({
           total: Number(i.total),
         })),
       }}
-      company={settings}
+      company={company}
     />
   );
 }

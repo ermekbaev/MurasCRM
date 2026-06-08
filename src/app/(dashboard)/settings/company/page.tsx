@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import AdditionalCompanies from "./AdditionalCompanies";
 import { Building2, CreditCard, Phone, Check, ImagePlus } from "lucide-react";
 
 interface Settings {
@@ -194,6 +195,8 @@ export default function CompanySettingsPage() {
           </div>
         </Section>
       </form>
+
+      <AdditionalCompanies />
     </div>
   );
 }

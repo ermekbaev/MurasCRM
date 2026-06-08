@@ -112,10 +112,12 @@ export default function ActsPage() {
   const [isOpen, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
 
   const [form, setForm] = useState({
     invoiceId: "",
     orderId: "",
+    companyId: "",
     date: new Date().toISOString().split("T")[0],
     items: [{ ...EMPTY_ITEM }] as ActItem[],
   });
@@ -145,9 +147,13 @@ export default function ActsPage() {
     fetch("/api/invoices?limit=100")
       .then((r) => r.json())
       .then((data) => setInvoices(data.invoices));
+    fetch("/api/companies")
+      .then((r) => r.json())
+      .then((data) => setCompanies(Array.isArray(data) ? data : []));
     setForm({
       invoiceId: "",
       orderId: "",
+      companyId: "",
       date: new Date().toISOString().split("T")[0],
       items: [{ ...EMPTY_ITEM }],
     });
@@ -173,7 +179,7 @@ export default function ActsPage() {
     setForm((f) => ({
       ...f,
       invoiceId,
-      items: inv?.items.length
+      items: inv?.items?.length
         ? inv.items.map((i) => ({ name: i.name, qty: Number(i.qty), unit: i.unit, price: Number(i.price) }))
         : [{ ...EMPTY_ITEM }],
     }));
@@ -200,6 +206,7 @@ export default function ActsPage() {
       body: JSON.stringify({
         invoiceId: form.invoiceId || undefined,
         orderId: form.orderId || undefined,
+        companyId: form.companyId || undefined,
         date: form.date,
         items: form.items.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price) })),
       }),
@@ -364,6 +371,21 @@ export default function ActsPage() {
               required
             />
           </div>
+          {companies.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Компания (от кого)</label>
+              <select
+                value={form.companyId}
+                onChange={(e) => setForm({ ...form, companyId: e.target.value })}
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+              >
+                <option value="">Основная компания</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name || "Без названия"}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <ItemsTable items={form.items} onChange={setItem} onAdd={addItem} onRemove={removeItem} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" type="button" onClick={() => setOpen(false)}>Отмена</Button>

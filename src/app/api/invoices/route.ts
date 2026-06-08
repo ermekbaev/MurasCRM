@@ -16,6 +16,7 @@ const invoiceSchema = z
   .object({
     clientId: z.string().optional(),
     clientName: z.string().optional(),
+    companyId: z.string().optional(),
     orderId: z.string().optional(),
     number: z.string().optional(),
     date: z.string().optional(),
@@ -63,6 +64,7 @@ export async function GET(req: Request) {
       include: {
         client: { select: { id: true, name: true } },
         order: { select: { id: true, number: true } },
+        items: true,
         _count: { select: { items: true } },
       },
     }),
@@ -75,6 +77,12 @@ export async function GET(req: Request) {
       subtotal: Number(i.subtotal),
       vatAmount: Number(i.vatAmount),
       total: Number(i.total),
+      items: i.items.map((it) => ({
+        ...it,
+        qty: Number(it.qty),
+        price: Number(it.price),
+        total: Number(it.total),
+      })),
     })),
     total,
     page: pageQ.page,
@@ -93,7 +101,7 @@ export async function POST(req: Request) {
   const parsed = invoiceSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { items, date, dueDate, vatRate, number: numberOverride, clientId, clientName, ...rest } = parsed.data;
+  const { items, date, dueDate, vatRate, number: numberOverride, clientId, clientName, companyId, ...rest } = parsed.data;
 
   // Resolve client: use existing one, or create a new client from the typed name
   let resolvedClientId = clientId?.trim();
@@ -123,6 +131,7 @@ export async function POST(req: Request) {
       data: {
         ...rest,
         clientId: resolvedClientId,
+        companyId: companyId?.trim() || null,
         number,
         vatRate,
         subtotal,

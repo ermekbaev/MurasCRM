@@ -43,9 +43,10 @@ interface Invoice {
 interface Props {
   clients: { id: string; name: string }[];
   orders: { id: string; number: string; client: { name: string } }[];
+  companies: { id: string; name: string }[];
 }
 
-export default function InvoicesClient({ clients, orders }: Props) {
+export default function InvoicesClient({ clients, orders, companies }: Props) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -59,6 +60,7 @@ export default function InvoicesClient({ clients, orders }: Props) {
   const [form, setForm] = useState({
     clientId: "",
     clientName: "",
+    companyId: "",
     orderId: "",
     number: "",
     vatRate: 0,
@@ -141,6 +143,7 @@ export default function InvoicesClient({ clients, orders }: Props) {
       body: JSON.stringify({
         clientId: form.clientId || undefined,
         clientName: form.clientName.trim() || undefined,
+        companyId: form.companyId || undefined,
         orderId: form.orderId || undefined,
         number: form.number || undefined,
         vatRate: form.vatRate,
@@ -151,7 +154,7 @@ export default function InvoicesClient({ clients, orders }: Props) {
     });
     if (res.ok) {
       setModalOpen(false);
-      setForm({ clientId: "", clientName: "", orderId: "", number: "", vatRate: 0, basis: "", dueDate: "" });
+      setForm({ clientId: "", clientName: "", companyId: "", orderId: "", number: "", vatRate: 0, basis: "", dueDate: "" });
       setItems([{ name: "", qty: 1, unit: "шт", price: 0 }]);
       loadInvoices(1, search, paidFilter);
       setPage(1);
@@ -348,6 +351,14 @@ export default function InvoicesClient({ clients, orders }: Props) {
               placeholder="Выберите заявку (необязательно)"
               options={orders.map((o) => ({ value: o.id, label: `${o.number} · ${o.client.name}` }))}
             />
+            {companies.length > 0 && (
+              <Select
+                label="Компания (от кого)"
+                value={form.companyId}
+                onChange={(e) => setForm({ ...form, companyId: e.target.value })}
+                options={[{ value: "", label: "Основная компания" }, ...companies.map((c) => ({ value: c.id, label: c.name || "Без названия" }))]}
+              />
+            )}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Input label="Номер счёта" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="авто" />

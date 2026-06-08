@@ -7,6 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   invoiceId: z.string().optional(),
   orderId: z.string().optional(),
+  companyId: z.string().optional(),
   date: z.string().optional(),
   items: z.array(z.object({
     name: z.string(),
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { items, date, ...rest } = parsed.data;
+  const { items, date, companyId, ...rest } = parsed.data;
   const calculatedItems = items.map((i) => ({ ...i, total: i.qty * i.price }));
   const total = calculatedItems.reduce((sum, i) => sum + i.total, 0);
   const yearStart = new Date(new Date().getFullYear(), 0, 1);
@@ -70,6 +71,7 @@ export async function POST(req: Request) {
     return prisma.act.create({
       data: {
         ...rest,
+        companyId: companyId?.trim() || null,
         number,
         total,
         date: date ? new Date(date) : new Date(),

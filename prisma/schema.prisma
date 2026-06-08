@@ -355,13 +355,15 @@ model Invoice {
   total     Decimal   @default(0) @db.Decimal(12, 2)
   basis     String?
   isPaid    Boolean   @default(false)
+  companyId String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  client Client        @relation(fields: [clientId], references: [id])
-  order  Order?        @relation(fields: [orderId], references: [id])
-  items  InvoiceItem[]
-  acts   Act[]
+  client  Client        @relation(fields: [clientId], references: [id])
+  order   Order?        @relation(fields: [orderId], references: [id])
+  company Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  items   InvoiceItem[]
+  acts    Act[]
 }
 
 model InvoiceItem {
@@ -381,6 +383,7 @@ model Act {
   number    String   @unique
   invoiceId String?
   orderId   String?
+  companyId String?
   date      DateTime @default(now())
   total     Decimal  @default(0) @db.Decimal(12, 2)
   createdAt DateTime @default(now())
@@ -388,6 +391,7 @@ model Act {
 
   invoice Invoice?  @relation(fields: [invoiceId], references: [id])
   order   Order?    @relation(fields: [orderId], references: [id])
+  company Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   items   ActItem[]
 }
 
@@ -607,4 +611,29 @@ model CompanySettings {
   signatureKey     String?
   telegramBotToken String?
   updatedAt        DateTime @updatedAt
+}
+
+// ─── Company (доп. компании-исполнители) ──────────────────────────────────────
+
+model Company {
+  id           String   @id @default(cuid())
+  name         String   @default("")
+  inn          String   @default("")
+  kpp          String   @default("")
+  ogrn         String   @default("")
+  legalAddress String   @default("")
+  phone        String   @default("")
+  email        String   @default("")
+  website      String   @default("")
+  bankName     String   @default("")
+  bankAccount  String   @default("")
+  bankBik      String   @default("")
+  corrAccount  String   @default("")
+  director     String   @default("")
+  accountant   String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  invoices Invoice[]
+  acts     Act[]
 }

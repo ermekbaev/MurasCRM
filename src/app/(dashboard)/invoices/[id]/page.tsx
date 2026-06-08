@@ -23,6 +23,12 @@ export default async function InvoiceDetailPage({
 
   if (!invoice) notFound();
 
+  // Источник реквизитов: выбранная доп.компания, иначе основная (CompanySettings)
+  const chosenCompany = invoice.companyId
+    ? await prisma.company.findUnique({ where: { id: invoice.companyId } })
+    : null;
+  const company = chosenCompany ?? settings;
+
   return (
     <InvoicePrintView
       invoice={{
@@ -40,7 +46,7 @@ export default async function InvoiceDetailPage({
           total: Number(i.total),
         })),
       }}
-      company={settings}
+      company={company}
     />
   );
 }
