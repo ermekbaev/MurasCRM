@@ -49,6 +49,36 @@ interface AnalyticsData {
   operatorLoad: { name: string; role: string; tasks: number }[];
   equipmentLoad: { name: string; type: string; orders: number }[];
   operatorEarnings: { name: string; earnings: number; qty: number }[];
+  details?: {
+    orders: {
+      number: string;
+      date: string;
+      client: string;
+      type: string;
+      status: string;
+      priority: string;
+      amount: number;
+      paymentStatus: string;
+      itemsCount: number;
+    }[];
+    items: {
+      orderNumber: string;
+      date: string;
+      name: string;
+      equipment: string;
+      qty: number;
+      unit: string;
+      price: number;
+      total: number;
+    }[];
+    byEquipment: {
+      name: string;
+      type: string;
+      itemsCount: number;
+      qty: number;
+      revenue: number;
+    }[];
+  };
 }
 
 export default function AnalyticsPage() {
@@ -87,51 +117,142 @@ export default function AnalyticsPage() {
     setExporting(true);
     try {
       const { utils, writeFile } = await import("xlsx");
+
+      const MONEY = '#,##0" сом"';
+      const QTY = "#,##0.00";
+      const PCT = '0.0"%"';
+
+      // Build a sheet from rows, set column widths and per-column number formats.
+      function makeSheet(
+        rows: (string | number)[][],
+        cols: { width: number; fmt?: string }[],
+      ) {
+        const ws = utils.aoa_to_sheet(rows);
+        ws["!cols"] = cols.map((c) => ({ wch: c.width }));
+        const ref = ws["!ref"];
+        if (ref) {
+          const range = utils.decode_range(ref);
+          for (let C = range.s.c; C <= range.e.c; C++) {
+            const fmt = cols[C]?.fmt;
+            if (!fmt) continue;
+            for (let R = range.s.r + 1; R <= range.e.r; R++) {
+              const cell = ws[utils.encode_cell({ r: R, c: C })];
+              if (cell && cell.t === "n") cell.z = fmt;
+            }
+          }
+        }
+        return ws;
+      }
+
       const periodLabel = period === "custom"
         ? `${dateFrom} – ${dateTo}`
         : (PERIODS.find((p) => p.value === period)?.label || period);
+
+      // Fetch detailed per-order / per-equipment breakdown for export
+      const detailUrl = period === "custom"
+        ? `/api/analytics?period=custom&from=${dateFrom}&to=${dateTo}&detailed=1`
+        : `/api/analytics?period=${period}&detailed=1`;
+      const detailed: AnalyticsData = await fetch(detailUrl).then((r) => r.json());
+      const details = detailed.details;
+
       const wb = utils.book_new();
 
-      // Sheet 1: Summary
-      const summarySheet = utils.aoa_to_sheet([
+      // Sheet 1: Summary (no header row, so format the value column explicitly)
+      const s = data.summary;
+      const summaryRows: [string, number | string][] = [
         ["Период", periodLabel],
-        ["Оборот (выручка)", data.summary.revenue],
-        ["Расходы (всего)", data.summary.totalExpenses],
-        ["  в т.ч. материалы", data.summary.materialCosts],
-        ["  в т.ч. себестоимость", data.summary.productionCost],
-        ["  в т.ч. ЗП операторов", data.summary.operatorWages],
-        ["Прибыль", data.summary.profit],
-        ["Заказов", data.summary.ordersCount],
-        ["Средний чек", data.summary.avgCheck],
-        ["Выручка (пред. период)", data.summary.prevRevenue],
-        ["Рост выручки %", data.summary.revGrowth ?? "—"],
-        ["Прибыль (пред. период)", data.summary.prevProfit],
-        ["Рост прибыли %", data.summary.profitGrowth ?? "—"],
-      ]);
+        ["Оборот (выручка)", s.revenue],
+        ["Расходы (всего)", s.totalExpenses],
+        ["  в т.ч. материалы", s.materialCosts],
+        ["  в т.ч. себестоимость", s.productionCost],
+        ["  в т.ч. ЗП операторов", s.operatorWages],
+        ["Прибыль", s.profit],
+        ["Заказов", s.ordersCount],
+        ["Средний чек", Math.round(s.avgCheck)],
+        ["Выручка (пред. период)", s.prevRevenue],
+        ["Рост выручки %", s.revGrowth ?? "—"],
+        ["Прибыль (пред. период)", s.prevProfit],
+        ["Рост прибыли %", s.profitGrowth ?? "—"],
+      ];
+      const summarySheet = utils.aoa_to_sheet(summaryRows);
+      summarySheet["!cols"] = [{ wch: 26 }, { wch: 18 }];
+      const moneyRows = [1, 2, 3, 4, 5, 6, 8, 9, 11]; // value-column rows holding currency
+      const pctRows = [10, 12];
+      for (const r of moneyRows) {
+        const cell = summarySheet[utils.encode_cell({ r, c: 1 })];
+        if (cell && cell.t === "n") cell.z = MONEY;
+      }
+      for (const r of pctRows) {
+        const cell = summarySheet[utils.encode_cell({ r, c: 1 })];
+        if (cell && cell.t === "n") cell.z = PCT;
+      }
       utils.book_append_sheet(wb, summarySheet, "Сводка");
 
       // Sheet 2: Monthly revenue
-      const monthlySheet = utils.aoa_to_sheet([
-        ["Месяц", "Выручка"],
-        ...data.monthlyRevenue.map((r) => [r.month, r.amount]),
-      ]);
-      utils.book_append_sheet(wb, monthlySheet, "По месяцам");
+      utils.book_append_sheet(wb, makeSheet(
+        [["Месяц", "Выручка"], ...data.monthlyRevenue.map((r) => [r.month, r.amount])],
+        [{ width: 12 }, { width: 18, fmt: MONEY }],
+      ), "По месяцам");
 
-      // Sheet 3: By type
-      const typeSheet = utils.aoa_to_sheet([
-        ["Тип работ", "Заказов", "Выручка"],
-        ...data.ordersByType.map((r) => [r.type, r.count, r.revenue]),
-      ]);
-      utils.book_append_sheet(wb, typeSheet, "По типам");
+      // Sheet 3: By equipment / type
+      utils.book_append_sheet(wb, makeSheet(
+        [["Оборудование / тип", "Заказов", "Выручка"], ...data.ordersByType.map((r) => [r.type, r.count, r.revenue])],
+        [{ width: 28 }, { width: 12 }, { width: 18, fmt: MONEY }],
+      ), "По оборудованию");
 
       // Sheet 4: Top services
-      const servicesSheet = utils.aoa_to_sheet([
-        ["Услуга", "Заказов", "Выручка"],
-        ...data.topServices.map((s) => [s.name, s.count, s.revenue]),
-      ]);
-      utils.book_append_sheet(wb, servicesSheet, "Топ услуг");
+      utils.book_append_sheet(wb, makeSheet(
+        [["Услуга", "Заказов", "Выручка"], ...data.topServices.map((s) => [s.name, s.count, s.revenue])],
+        [{ width: 36 }, { width: 12 }, { width: 18, fmt: MONEY }],
+      ), "Топ услуг");
 
-      writeFile(wb, `Аналитика_${periodLabel}_${new Date().toLocaleDateString("ru-RU")}.xlsx`);
+      // Sheet 5: Operator earnings
+      if (data.operatorEarnings?.length) {
+        utils.book_append_sheet(wb, makeSheet(
+          [["Оператор", "Кол-во (ед.)", "Начислено ЗП"], ...data.operatorEarnings.map((o) => [o.name, Number(o.qty.toFixed(2)), Math.round(o.earnings)])],
+          [{ width: 28 }, { width: 14, fmt: QTY }, { width: 18, fmt: MONEY }],
+        ), "ЗП операторов");
+      }
+
+      // Detailed sheets
+      if (details) {
+        // Per equipment: how much was produced + revenue
+        utils.book_append_sheet(wb, makeSheet(
+          [
+            ["Оборудование", "Тип", "Позиций", "Кол-во (ед.)", "Выручка"],
+            ...details.byEquipment.map((e) => [e.name, e.type, e.itemsCount, Number(e.qty.toFixed(2)), Math.round(e.revenue)]),
+          ],
+          [{ width: 28 }, { width: 16 }, { width: 10 }, { width: 14, fmt: QTY }, { width: 18, fmt: MONEY }],
+        ), "Станки — детально");
+
+        // Per order
+        utils.book_append_sheet(wb, makeSheet(
+          [
+            ["№ заказа", "Дата", "Клиент", "Тип", "Статус", "Приоритет", "Оплата", "Позиций", "Сумма"],
+            ...details.orders.map((o) => [o.number, o.date, o.client, o.type, o.status, o.priority, o.paymentStatus, o.itemsCount, o.amount]),
+          ],
+          [
+            { width: 14 }, { width: 12 }, { width: 26 }, { width: 16 }, { width: 12 },
+            { width: 14 }, { width: 12 }, { width: 10 }, { width: 16, fmt: MONEY },
+          ],
+        ), "Заказы — детально");
+
+        // Per order item
+        utils.book_append_sheet(wb, makeSheet(
+          [
+            ["№ заказа", "Дата", "Позиция", "Оборудование", "Кол-во", "Ед.", "Цена", "Сумма"],
+            ...details.items.map((i) => [i.orderNumber, i.date, i.name, i.equipment, i.qty, i.unit, i.price, i.total]),
+          ],
+          [
+            { width: 14 }, { width: 12 }, { width: 32 }, { width: 24 },
+            { width: 12, fmt: QTY }, { width: 8 }, { width: 14, fmt: MONEY }, { width: 16, fmt: MONEY },
+          ],
+        ), "Позиции — детально");
+      }
+
+      const safeLabel = periodLabel.replace(/[\\/:*?"<>|]/g, "-");
+      const dateStr = new Date().toLocaleDateString("ru-RU").replace(/[\\/:*?"<>|]/g, ".");
+      writeFile(wb, `Аналитика_${safeLabel}_${dateStr}.xlsx`);
     } finally {
       setExporting(false);
     }

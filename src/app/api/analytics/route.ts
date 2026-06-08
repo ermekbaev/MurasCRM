@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { startOfWeek, startOfMonth, startOfQuarter, startOfYear, subMonths, subWeeks, format } from "date-fns";
+import {
+  ORDER_STATUS_LABELS,
+  ORDER_TYPE_LABELS,
+  PRIORITY_LABELS,
+  PAYMENT_STATUS_LABELS,
+} from "@/lib/constants";
 
 export async function GET(req: Request) {
   const session = await requireAuth();
@@ -249,6 +255,111 @@ export async function GET(req: Request) {
   const prevProfit = prevRev - prevExpenses;
   const profitGrowth = prevProfit !== 0 ? ((profit - prevProfit) / Math.abs(prevProfit)) * 100 : null;
 
+  // Detailed breakdown (only when requested — used for Excel export)
+  let details: {
+    orders: {
+      number: string;
+      date: string;
+      client: string;
+      type: string;
+      status: string;
+      priority: string;
+      amount: number;
+      paymentStatus: string;
+      itemsCount: number;
+    }[];
+    items: {
+      orderNumber: string;
+      date: string;
+      name: string;
+      equipment: string;
+      qty: number;
+      unit: string;
+      price: number;
+      total: number;
+    }[];
+    byEquipment: {
+      name: string;
+      type: string;
+      itemsCount: number;
+      qty: number;
+      revenue: number;
+    }[];
+  } | undefined;
+
+  if (searchParams.get("detailed")) {
+    const detailOrders = await prisma.order.findMany({
+      where: { createdAt: { gte: startDate, lte: endDate }, status: { not: "CANCELLED" } },
+      orderBy: { createdAt: "asc" },
+      select: {
+        number: true,
+        createdAt: true,
+        type: true,
+        status: true,
+        priority: true,
+        amount: true,
+        paymentStatus: true,
+        client: { select: { name: true } },
+        items: {
+          select: {
+            name: true,
+            qty: true,
+            unit: true,
+            price: true,
+            total: true,
+            equipment: { select: { name: true, type: true } },
+          },
+        },
+      },
+    });
+
+    const eqAgg: Record<string, { name: string; type: string; itemsCount: number; qty: number; revenue: number }> = {};
+    const orderRows: NonNullable<typeof details>["orders"] = [];
+    const itemRows: NonNullable<typeof details>["items"] = [];
+
+    for (const o of detailOrders) {
+      const dateStr = format(new Date(o.createdAt), "dd.MM.yyyy");
+      orderRows.push({
+        number: o.number,
+        date: dateStr,
+        client: o.client?.name || "—",
+        type: ORDER_TYPE_LABELS[o.type] || o.type,
+        status: ORDER_STATUS_LABELS[o.status] || o.status,
+        priority: PRIORITY_LABELS[o.priority] || o.priority,
+        amount: Number(o.amount),
+        paymentStatus: PAYMENT_STATUS_LABELS[o.paymentStatus] || o.paymentStatus,
+        itemsCount: o.items.length,
+      });
+
+      for (const it of o.items) {
+        const eqName = it.equipment?.name || "Без оборудования";
+        const eqType = it.equipment?.type || "";
+        const qty = Number(it.qty);
+        const total = Number(it.total);
+        itemRows.push({
+          orderNumber: o.number,
+          date: dateStr,
+          name: it.name,
+          equipment: eqName,
+          qty,
+          unit: it.unit,
+          price: Number(it.price),
+          total,
+        });
+        if (!eqAgg[eqName]) eqAgg[eqName] = { name: eqName, type: eqType, itemsCount: 0, qty: 0, revenue: 0 };
+        eqAgg[eqName].itemsCount++;
+        eqAgg[eqName].qty += qty;
+        eqAgg[eqName].revenue += total;
+      }
+    }
+
+    details = {
+      orders: orderRows,
+      items: itemRows,
+      byEquipment: Object.values(eqAgg).sort((a, b) => b.revenue - a.revenue),
+    };
+  }
+
   return NextResponse.json({
     summary: {
       revenue: currentRev,
@@ -291,5 +402,6 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.orders - a.orders),
     operatorEarnings,
+    details,
   });
 }

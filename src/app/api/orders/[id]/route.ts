@@ -126,6 +126,11 @@ export async function GET(
   return NextResponse.json(order);
 }
 
+// Поля, которые могут менять разные роли
+const FULL_EDIT_ROLES = ["ADMIN", "MANAGER"];
+const PAYMENT_EDIT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
+// status может менять любой с доступом к заказу (assignee / manager / privileged)
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -134,7 +139,10 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
-  const existing = await prisma.order.findUnique({ where: { id } });
+  const existing = await prisma.order.findFirst({
+    where: { id, ...orderAccessFilter(session.user.id, session.user.role) },
+    include: { assignees: { select: { id: true } } },
+  });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = await req.json();
@@ -144,22 +152,35 @@ export async function PATCH(
   }
 
   const { assigneeIds, deadline, ...rest } = parsed.data;
+  const { role, id: userId } = session.user;
+  const isFullEditor = FULL_EDIT_ROLES.includes(role);
 
-  // Log status changes + notify
-  if (rest.status && rest.status !== existing.status) {
-    await prisma.changeLog.create({
-      data: {
-        orderId: id,
-        field: "status",
-        oldValue: existing.status,
-        newValue: rest.status,
-        userId: session.user.id,
-      },
-    });
-    notifyOrderStatusChanged(id, existing.status, rest.status).catch(console.error);
-
-    // Авто-списание расходников при переходе в нужный статус
-    await deductConsumablesForOrder(id, rest.status);
+  // RBAC по полям
+  if (!isFullEditor) {
+    // Поля, которые НЕ может менять не-админ/не-менеджер
+    const forbiddenFields: string[] = [];
+    if (rest.type !== undefined) forbiddenFields.push("type");
+    if (rest.priority !== undefined) forbiddenFields.push("priority");
+    if (deadline !== undefined) forbiddenFields.push("deadline");
+    if (rest.notes !== undefined) forbiddenFields.push("notes");
+    if (rest.managerId !== undefined) forbiddenFields.push("managerId");
+    if (assigneeIds !== undefined) forbiddenFields.push("assigneeIds");
+    if (rest.paymentStatus !== undefined && !PAYMENT_EDIT_ROLES.includes(role)) {
+      forbiddenFields.push("paymentStatus");
+    }
+    if (forbiddenFields.length) {
+      return NextResponse.json(
+        { error: `Недостаточно прав для изменения: ${forbiddenFields.join(", ")}` },
+        { status: 403 }
+      );
+    }
+    // Не-админ/менеджер может менять статус только если он assignee
+    if (rest.status !== undefined) {
+      const isAssignee = existing.assignees.some((a) => a.id === userId);
+      if (!isAssignee) {
+        return NextResponse.json({ error: "Только исполнители могут менять статус" }, { status: 403 });
+      }
+    }
   }
 
   const order = await prisma.order.update({
@@ -176,6 +197,23 @@ export async function PATCH(
       assignees: { select: { id: true, name: true } },
     },
   });
+
+  // Log status changes + notify (после успешного update — иначе расходники списались бы при ошибке)
+  if (rest.status && rest.status !== existing.status) {
+    await prisma.changeLog.create({
+      data: {
+        orderId: id,
+        field: "status",
+        oldValue: existing.status,
+        newValue: rest.status,
+        userId: session.user.id,
+      },
+    });
+    notifyOrderStatusChanged(id, existing.status, rest.status).catch(console.error);
+
+    // Авто-списание расходников при переходе в нужный статус
+    await deductConsumablesForOrder(id, rest.status).catch(console.error);
+  }
 
   return NextResponse.json(order);
 }

@@ -3,6 +3,9 @@ import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+const CLIENT_READ_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
+const CLIENT_WRITE_ROLES = ["ADMIN", "MANAGER"];
+
 const updateSchema = z.object({
   type: z.enum(["INDIVIDUAL", "LEGAL", "IP"]).optional(),
   name: z.string().min(1).optional(),
@@ -29,6 +32,9 @@ export async function GET(
 ) {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!CLIENT_READ_ROLES.includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { id } = await params;
 
   const client = await prisma.client.findUnique({
@@ -52,6 +58,9 @@ export async function PATCH(
 ) {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!CLIENT_WRITE_ROLES.includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { id } = await params;
 
   const body = await req.json();

@@ -12,16 +12,22 @@ const itemSchema = z.object({
   price: z.number().nonnegative(),
 });
 
-const invoiceSchema = z.object({
-  clientId: z.string().min(1),
-  orderId: z.string().optional(),
-  number: z.string().optional(),
-  date: z.string().optional(),
-  dueDate: z.string().optional(),
-  vatRate: z.number().min(0).max(100).default(0),
-  basis: z.string().optional(),
-  items: z.array(itemSchema).min(1),
-});
+const invoiceSchema = z
+  .object({
+    clientId: z.string().optional(),
+    clientName: z.string().optional(),
+    orderId: z.string().optional(),
+    number: z.string().optional(),
+    date: z.string().optional(),
+    dueDate: z.string().optional(),
+    vatRate: z.number().min(0).max(100).default(0),
+    basis: z.string().optional(),
+    items: z.array(itemSchema).min(1),
+  })
+  .refine((d) => Boolean(d.clientId?.trim() || d.clientName?.trim()), {
+    message: "Укажите клиента",
+    path: ["clientId"],
+  });
 
 export async function GET(req: Request) {
   const session = await requireAuth();
@@ -87,7 +93,17 @@ export async function POST(req: Request) {
   const parsed = invoiceSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { items, date, dueDate, vatRate, number: numberOverride, ...rest } = parsed.data;
+  const { items, date, dueDate, vatRate, number: numberOverride, clientId, clientName, ...rest } = parsed.data;
+
+  // Resolve client: use existing one, or create a new client from the typed name
+  let resolvedClientId = clientId?.trim();
+  if (!resolvedClientId && clientName?.trim()) {
+    const newClient = await prisma.client.create({ data: { name: clientName.trim() } });
+    resolvedClientId = newClient.id;
+  }
+  if (!resolvedClientId) {
+    return NextResponse.json({ error: "Укажите клиента" }, { status: 400 });
+  }
 
   const subtotal = items.reduce((sum, i) => sum + i.qty * i.price, 0);
   const vatAmount = (subtotal * vatRate) / 100;
@@ -106,6 +122,7 @@ export async function POST(req: Request) {
     return prisma.invoice.create({
       data: {
         ...rest,
+        clientId: resolvedClientId,
         number,
         vatRate,
         subtotal,

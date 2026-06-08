@@ -58,12 +58,14 @@ export default function InvoicesClient({ clients, orders }: Props) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     clientId: "",
+    clientName: "",
     orderId: "",
     number: "",
     vatRate: 0,
     basis: "",
     dueDate: "",
   });
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   const [items, setItems] = useState<{ name: string; qty: number; unit: string; price: number }[]>([
     { name: "", qty: 1, unit: "шт", price: 0 },
   ]);
@@ -118,24 +120,38 @@ export default function InvoicesClient({ clients, orders }: Props) {
   const vatAmount = (subtotal * form.vatRate) / 100;
   const formTotal = subtotal + vatAmount;
 
+  const clientQuery = form.clientName.trim().toLowerCase();
+  const filteredClients = clients
+    .filter((c) => c.name.toLowerCase().includes(clientQuery))
+    .slice(0, 8);
+  const isNewClient = !form.clientId && form.clientName.trim().length > 0;
+
+  function selectClient(c: { id: string; name: string }) {
+    setForm((f) => ({ ...f, clientId: c.id, clientName: c.name }));
+    setClientDropdownOpen(false);
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.clientId || items.some((i) => !i.name || i.price <= 0)) return;
+    if (!form.clientName.trim() || items.some((i) => !i.name || i.price <= 0)) return;
     setLoading(true);
     const res = await fetch("/api/invoices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ...form,
-        number: form.number || undefined,
+        clientId: form.clientId || undefined,
+        clientName: form.clientName.trim() || undefined,
         orderId: form.orderId || undefined,
+        number: form.number || undefined,
+        vatRate: form.vatRate,
+        basis: form.basis,
         dueDate: form.dueDate || undefined,
         items: items.filter((i) => i.name),
       }),
     });
     if (res.ok) {
       setModalOpen(false);
-      setForm({ clientId: "", orderId: "", number: "", vatRate: 0, basis: "", dueDate: "" });
+      setForm({ clientId: "", clientName: "", orderId: "", number: "", vatRate: 0, basis: "", dueDate: "" });
       setItems([{ name: "", qty: 1, unit: "шт", price: 0 }]);
       loadInvoices(1, search, paidFilter);
       setPage(1);
@@ -293,13 +309,38 @@ export default function InvoicesClient({ clients, orders }: Props) {
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)} title="Новый счёт" size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select
-              label="Клиент *"
-              value={form.clientId}
-              onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-              placeholder="Выберите клиента"
-              options={clients.map((c) => ({ value: c.id, label: c.name }))}
-            />
+            <div className="flex flex-col gap-1 relative">
+              <label className="text-sm font-medium text-gray-700 dark:text-slate-300">Клиент *</label>
+              <input
+                value={form.clientName}
+                onChange={(e) => {
+                  setForm({ ...form, clientName: e.target.value, clientId: "" });
+                  setClientDropdownOpen(true);
+                }}
+                onFocus={() => setClientDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setClientDropdownOpen(false), 150)}
+                placeholder="Введите имя или выберите клиента"
+                className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
+              {clientDropdownOpen && filteredClients.length > 0 && (
+                <ul className="absolute z-20 top-full mt-1 w-full max-h-48 overflow-auto bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg">
+                  {filteredClients.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        onMouseDown={() => selectClient(c)}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-slate-700"
+                      >
+                        {c.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {isNewClient && (
+                <p className="text-xs text-violet-600">Будет создан новый клиент «{form.clientName.trim()}»</p>
+              )}
+            </div>
             <Select
               label="Привязать к заявке"
               value={form.orderId}
@@ -403,7 +444,7 @@ export default function InvoicesClient({ clients, orders }: Props) {
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>Отмена</Button>
-            <Button type="submit" loading={loading} disabled={!form.clientId}>Выставить счёт</Button>
+            <Button type="submit" loading={loading} disabled={!form.clientName.trim()}>Выставить счёт</Button>
           </div>
         </form>
       </Modal>

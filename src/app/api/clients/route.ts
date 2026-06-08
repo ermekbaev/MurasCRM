@@ -23,9 +23,14 @@ const clientSchema = z.object({
   notes: z.string().optional(),
 });
 
+const CLIENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
+
 export async function GET(req: Request) {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!CLIENT_ROLES.includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";

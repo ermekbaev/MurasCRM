@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 
 const createSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(10, "Минимум 10 символов"),
   name: z.string().min(1),
   role: z.enum(["ADMIN", "MANAGER", "DESIGNER", "OPERATOR", "ACCOUNTANT"]),
   phone: z.string().optional(),

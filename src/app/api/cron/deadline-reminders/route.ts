@@ -4,12 +4,9 @@ import { sendMessage } from "@/lib/telegram";
 
 export async function GET(req: Request) {
   // Vercel Cron передаёт: Authorization: Bearer <CRON_SECRET>
-  // Ручной вызов допускает: ?secret=<CRON_SECRET>
+  // Для ручного теста используйте curl с заголовком Authorization
   const authHeader = req.headers.get("authorization");
-  const { searchParams } = new URL(req.url);
-  const querySecret = searchParams.get("secret");
-
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : querySecret;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!process.env.CRON_SECRET || token !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -39,10 +36,13 @@ export async function GET(req: Request) {
       timeZone: "Europe/Moscow",
     });
 
+    const escapeHtml = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
     const text =
       `⏰ <b>Срок сдачи заявки через 1 день!</b>\n` +
-      `📋 Заявка: <b>${order.number}</b>\n` +
-      `👤 Клиент: ${order.client.name}\n` +
+      `📋 Заявка: <b>${escapeHtml(order.number)}</b>\n` +
+      `👤 Клиент: ${escapeHtml(order.client.name)}\n` +
       `📅 Дедлайн: ${deadline}`;
 
     const recipients = [order.manager, ...order.assignees]

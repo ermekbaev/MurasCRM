@@ -3,6 +3,16 @@ import { prisma } from "@/lib/prisma";
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
+// Экранирование HTML для безопасной интерполяции в parse_mode: "HTML"
+function esc(s: string | null | undefined): string {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 const STATUS_LABELS: Record<string, string> = {
   NEW: "Новая",
   IN_PROGRESS: "В работе",
@@ -60,9 +70,9 @@ export async function notifyNewOrder(orderId: string): Promise<void> {
   if (!order || !order.manager) return;
 
   const text =
-    `📋 <b>Новая заявка ${order.number}</b>\n` +
-    `👤 Клиент: ${order.client.name}\n` +
-    `⚡ Приоритет: ${PRIORITY_LABELS[order.priority]}\n` +
+    `📋 <b>Новая заявка ${esc(order.number)}</b>\n` +
+    `👤 Клиент: ${esc(order.client.name)}\n` +
+    `⚡ Приоритет: ${esc(PRIORITY_LABELS[order.priority])}\n` +
     (order.deadline ? `📅 Срок: ${new Date(order.deadline).toLocaleDateString("ru-RU")}\n` : "") +
     `🔗 /orders/${order.id}`;
 
@@ -86,9 +96,9 @@ export async function notifyOrderStatusChanged(
   if (!order) return;
 
   const text =
-    `🔄 <b>Статус заявки ${order.number} изменён</b>\n` +
-    `👤 Клиент: ${order.client.name}\n` +
-    `${STATUS_LABELS[oldStatus] ?? oldStatus} → <b>${STATUS_LABELS[newStatus] ?? newStatus}</b>`;
+    `🔄 <b>Статус заявки ${esc(order.number)} изменён</b>\n` +
+    `👤 Клиент: ${esc(order.client.name)}\n` +
+    `${esc(STATUS_LABELS[oldStatus] ?? oldStatus)} → <b>${esc(STATUS_LABELS[newStatus] ?? newStatus)}</b>`;
 
   const ids = [
     ...(order.manager ? [order.manager.id] : []),
@@ -109,8 +119,8 @@ export async function notifyTaskAssigned(taskId: string): Promise<void> {
   if (!task || !task.assignee) return;
 
   const text =
-    `📌 <b>Новая задача: ${task.title}</b>\n` +
-    (task.order ? `📋 Заявка: ${task.order.number}\n` : "") +
+    `📌 <b>Новая задача: ${esc(task.title)}</b>\n` +
+    (task.order ? `📋 Заявка: ${esc(task.order.number)}\n` : "") +
     (task.dueDate ? `📅 Срок: ${new Date(task.dueDate).toLocaleDateString("ru-RU")}\n` : "") +
     `🔗 /tasks/${task.id}`;
 
@@ -128,8 +138,8 @@ export async function notifyFilePendingApproval(fileId: string): Promise<void> {
 
   const text =
     `📎 <b>Файл отправлен на согласование</b>\n` +
-    `📄 ${file.originalName}\n` +
-    `👤 Загрузил: ${file.uploadedBy.name}\n` +
+    `📄 ${esc(file.originalName)}\n` +
+    `👤 Загрузил: ${esc(file.uploadedBy.name)}\n` +
     `🔗 /files`;
 
   await Promise.all([sendToRole("ADMIN", text), sendToRole("MANAGER", text)]);
@@ -146,8 +156,8 @@ export async function notifyLowStock(consumableId: string): Promise<void> {
 
   const text =
     `⚠️ <b>Низкий остаток расходника</b>\n` +
-    `📦 ${c.name}\n` +
-    `Остаток: <b>${stock} ${c.unit}</b> (мин: ${minStock} ${c.unit})\n` +
+    `📦 ${esc(c.name)}\n` +
+    `Остаток: <b>${stock} ${esc(c.unit)}</b> (мин: ${minStock} ${esc(c.unit)})\n` +
     `🔗 /consumables`;
 
   await sendToRole("ADMIN", text);
@@ -162,8 +172,8 @@ export async function notifyInvoiceCreated(invoiceId: string): Promise<void> {
   if (!invoice) return;
 
   const text =
-    `💳 <b>Выставлен счёт ${invoice.number}</b>\n` +
-    `👤 Клиент: ${invoice.client.name}\n` +
+    `💳 <b>Выставлен счёт ${esc(invoice.number)}</b>\n` +
+    `👤 Клиент: ${esc(invoice.client.name)}\n` +
     `💰 Сумма: ${Number(invoice.total).toLocaleString("ru-RU")} сом\n` +
     `🔗 /invoices/${invoice.id}`;
 

@@ -19,12 +19,17 @@ const patchSchema = z.object({
   items: z.array(itemSchema).min(1).optional(),
 });
 
+const INVOICE_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!INVOICE_ROLES.includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { id } = await params;
 
   const invoice = await prisma.invoice.findUnique({
@@ -53,6 +58,9 @@ export async function PATCH(
 ) {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!INVOICE_ROLES.includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { id } = await params;
 
   const body = await req.json();
