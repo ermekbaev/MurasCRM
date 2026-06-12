@@ -59,6 +59,18 @@ export async function DELETE(
   }
 
   const { id } = await params;
+
+  const [movements, configs] = await Promise.all([
+    prisma.consumableMovement.count({ where: { consumableId: id } }),
+    prisma.equipmentConsumable.count({ where: { consumableId: id } }),
+  ]);
+  if (movements > 0 || configs > 0) {
+    return NextResponse.json(
+      { error: "Нельзя удалить: есть движения по складу или привязки к оборудованию. Сначала удалите их." },
+      { status: 409 }
+    );
+  }
+
   await prisma.consumable.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

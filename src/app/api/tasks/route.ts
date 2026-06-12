@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     },
   });
 
-  if (task.assignee) notifyTaskAssigned(task.id);
+  if (task.assignee) notifyTaskAssigned(task.id).catch(() => {});
 
   return NextResponse.json(task, { status: 201 });
 }

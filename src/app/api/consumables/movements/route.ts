@@ -4,14 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notifyLowStock } from "@/lib/telegram";
 
-const movementSchema = z.object({
-  consumableId: z.string().min(1),
-  direction: z.enum(["IN", "OUT", "ADJUSTMENT"]),
-  qty: z.number().positive(),
-  orderId: z.string().optional(),
-  note: z.string().optional(),
-  totalCost: z.number().optional(),
-});
+const movementSchema = z
+  .object({
+    consumableId: z.string().min(1),
+    direction: z.enum(["IN", "OUT", "ADJUSTMENT"]),
+    // IN/OUT — всегда положительное; ADJUSTMENT — любое ненулевое (минус = недостача)
+    qty: z.number().refine((v) => v !== 0, "qty не может быть 0"),
+    orderId: z.string().optional(),
+    note: z.string().optional(),
+    totalCost: z.number().optional(),
+  })
+  .refine((d) => d.direction === "ADJUSTMENT" || d.qty > 0, {
+    message: "qty должно быть положительным для прихода/расхода",
+    path: ["qty"],
+  });
 
 export async function GET(req: Request) {
   const session = await requireAuth();

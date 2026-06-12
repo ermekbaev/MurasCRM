@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { notifyOrderStatusChanged } from "@/lib/telegram";
+import { notifyOrderStatusChanged, notifyLowStock } from "@/lib/telegram";
 
 const updateSchema = z.object({
   status: z.enum(["NEW", "IN_PROGRESS", "REVIEW", "READY", "ISSUED", "CANCELLED"]).optional(),
@@ -33,15 +33,16 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
     },
   });
 
-  const itemIds = items.map((i) => i.id);
-  if (!itemIds.length) return;
+  if (!items.length) return;
 
-  // Batch-check already deducted: one query instead of N×M
+  // Дедуп на уровне (заказ + расходник + триггер): устойчив к правке позиций,
+  // т.к. при PUT позиции пересоздаются с новыми id (orderItemId обнуляется).
   const existing = await prisma.consumableMovement.findMany({
-    where: { orderItemId: { in: itemIds } },
-    select: { orderItemId: true, consumableId: true },
+    where: { orderId, trigger },
+    select: { consumableId: true },
   });
-  const deducted = new Set(existing.map((m) => `${m.orderItemId}:${m.consumableId}`));
+  const deducted = new Set(existing.map((m) => m.consumableId));
+  const affected = new Set<string>();
 
   for (const item of items) {
     if (!item.equipment) continue;
@@ -49,7 +50,7 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
     if (!configs.length) continue;
 
     for (const cfg of configs) {
-      if (deducted.has(`${item.id}:${cfg.consumableId}`)) continue;
+      if (deducted.has(cfg.consumableId)) continue;
 
       const qty = Number(item.qty) * Number(cfg.consumptionPerUnit);
       if (qty <= 0) continue;
@@ -65,6 +66,7 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
             qty,
             orderId,
             orderItemId: item.id,
+            trigger,
             note: `Авто-списание по заказу, позиция: ${item.name}`,
             totalCost,
           },
@@ -74,7 +76,13 @@ async function deductConsumablesForOrder(orderId: string, newStatus: string) {
           data: { stock: { decrement: qty } },
         }),
       ]);
+      affected.add(cfg.consumableId);
     }
+  }
+
+  // Уведомить админов, если остаток упал ниже минимума (по каждому списанному расходнику один раз)
+  for (const consumableId of affected) {
+    await notifyLowStock(consumableId).catch(console.error);
   }
 }
 

@@ -55,15 +55,31 @@ export async function PATCH(
 
   const { dueDate, startedAt, finishedAt, ...rest } = parsed.data;
 
-  const existing = await prisma.task.findUnique({ where: { id }, select: { assigneeId: true, startedAt: true } });
+  const existing = await prisma.task.findUnique({
+    where: { id },
+    select: { assigneeId: true, startedAt: true, status: true, finishedAt: true },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Auto-set startedAt when status changes to IN_PROGRESS
+  // RBAC: ADMIN/MANAGER — полный доступ; исполнитель может править только свою задачу и не переназначать
+  const privileged = ["ADMIN", "MANAGER"].includes(session.user.role);
+  if (!privileged) {
+    if (existing.assigneeId !== session.user.id) {
+      return NextResponse.json({ error: "Можно менять только свои задачи" }, { status: 403 });
+    }
+    if (rest.assigneeId !== undefined && rest.assigneeId !== existing.assigneeId) {
+      return NextResponse.json({ error: "Переназначать задачи может только менеджер" }, { status: 403 });
+    }
+  }
+
+  // Auto-set startedAt при переходе в IN_PROGRESS; finishedAt — только при входе/выходе из DONE
   const extraData: Record<string, unknown> = {};
-  if (rest.status === "IN_PROGRESS" && !existing?.startedAt) {
+  if (rest.status === "IN_PROGRESS" && !existing.startedAt) {
     extraData.startedAt = new Date();
   }
-  if (rest.status === "DONE") {
-    extraData.finishedAt = new Date();
+  if (rest.status !== undefined && rest.status !== existing.status) {
+    if (rest.status === "DONE") extraData.finishedAt = new Date();
+    else if (existing.status === "DONE") extraData.finishedAt = null;
   }
 
   const task = await prisma.task.update({
@@ -92,6 +108,9 @@ export async function DELETE(
 ) {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!["ADMIN", "MANAGER"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { id } = await params;
 
   await prisma.task.delete({ where: { id } });

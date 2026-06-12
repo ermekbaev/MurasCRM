@@ -229,15 +229,17 @@ export async function GET(req: Request) {
   const revGrowth = prevRev > 0 ? ((currentRev - prevRev) / prevRev) * 100 : null;
   const avgCheck = currentRevenue._count > 0 ? currentRev / currentRevenue._count : 0;
 
-  const totalOperatorWages = Object.values(earningsMap).reduce((s, o) => s + o.earnings, 0);
   const materialCosts = Number(materialCostsAgg._sum.totalCost || 0);
   const prevMaterialCosts = Number(prevMaterialCostsAgg._sum.totalCost || 0);
 
-  // Production cost (себестоимость): costPerLm × qty for each order item
+  // Себестоимость + ЗП операторов: считаем один раз на позицию (как и для прошлого периода).
+  // earningsMap выше — отдельная разбивка по операторам для отображения, а не для суммы расходов.
   let productionCost = 0;
+  let totalOperatorWages = 0;
   for (const item of operatorEarningsItems) {
-    const cost = item.equipment?.costPerLm ? Number(item.equipment.costPerLm) : 0;
-    productionCost += Number(item.qty) * cost;
+    const qty = Number(item.qty);
+    productionCost += qty * (item.equipment?.costPerLm ? Number(item.equipment.costPerLm) : 0);
+    totalOperatorWages += qty * (item.equipment?.operatorRate ? Number(item.equipment.operatorRate) : 0);
   }
 
   let prevProductionCost = 0;

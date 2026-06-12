@@ -502,6 +502,7 @@ model ConsumableMovement {
   qty          Decimal           @db.Decimal(12, 3)
   orderId      String?
   orderItemId  String?
+  trigger      ConsumableDeductTrigger? // для авто-списания: на каком триггере списано (дедуп при правке позиций)
   date         DateTime          @default(now())
   note         String?
   totalCost    Decimal?          @db.Decimal(12, 2)
@@ -513,6 +514,7 @@ model ConsumableMovement {
   @@index([consumableId])
   @@index([orderItemId])
   @@index([orderItemId, consumableId])
+  @@index([orderId, trigger])
 }
 
 // ─── Equipment ────────────────────────────────────────────────────────────────

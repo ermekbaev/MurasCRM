@@ -401,7 +401,7 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-800 dark:text-slate-200">
-                        {m.direction === "IN" ? "+" : m.direction === "OUT" ? "−" : "±"}{m.qty} {selectedConsumable?.unit}
+                        {m.direction === "IN" ? "+" : m.direction === "OUT" ? "−" : m.qty < 0 ? "−" : "+"}{Math.abs(m.qty)} {selectedConsumable?.unit}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-slate-500">{m.note || (m.orderId ? "Авто-списание по заявке" : "—")}</p>
                     </div>
@@ -451,11 +451,12 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
           <Input
             label="Количество *"
             type="number"
-            min={0.001}
+            min={movementForm.direction === "ADJUSTMENT" ? undefined : 0.001}
             step={0.001}
             required
             value={movementForm.qty}
             onChange={(e) => setMovementForm({ ...movementForm, qty: e.target.value })}
+            hint={movementForm.direction === "ADJUSTMENT" ? "Отрицательное значение — недостача (списать)" : undefined}
           />
           <Input
             label="Сумма (сом)"
