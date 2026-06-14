@@ -32,7 +32,7 @@ export default function UsersSettingsPage() {
   });
 
   const [editUser, setEditUser] = useState<User | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", role: "", phone: "", telegramChatId: "" });
+  const [editForm, setEditForm] = useState({ name: "", role: "", password: "", phone: "", telegramChatId: "" });
   const [editLoading, setEditLoading] = useState(false);
 
   useEffect(() => {
@@ -70,6 +70,7 @@ export default function UsersSettingsPage() {
     setEditForm({
       name: user.name,
       role: user.role,
+      password: "",
       phone: user.phone || "",
       telegramChatId: user.telegramChatId || "",
     });
@@ -87,15 +88,25 @@ export default function UsersSettingsPage() {
         role: editForm.role,
         phone: editForm.phone || null,
         telegramChatId: editForm.telegramChatId || null,
+        ...(editForm.password ? { password: editForm.password } : {}),
       }),
     });
     if (res.ok) {
       setUsers((prev) => prev.map((u) =>
         u.id === editUser.id
-          ? { ...u, ...editForm, phone: editForm.phone || null, telegramChatId: editForm.telegramChatId || null }
+          ? {
+              ...u,
+              name: editForm.name,
+              role: editForm.role,
+              phone: editForm.phone || null,
+              telegramChatId: editForm.telegramChatId || null,
+            }
           : u
       ));
       setEditUser(null);
+    } else {
+      const data = await res.json().catch(() => null);
+      alert(data?.error?.fieldErrors?.password?.[0] ?? "Не удалось сохранить изменения");
     }
     setEditLoading(false);
   }
@@ -221,6 +232,18 @@ export default function UsersSettingsPage() {
             onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
             options={Object.entries(ROLE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
           />
+          <div>
+            <Input
+              label="Новый пароль"
+              type="password"
+              minLength={10}
+              autoComplete="new-password"
+              value={editForm.password}
+              onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+              placeholder="Оставьте пустым, чтобы не менять"
+            />
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Минимум 10 символов</p>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Телефон" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
             <div>
@@ -246,7 +269,7 @@ export default function UsersSettingsPage() {
         <form onSubmit={handleCreate} className="space-y-4">
           <Input label="Имя *" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <Input label="Email *" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <Input label="Пароль *" type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <Input label="Пароль *" type="password" required minLength={10} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Минимум 10 символов" />
           <Select
             label="Роль"
             value={form.role}

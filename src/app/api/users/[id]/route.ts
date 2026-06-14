@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 
 const updateSchema = z.object({
   isBlocked: z.boolean().optional(),
   role: z.enum(["ADMIN", "MANAGER", "DESIGNER", "OPERATOR", "ACCOUNTANT"]).optional(),
   name: z.string().min(1).optional(),
+  password: z.string().min(10, "Минимум 10 символов").optional(),
   phone: z.string().nullable().optional(),
   telegramChatId: z.string().nullable().optional(),
 });
@@ -23,7 +25,7 @@ export async function PATCH(
   const body = await req.json();
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  const { isBlocked, role, name, phone, telegramChatId } = parsed.data;
+  const { isBlocked, role, name, password, phone, telegramChatId } = parsed.data;
 
   // Защита от admin lockout: нельзя себе понизить роль или заблокировать себя
   if (id === session.user.id) {
@@ -54,6 +56,7 @@ export async function PATCH(
       ...(isBlocked !== undefined ? { isBlocked } : {}),
       ...(role !== undefined ? { role } : {}),
       ...(name !== undefined ? { name } : {}),
+      ...(password !== undefined ? { password: await bcrypt.hash(password, 12) } : {}),
       ...(phone !== undefined ? { phone } : {}),
       ...(telegramChatId !== undefined ? { telegramChatId } : {}),
     },
