@@ -293,12 +293,22 @@ export default function OrderDetailClient({
     const res = await fetch(`/api/orders/${order.id}/items`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: editItems.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price), discount: Number(i.discount) })) }),
+      body: JSON.stringify({
+        items: editItems.map((i) => {
+          const qty = Number(i.qty);
+          const price = Number(i.price);
+          const discount = Number(i.discount);
+          const total = Math.round(qty * price * (1 - discount / 100) * 100) / 100;
+          return { name: i.name, unit: i.unit, qty, price, discount, total };
+        }),
+      }),
     });
     if (res.ok) {
       const data = await res.json();
       setOrder((prev) => ({ ...prev, items: data.items, amount: data.amount }));
       setEditingItems(false);
+    } else {
+      alert("Не удалось сохранить позиции. Проверьте, что у каждой позиции заполнены название, кол-во и цена.");
     }
     setSavingItems(false);
   }

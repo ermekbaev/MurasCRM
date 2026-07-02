@@ -84,6 +84,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const [isModalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formItems, setFormItems] = useState<FormItem[]>([emptyItem()]);
@@ -209,7 +210,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       o.status === statusFilter;
     const matchPriority = !priorityFilter || o.priority === priorityFilter;
     const matchType = !typeFilter || o.type === typeFilter;
-    return matchSearch && matchStatus && matchPriority && matchType;
+    const matchPayment = !paymentFilter || o.paymentStatus === paymentFilter;
+    return matchSearch && matchStatus && matchPriority && matchType && matchPayment;
   });
 
   async function handleCreate(e: React.FormEvent) {
@@ -348,6 +350,16 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           >
             <option value="">Все типы</option>
             {Object.entries(ORDER_TYPE_LABELS).map(([val, label]) => (
+              <option key={val} value={val}>{label}</option>
+            ))}
+          </select>
+          <select
+            value={paymentFilter}
+            onChange={(e) => setPaymentFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+          >
+            <option value="">Все оплаты</option>
+            {Object.entries(PAYMENT_STATUS_LABELS).map(([val, label]) => (
               <option key={val} value={val}>{label}</option>
             ))}
           </select>

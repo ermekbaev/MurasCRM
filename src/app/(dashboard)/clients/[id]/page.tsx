@@ -6,6 +6,8 @@ import {
   CLIENT_SOURCE_LABELS,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_COLORS,
 } from "@/lib/constants";
 import Card from "@/components/ui/Card";
 import Link from "next/link";
@@ -19,8 +21,10 @@ import {
   CreditCard,
   ShoppingCart,
   FileText,
+  Wallet,
 } from "lucide-react";
 import ClientEditButton from "./ClientEditButton";
+import ClientPaymentButton from "./ClientPaymentButton";
 
 export default async function ClientDetailPage({
   params,
@@ -37,14 +41,26 @@ export default async function ClientDetailPage({
         include: { _count: { select: { items: true } } },
       },
       invoices: { orderBy: { date: "desc" }, take: 10 },
+      payments: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        include: { order: { select: { number: true } } },
+      },
     },
   });
 
   if (!client) notFound();
 
-  const totalAmount = client.orders
-    .filter((o) => o.status !== "CANCELLED")
-    .reduce((sum, o) => sum + Number(o.amount), 0);
+  const activeOrders = client.orders.filter((o) => o.status !== "CANCELLED");
+  const totalAmount = activeOrders.reduce((sum, o) => sum + Number(o.amount), 0);
+  const totalDebt = activeOrders.reduce(
+    (sum, o) =>
+      sum +
+      (o.paymentStatus === "PAID"
+        ? 0
+        : Math.max(0, Number(o.amount) - Number(o.paidAmount))),
+    0
+  );
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -76,6 +92,7 @@ export default async function ClientDetailPage({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ClientPaymentButton clientId={client.id} debt={totalDebt} />
             <ClientEditButton client={client} />
             <Link
               href={`/orders/new?clientId=${client.id}`}
@@ -88,7 +105,7 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card padding="md">
           <p className="text-xs text-gray-500 dark:text-slate-400">Всего заказов</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{client.orders.length}</p>
@@ -96,6 +113,12 @@ export default async function ClientDetailPage({
         <Card padding="md">
           <p className="text-xs text-gray-500 dark:text-slate-400">Общий оборот</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(totalAmount)}</p>
+        </Card>
+        <Card padding="md">
+          <p className="text-xs text-gray-500 dark:text-slate-400">Задолженность</p>
+          <p className={`text-2xl font-bold mt-1 ${totalDebt > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+            {formatCurrency(totalDebt)}
+          </p>
         </Card>
         <Card padding="md">
           <p className="text-xs text-gray-500 dark:text-slate-400">Источник</p>
@@ -210,7 +233,7 @@ export default async function ClientDetailPage({
         </div>
 
         {/* Orders */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <Card padding="none">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
               <h2 className="font-semibold text-gray-800 dark:text-slate-200 flex items-center gap-2">
@@ -224,27 +247,77 @@ export default async function ClientDetailPage({
               </div>
             ) : (
               <div className="divide-y divide-gray-50 dark:divide-slate-700">
-                {client.orders.map((order) => (
+                {client.orders.map((order) => {
+                  const remaining =
+                    order.paymentStatus === "PAID"
+                      ? 0
+                      : Math.max(0, Number(order.amount) - Number(order.paidAmount));
+                  return (
                   <Link
                     key={order.id}
                     href={`/orders/${order.id}`}
                     className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors"
                   >
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-gray-800 dark:text-slate-200">{order.number}</span>
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status]}`}
                         >
                           {ORDER_STATUS_LABELS[order.status]}
                         </span>
+                        {order.status !== "CANCELLED" && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${PAYMENT_STATUS_COLORS[order.paymentStatus]}`}
+                          >
+                            {PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{formatDate(order.createdAt)}</p>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
-                      {formatCurrency(Number(order.amount))}
-                    </span>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                        {formatCurrency(Number(order.amount))}
+                      </div>
+                      {order.status !== "CANCELLED" && remaining > 0 && (
+                        <div className="text-xs text-red-500 mt-0.5">остаток {formatCurrency(remaining)}</div>
+                      )}
+                    </div>
                   </Link>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          <Card padding="none">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+              <h2 className="font-semibold text-gray-800 dark:text-slate-200 flex items-center gap-2">
+                <Wallet size={16} /> Журнал оплат ({client.payments.length})
+              </h2>
+            </div>
+            {client.payments.length === 0 ? (
+              <div className="py-10 text-center text-gray-400 dark:text-slate-500">
+                <Wallet size={28} className="mx-auto mb-2 opacity-30" />
+                Оплат пока не было
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50 dark:divide-slate-700">
+                {client.payments.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between px-6 py-2.5">
+                    <div>
+                      <p className="text-sm text-gray-700 dark:text-slate-300">
+                        {p.order ? `Заявка ${p.order.number}` : "Оплата"}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                        {formatDate(p.createdAt)}{p.userName ? ` · ${p.userName}` : ""}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                      +{formatCurrency(Number(p.amount))}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}

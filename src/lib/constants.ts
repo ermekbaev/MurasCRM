@@ -58,12 +58,14 @@ export const PRIORITY_COLORS: Record<Priority, string> = {
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   UNPAID: "Не оплачен",
+  PARTIAL: "Частично оплачен",
   ADVANCE: "Аванс",
   PAID: "Оплачен",
 };
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   UNPAID: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
+  PARTIAL: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
   ADVANCE: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300",
   PAID: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
 };

@@ -58,6 +58,7 @@ enum Priority {
 
 enum PaymentStatus {
   UNPAID
+  PARTIAL
   ADVANCE
   PAID
 }
@@ -185,6 +186,25 @@ model Client {
 
   orders   Order[]
   invoices Invoice[]
+  payments Payment[]
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
+model Payment {
+  id        String   @id @default(cuid())
+  clientId  String
+  orderId   String?
+  amount    Decimal  @db.Decimal(12, 2)
+  userId    String?
+  userName  String?
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([orderId])
 }
 
 // ─── Order ────────────────────────────────────────────────────────────────────
@@ -199,6 +219,7 @@ model Order {
   clientId      String
   managerId     String?
   amount        Decimal       @default(0) @db.Decimal(12, 2)
+  paidAmount    Decimal       @default(0) @db.Decimal(12, 2)
   paymentStatus PaymentStatus @default(UNPAID)
   notes         String?
   createdAt     DateTime      @default(now())
@@ -215,6 +236,7 @@ model Order {
   invoices    Invoice[]
   acts        Act[]
   defects     DefectRecord[]
+  payments    Payment[]
 
   @@index([clientId])
   @@index([managerId])
