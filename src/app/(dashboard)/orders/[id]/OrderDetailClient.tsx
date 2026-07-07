@@ -6,7 +6,6 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
-  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   PAYMENT_STATUS_LABELS,
@@ -101,6 +100,7 @@ interface OrderDetailClientProps {
     }[];
   };
   users: { id: string; name: string; role: string }[];
+  orderTypes: { code: string; label: string; isActive: boolean }[];
   currentUserId: string;
   currentRole: string;
 }
@@ -114,6 +114,7 @@ function formatFileSize(bytes: number) {
 export default function OrderDetailClient({
   order: initialOrder,
   users,
+  orderTypes,
   currentUserId,
   currentRole,
 }: OrderDetailClientProps) {
@@ -343,7 +344,10 @@ export default function OrderDetailClient({
   const editTotal = editItems.reduce((s, i) => s + Number(i.qty) * Number(i.price) * (1 - Number(i.discount) / 100), 0);
 
   const statusOptions = Object.entries(ORDER_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
-  const typeOptions = Object.entries(ORDER_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }));
+  const typeLabels: Record<string, string> = Object.fromEntries(orderTypes.map((t) => [t.code, t.label]));
+  const typeOptions = orderTypes
+    .filter((t) => t.isActive || t.code === order.type)
+    .map((t) => ({ value: t.code, label: t.label }));
   const priorityOptions = Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }));
   const paymentOptions = Object.entries(PAYMENT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
 
@@ -441,7 +445,7 @@ export default function OrderDetailClient({
                 <>
                   <div className="flex justify-between text-sm">
                     <dt className="text-gray-500 dark:text-slate-500">Тип</dt>
-                    <dd className="text-gray-800 dark:text-slate-200">{ORDER_TYPE_LABELS[order.type as keyof typeof ORDER_TYPE_LABELS] ?? order.type}</dd>
+                    <dd className="text-gray-800 dark:text-slate-200">{typeLabels[order.type] ?? order.type}</dd>
                   </div>
                   <div className="flex justify-between text-sm">
                     <dt className="text-gray-500 dark:text-slate-500">Приоритет</dt>

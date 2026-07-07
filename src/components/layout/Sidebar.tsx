@@ -126,6 +126,11 @@ const settingsItems = [
     roles: ["ADMIN", "MANAGER"] as Role[],
   },
   {
+    label: "Типы заявок",
+    href: "/settings/order-types",
+    roles: ["ADMIN", "MANAGER"] as Role[],
+  },
+  {
     label: "Шаблоны",
     href: "/settings/templates",
     roles: ["ADMIN", "ACCOUNTANT"] as Role[],

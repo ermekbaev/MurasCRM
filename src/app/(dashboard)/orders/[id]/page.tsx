@@ -45,6 +45,11 @@ export default async function OrderDetailPage({
     }),
   ]);
 
+  const orderTypes = await prisma.orderTypeOption.findMany({
+    select: { code: true, label: true, isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
+
   if (!order) notFound();
 
   const filesWithUrls = await Promise.all(
@@ -88,6 +93,7 @@ export default async function OrderDetailPage({
         })),
       }}
       users={users}
+      orderTypes={orderTypes}
       currentUserId={session?.user.id || ""}
       currentRole={session?.user.role || "MANAGER"}
     />

@@ -1,6 +1,5 @@
 import {
   OrderStatus,
-  OrderType,
   Priority,
   PaymentStatus,
   TaskStatus,
@@ -32,7 +31,8 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   CANCELLED: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
 };
 
-export const ORDER_TYPE_LABELS: Record<OrderType, string> = {
+// Запасные подписи встроенных типов. Актуальный список — в справочнике (/api/order-types)
+export const ORDER_TYPE_LABELS: Record<string, string> = {
   DTF: "DTF-печать",
   UV_DTF: "UV DTF",
   UV_FLATBED: "UV планшет",

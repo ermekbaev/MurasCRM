@@ -7,7 +7,7 @@ import { notifyNewOrder } from "@/lib/telegram";
 
 const orderSchema = z.object({
   clientId: z.string().min(1),
-  type: z.enum(["DTF", "UV_DTF", "UV_FLATBED", "LASER_CUT", "PLOTTER_CUT", "HIGH_PRECISION", "COMBO"]).default("DTF"),
+  type: z.string().min(1).default("DTF"),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).default("NORMAL"),
   deadline: z.string().optional(),
   notes: z.string().optional(),
@@ -105,6 +105,11 @@ export async function POST(req: Request) {
   }
 
   const { items = [], assigneeIds = [], deadline, ...rest } = parsed.data;
+
+  const typeExists = await prisma.orderTypeOption.findUnique({ where: { code: rest.type } });
+  if (!typeExists) {
+    return NextResponse.json({ error: "Неизвестный тип заявки" }, { status: 400 });
+  }
 
   const calculatedItems = items.map((item) => {
     const total = item.qty * item.price * (1 - item.discount / 100);

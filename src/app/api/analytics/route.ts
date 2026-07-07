@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { startOfWeek, startOfMonth, startOfQuarter, startOfYear, subMonths, subWeeks, format } from "date-fns";
 import {
   ORDER_STATUS_LABELS,
-  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
   PAYMENT_STATUS_LABELS,
 } from "@/lib/constants";
+import { getOrderTypeLabels } from "@/lib/orderTypes";
 
 export async function GET(req: Request) {
   const session = await requireAuth();
@@ -315,6 +315,7 @@ export async function GET(req: Request) {
       },
     });
 
+    const ORDER_TYPE_LABELS = await getOrderTypeLabels();
     const eqAgg: Record<string, { name: string; type: string; itemsCount: number; qty: number; revenue: number }> = {};
     const orderRows: NonNullable<typeof details>["orders"] = [];
     const itemRows: NonNullable<typeof details>["items"] = [];

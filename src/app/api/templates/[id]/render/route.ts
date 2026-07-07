@@ -2,11 +2,6 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
-const ORDER_TYPE_LABELS: Record<string, string> = {
-  DTF: "DTF-печать", UV_DTF: "UV DTF", UV_FLATBED: "UV планшет",
-  LASER_CUT: "Лазерная резка", PLOTTER_CUT: "Плоттерная резка",
-  HIGH_PRECISION: "Высокоточная печать", COMBO: "Комбо",
-};
 const ORDER_STATUS_LABELS: Record<string, string> = {
   NEW: "Новая", IN_PROGRESS: "В работе", REVIEW: "На проверке",
   READY: "Готово", ISSUED: "Выдано", CANCELLED: "Отменено",

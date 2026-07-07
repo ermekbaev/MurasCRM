@@ -6,7 +6,6 @@ import { formatCurrency, formatDate, formatFileSize } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
-  ORDER_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   PAYMENT_STATUS_LABELS,
@@ -63,11 +62,18 @@ interface FormItem {
   discount: string;
 }
 
+interface OrderTypeOption {
+  code: string;
+  label: string;
+  isActive: boolean;
+}
+
 interface Props {
   initialOrders: Order[];
   clients: Client[];
   users: User[];
   equipment: Equipment[];
+  orderTypes: OrderTypeOption[];
   currentUserId: string;
   currentRole: string;
 }
@@ -78,7 +84,9 @@ const PRICING_UNIT_SHORT: Record<string, string> = {
 
 const emptyItem = (): FormItem => ({ equipmentId: "", name: "", qty: "", unit: "шт", price: "", discount: "" });
 
-export default function OrdersClient({ initialOrders, clients, users, equipment, currentUserId, currentRole }: Props) {
+export default function OrdersClient({ initialOrders, clients, users, equipment, orderTypes, currentUserId, currentRole }: Props) {
+  const typeLabels: Record<string, string> = Object.fromEntries(orderTypes.map((t) => [t.code, t.label]));
+  const typeOptions = orderTypes.filter((t) => t.isActive).map((t) => ({ value: t.code, label: t.label }));
   const [orders, setOrders] = useState(initialOrders);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -349,8 +357,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
           >
             <option value="">Все типы</option>
-            {Object.entries(ORDER_TYPE_LABELS).map(([val, label]) => (
-              <option key={val} value={val}>{label}</option>
+            {typeOptions.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
             ))}
           </select>
           <select
@@ -373,6 +381,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
                 <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Заявка</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Тип</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Приоритет</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Срок</th>
@@ -383,7 +392,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-gray-400 dark:text-slate-500">
+                  <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-slate-500">
                     <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
                     Заявки не найдены
                   </td>
@@ -403,6 +412,11 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                           {formatDate(order.createdAt)}
                         </p>
                       </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-violet-100 dark:bg-violet-900/40 text-violet-800 dark:text-violet-300">
+                        {typeLabels[order.type] ?? order.type}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS]}`}>
@@ -450,7 +464,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               label="Тип заявки"
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
-              options={Object.entries(ORDER_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+              options={typeOptions}
             />
             <Select
               label="Приоритет"

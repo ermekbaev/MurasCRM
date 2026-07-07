@@ -61,6 +61,25 @@ async function main() {
     },
   });
 
+  // Order types (справочник)
+  const orderTypeDefaults = [
+    { code: "DTF", label: "DTF-печать" },
+    { code: "UV_DTF", label: "UV DTF" },
+    { code: "UV_FLATBED", label: "UV планшет" },
+    { code: "LASER_CUT", label: "Лазерная резка" },
+    { code: "PLOTTER_CUT", label: "Плоттерная резка" },
+    { code: "HIGH_PRECISION", label: "Высокоточная печать" },
+    { code: "COMBO", label: "Комбо" },
+  ];
+  for (let i = 0; i < orderTypeDefaults.length; i++) {
+    const t = orderTypeDefaults[i];
+    await prisma.orderTypeOption.upsert({
+      where: { code: t.code },
+      update: {},
+      create: { code: t.code, label: t.label, sortOrder: i + 1 },
+    });
+  }
+
   // Equipment
   const dtfPrinter = await prisma.equipment.upsert({
     where: { id: "dtf-printer-1" },

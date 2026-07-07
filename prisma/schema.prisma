@@ -30,16 +30,6 @@ enum ClientSource {
   OTHER
 }
 
-enum OrderType {
-  DTF
-  UV_DTF
-  UV_FLATBED
-  LASER_CUT
-  PLOTTER_CUT
-  HIGH_PRECISION
-  COMBO
-}
-
 enum OrderStatus {
   NEW
   IN_PROGRESS
@@ -213,7 +203,7 @@ model Order {
   id            String        @id @default(cuid())
   number        String        @unique
   status        OrderStatus   @default(NEW)
-  type          OrderType     @default(DTF)
+  type          String        @default("DTF")
   priority      Priority      @default(NORMAL)
   deadline      DateTime?
   clientId      String
@@ -610,6 +600,17 @@ model Tag {
   name      String   @unique
   color     String   @default("#6366f1")
   createdAt DateTime @default(now())
+}
+
+// Справочник типов заявок (редактируется вручную в настройках)
+model OrderTypeOption {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  label     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── CompanySettings ──────────────────────────────────────────────────────────
