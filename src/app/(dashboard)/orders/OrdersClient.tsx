@@ -22,6 +22,7 @@ import { Role } from "@prisma/client";
 interface Order {
   id: string;
   number: string;
+  title: string | null;
   status: string;
   type: string;
   priority: string;
@@ -98,6 +99,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   const [formItems, setFormItems] = useState<FormItem[]>([emptyItem()]);
   const [form, setForm] = useState({
     clientId: "",
+    title: "",
     type: "DTF",
     priority: "NORMAL",
     deadline: "",
@@ -182,7 +184,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
 
   function closeModal() {
     setModalOpen(false);
-    setForm({ clientId: "", type: "DTF", priority: "NORMAL", deadline: "", notes: "" });
+    setForm({ clientId: "", title: "", type: "DTF", priority: "NORMAL", deadline: "", notes: "" });
     setFormItems([emptyItem()]);
     setSelectedAssignees([]);
     setPendingFiles([]);
@@ -403,8 +405,13 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                     <td className="px-5 py-3">
                       <Link href={`/orders/${order.id}`} className="group">
                         <p className="font-medium text-gray-800 dark:text-slate-200 group-hover:text-violet-600 transition-colors truncate max-w-48">
-                          {order.client.name}
+                          {order.title || order.client.name}
                         </p>
+                        {order.title && (
+                          <p className="text-xs text-gray-500 dark:text-slate-400 truncate max-w-48">
+                            {order.client.name}
+                          </p>
+                        )}
                         <p className="text-xs text-gray-400 dark:text-slate-500">
                           {order.number}
                         </p>
@@ -459,6 +466,12 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       {/* Create Modal */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Новая заявка" size="xl">
         <form onSubmit={handleCreate} className="space-y-4">
+          <Input
+            label="Название заказа"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder="Напр.: Наклейки на авто, Баннер 3×2 м..."
+          />
           <div className="grid grid-cols-2 gap-4">
             <Select
               label="Тип заявки"

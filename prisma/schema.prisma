@@ -202,6 +202,7 @@ model Payment {
 model Order {
   id            String        @id @default(cuid())
   number        String        @unique
+  title         String?
   status        OrderStatus   @default(NEW)
   type          String        @default("DTF")
   priority      Priority      @default(NORMAL)

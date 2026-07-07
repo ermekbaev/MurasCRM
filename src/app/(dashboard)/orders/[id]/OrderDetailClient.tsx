@@ -47,6 +47,7 @@ interface OrderDetailClientProps {
   order: {
     id: string;
     number: string;
+    title: string | null;
     status: string;
     type: string;
     priority: string;
@@ -125,6 +126,8 @@ export default function OrderDetailClient({
   const [activeTab, setActiveTab] = useState<"items" | "files" | "tasks" | "comments" | "history">("items");
   const [uploadingFile, setUploadingFile] = useState(false);
   const [isDraggingTab, setIsDraggingTab] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
   const localPreviewsRef = useRef<Map<string, string>>(new Map());
@@ -180,6 +183,11 @@ export default function OrderDetailClient({
       setOrder((prev) => ({ ...prev, ...updated }));
     }
     setSaving(false);
+  }
+
+  async function saveTitle() {
+    await updateField("title", titleDraft.trim());
+    setEditingTitle(false);
   }
 
   async function sendComment(e: React.FormEvent) {
@@ -362,9 +370,38 @@ export default function OrderDetailClient({
           <ArrowLeft size={14} /> Все заявки
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{order.number}</h1>
+          <div className="min-w-0">
+            {editingTitle ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  placeholder="Название заказа"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
+                />
+                <button onClick={saveTitle} disabled={saving} className="p-1.5 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30">
+                  <Check size={18} />
+                </button>
+                <button onClick={() => setEditingTitle(false)} className="p-1.5 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700">
+                  <X size={18} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 truncate">{order.title || order.number}</h1>
+                {canEdit && (
+                  <button
+                    onClick={() => { setTitleDraft(order.title || ""); setEditingTitle(true); }}
+                    className="p-1 rounded text-gray-400 hover:text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                )}
+              </div>
+            )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {order.title && <span className="text-xs text-gray-400 dark:text-slate-500">{order.number}</span>}
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS]}`}>
                 {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
               </span>

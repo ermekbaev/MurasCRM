@@ -7,6 +7,7 @@ import { notifyNewOrder } from "@/lib/telegram";
 
 const orderSchema = z.object({
   clientId: z.string().min(1),
+  title: z.string().max(200).optional(),
   type: z.string().min(1).default("DTF"),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).default("NORMAL"),
   deadline: z.string().optional(),

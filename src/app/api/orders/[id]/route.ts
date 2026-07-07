@@ -6,6 +6,7 @@ import { notifyOrderStatusChanged, notifyLowStock } from "@/lib/telegram";
 
 const updateSchema = z.object({
   status: z.enum(["NEW", "IN_PROGRESS", "REVIEW", "READY", "ISSUED", "CANCELLED"]).optional(),
+  title: z.string().max(200).nullable().optional(),
   type: z.string().min(1).optional(),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).optional(),
   deadline: z.string().nullable().optional(),
@@ -167,6 +168,7 @@ export async function PATCH(
   if (!isFullEditor) {
     // Поля, которые НЕ может менять не-админ/не-менеджер
     const forbiddenFields: string[] = [];
+    if (rest.title !== undefined) forbiddenFields.push("title");
     if (rest.type !== undefined) forbiddenFields.push("type");
     if (rest.priority !== undefined) forbiddenFields.push("priority");
     if (deadline !== undefined) forbiddenFields.push("deadline");
