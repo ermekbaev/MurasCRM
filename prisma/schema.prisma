@@ -663,3 +663,17 @@ model Company {
   invoices Invoice[]
   acts     Act[]
 }
+
+// ─── DemoVisit (аналитика заходов в демо по метке ?ref=) ──────────────────────
+// Пишется публично, когда кто-то открывает демо по ссылке вида
+// https://demo.muras-brand.kg/login?ref=sunprint. Позволяет видеть, какой
+// заказчик реально заходил смотреть систему.
+model DemoVisit {
+  id        String   @id @default(cuid())
+  ref       String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([ref, createdAt])
+}
