@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Link from "next/link";
 import { History, ChevronLeft, ChevronRight, Search } from "lucide-react";
@@ -83,86 +84,80 @@ export default function ChangelogPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-            <History size={22} className="text-violet-500" />
-            Журнал изменений
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            История всех изменений заявок · {total} записей
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<History size={18} className="text-accent" />}
+        title="Журнал изменений"
+        subtitle={`История всех изменений заявок · ${total} записей`}
+      />
 
       <Card padding="none">
-        <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700">
+        <div className="px-5 py-3 border-b border-line-soft">
           <div className="relative max-w-sm">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
             <input
               type="text"
               placeholder="Поиск по ID заявки..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-line rounded-lg bg-surface text-fg placeholder:text-fg-subtle dark:placeholder:text-slate-500 focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-sm text-gray-400 dark:text-slate-500">Загрузка...</div>
+          <div className="py-12 text-center text-sm text-fg-subtle">Загрузка...</div>
         ) : logs.length === 0 ? (
-          <div className="py-12 text-center text-sm text-gray-400 dark:text-slate-500">Изменений пока нет</div>
+          <div className="py-12 text-center text-sm text-fg-subtle">Изменений пока нет</div>
         ) : (
-          <div className="divide-y divide-gray-50 dark:divide-slate-700">
+          <div className="divide-y divide-line-soft">
             {logs.map((log) => (
-              <div key={log.id} className="flex items-start gap-4 px-5 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors">
-                <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-violet-600">{log.user.name.charAt(0)}</span>
+              <div key={log.id} className="flex items-start gap-4 px-5 py-3 hover:bg-surface-sunken dark:hover:bg-slate-700/50 transition-colors">
+                <div className="w-8 h-8 bg-accent-soft rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-accent">{log.user.name.charAt(0)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-gray-800 dark:text-slate-200">{log.user.name}</span>
+                    <span className="text-sm font-medium text-fg">{log.user.name}</span>
                     <Badge variant="default" className="text-xs">{log.user.role}</Badge>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">изменил(а)</span>
-                    <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                    <span className="text-xs text-fg-subtle">изменил(а)</span>
+                    <span className="text-xs font-semibold text-fg-muted">
                       {FIELD_LABELS[log.field] ?? log.field}
                     </span>
-                    <span className="text-xs text-gray-400 dark:text-slate-500">в заявке</span>
+                    <span className="text-xs text-fg-subtle">в заявке</span>
                     <Link
                       href={`/orders/${log.order.id}`}
-                      className="text-xs font-medium text-violet-600 hover:underline"
+                      className="text-xs font-medium text-accent hover:underline"
                     >
                       {log.order.number}
                     </Link>
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-xs">
-                    <span className="text-gray-500 dark:text-slate-500 line-through">{formatValue(log.field, log.oldValue)}</span>
-                    <span className="text-gray-400 dark:text-slate-500">→</span>
-                    <span className="text-gray-800 dark:text-slate-200 font-medium">{formatValue(log.field, log.newValue)}</span>
+                    <span className="text-fg-muted line-through">{formatValue(log.field, log.oldValue)}</span>
+                    <span className="text-fg-subtle">→</span>
+                    <span className="text-fg font-medium">{formatValue(log.field, log.newValue)}</span>
                   </div>
                 </div>
-                <span className="text-xs text-gray-400 dark:text-slate-500 shrink-0 mt-0.5">{formatDate(log.createdAt)}</span>
+                <span className="text-xs text-fg-subtle shrink-0 mt-0.5">{formatDate(log.createdAt)}</span>
               </div>
             ))}
           </div>
         )}
 
         {pages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-slate-700">
-            <span className="text-xs text-gray-500 dark:text-slate-400">Страница {page} из {pages}</span>
+          <div className="flex items-center justify-between px-5 py-3 border-t border-line-soft">
+            <span className="text-xs text-fg-muted">Страница {page} из {pages}</span>
             <div className="flex items-center gap-1">
               <button
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="p-1.5 rounded hover:bg-gray-100 dark:bg-slate-700 dark:hover:bg-slate-700 disabled:opacity-40"
+                className="p-1.5 rounded hover:bg-surface-hover dark:hover:bg-slate-700 disabled:opacity-40"
               >
                 <ChevronLeft size={14} />
               </button>
               <button
                 disabled={page >= pages}
                 onClick={() => setPage((p) => p + 1)}
-                className="p-1.5 rounded hover:bg-gray-100 dark:bg-slate-700 dark:hover:bg-slate-700 disabled:opacity-40"
+                className="p-1.5 rounded hover:bg-surface-hover dark:hover:bg-slate-700 disabled:opacity-40"
               >
                 <ChevronRight size={14} />
               </button>

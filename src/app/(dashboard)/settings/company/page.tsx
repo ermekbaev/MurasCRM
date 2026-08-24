@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import AdditionalCompanies from "./AdditionalCompanies";
+import PageHeader from "@/components/layout/PageHeader";
 import { Building2, CreditCard, Phone, Check, ImagePlus } from "lucide-react";
 
 interface Settings {
@@ -39,7 +40,7 @@ const BRANDING: BrandingItem[] = [
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <Card padding="md">
-      <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">{icon}{title}</h2>
+      <h2 className="font-semibold text-fg mb-4 flex items-center gap-2">{icon}{title}</h2>
       <div className="space-y-4">{children}</div>
     </Card>
   );
@@ -110,16 +111,20 @@ export default function CompanySettingsPage() {
     setLoading(false);
   }
 
-  if (fetching) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
+  if (fetching) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Реквизиты компании</h1>
-        <Button onClick={handleSave} loading={loading}>
-          {saved ? <><Check size={15} /> Сохранено</> : "Сохранить"}
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        icon={<Building2 size={18} />}
+        title="Реквизиты компании"
+        subtitle="Используются в счетах, актах и печатных формах"
+        actions={
+          <Button onClick={handleSave} loading={loading}>
+            {saved ? <><Check size={15} /> Сохранено</> : "Сохранить"}
+          </Button>
+        }
+      />
 
       <form onSubmit={handleSave} className="space-y-5">
         <Section title="Основная информация" icon={<Building2 size={16} />}>
@@ -157,20 +162,20 @@ export default function CompanySettingsPage() {
         </Section>
 
         <Section title="Брендинг для документов (PDF)" icon={<ImagePlus size={16} />}>
-          <p className="text-xs text-gray-500 dark:text-slate-400 -mt-2">Используются в PDF-версиях счетов и актов.</p>
+          <p className="text-xs text-fg-muted -mt-2">Используются в PDF-версиях счетов и актов.</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {BRANDING.map((item) => {
               const url = brandingUrls[item.field];
               const isUploading = uploading === item.field;
               return (
                 <div key={item.field} className="flex flex-col gap-2 justify-between">
-                  <p className="text-sm font-medium text-gray-700 dark:text-slate-300">{item.label}</p>
-                  <div className={`${item.size} border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-slate-800/50 overflow-hidden`}>
+                  <p className="text-sm font-medium text-fg-muted">{item.label}</p>
+                  <div className={`${item.size} border-2 border-dashed border-line rounded-lg flex items-center justify-center bg-surface-sunken overflow-hidden`}>
                     {url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={url} alt={item.label} className="max-w-full max-h-full object-contain p-2" />
                     ) : (
-                      <ImagePlus size={20} className="text-gray-300" />
+                      <ImagePlus size={20} className="text-fg-subtle" />
                     )}
                   </div>
                   <input
@@ -188,7 +193,7 @@ export default function CompanySettingsPage() {
                   >
                     {url ? "Заменить" : "Загрузить"}
                   </Button>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">{item.hint}</p>
+                  <p className="text-xs text-fg-subtle">{item.hint}</p>
                 </div>
               );
             })}

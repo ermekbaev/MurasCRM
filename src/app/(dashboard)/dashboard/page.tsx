@@ -8,9 +8,11 @@ import {
   PRIORITY_COLORS,
 } from "@/lib/constants";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Link from "next/link";
 import {
+  LayoutDashboard,
   ShoppingCart,
   CheckCircle,
   Clock,
@@ -142,28 +144,28 @@ export default async function DashboardPage() {
     {
       label: "Активных заявок",
       value: data.stats.activeOrders,
-      icon: <Clock size={20} />,
-      color: "text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400",
+      icon: <Clock size={18} />,
+      color: "text-sky-600 bg-sky-50 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-400 dark:ring-sky-500/20",
       href: "/orders?status=active",
     },
     {
       label: "Выручка за месяц",
       value: formatCurrency(data.stats.revenue),
-      icon: <TrendingUp size={20} />,
-      color: "text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400",
+      icon: <TrendingUp size={18} />,
+      color: "text-emerald-600 bg-emerald-50 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20",
     },
     {
       label: "Завершено",
       value: data.stats.completedOrders,
-      icon: <CheckCircle size={20} />,
-      color: "text-violet-600 bg-violet-50 dark:bg-violet-900/30 dark:text-violet-400",
+      icon: <CheckCircle size={18} />,
+      color: "text-accent bg-accent-soft ring-accent/15",
       href: "/orders?status=completed",
     },
     {
       label: "Без исполнителя",
       value: data.stats.newOrdersWithoutAssignee,
-      icon: <AlertTriangle size={20} />,
-      color: "text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400",
+      icon: <AlertTriangle size={18} />,
+      color: "text-amber-600 bg-amber-50 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20",
       href: "/orders?status=NEW",
     },
   ];
@@ -171,43 +173,47 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Дашборд</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            Добро пожаловать, {session?.user.name}
-          </p>
-        </div>
-        <Link
-          href="/orders"
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
-        >
-          <Plus size={16} />
-          Новая заявка
-        </Link>
-      </div>
+      <PageHeader
+        icon={<LayoutDashboard size={18} />}
+        title={`Здравствуйте, ${session?.user.name || ""}`}
+        subtitle="Сводка по производству на сегодня"
+        actions={
+          <Link
+            href="/orders"
+            className="inline-flex h-9.5 items-center gap-2 rounded-lg bg-accent px-4 text-[13px] font-medium text-white shadow-[0_1px_2px_rgb(16_20_28/0.16)] transition-colors hover:bg-accent-hover"
+          >
+            <Plus size={16} />
+            Новая заявка
+          </Link>
+        }
+      />
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((card) => (
-          <Card key={card.label} padding="md">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-slate-400">{card.label}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{card.value}</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((card) => {
+          const body = (
+            <Card padding="md" interactive={!!card.href} className="h-full">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-fg-muted">{card.label}</p>
+                  <p className="mt-1.5 text-[26px] font-semibold leading-none tracking-tight text-fg tabular-nums">
+                    {card.value}
+                  </p>
+                </div>
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${card.color}`}>
+                  {card.icon}
+                </div>
               </div>
-              <div className={`p-2.5 rounded-lg ${card.color}`}>{card.icon}</div>
-            </div>
-            {card.href && (
-              <Link
-                href={card.href}
-                className="text-xs text-violet-600 hover:underline mt-2 block"
-              >
-                Посмотреть →
-              </Link>
-            )}
-          </Card>
-        ))}
+            </Card>
+          );
+          return card.href ? (
+            <Link key={card.label} href={card.href} className="block">
+              {body}
+            </Link>
+          ) : (
+            <div key={card.label}>{body}</div>
+          );
+        })}
       </div>
 
       {/* Charts placeholder (client component) */}
@@ -218,43 +224,43 @@ export default async function DashboardPage() {
         {/* Recent orders */}
         <div className="lg:col-span-2">
           <Card padding="none">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
-              <h2 className="font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-line-soft">
+              <h2 className="font-semibold text-fg flex items-center gap-2">
                 <ShoppingCart size={16} /> Последние заявки
               </h2>
-              <Link href="/orders" className="text-xs text-violet-600 hover:underline">
+              <Link href="/orders" className="text-xs text-accent hover:underline">
                 Все заявки
               </Link>
             </div>
-            <div className="divide-y divide-gray-50 dark:divide-slate-700">
+            <div className="divide-y divide-line-soft">
               {data.recentOrders.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 dark:text-slate-500 py-8">Заявок пока нет</p>
+                <p className="text-center text-sm text-fg-subtle py-8">Заявок пока нет</p>
               ) : (
                 data.recentOrders.map((order) => (
                   <Link
                     key={order.id}
                     href={`/orders/${order.id}`}
-                    className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors"
+                    className="flex items-center justify-between px-6 py-3 hover:bg-surface-sunken dark:hover:bg-slate-700/50 transition-colors"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-800 dark:text-slate-200">{order.number}</span>
+                        <span className="text-sm font-medium text-fg">{order.number}</span>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status]}`}
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${ORDER_STATUS_COLORS[order.status]}`}
                         >
                           {ORDER_STATUS_LABELS[order.status]}
                         </span>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[order.priority]}`}
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PRIORITY_COLORS[order.priority]}`}
                         >
                           {PRIORITY_LABELS[order.priority]}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
+                      <p className="text-xs text-fg-muted truncate mt-0.5">
                         {order.client.name} · {formatDate(order.createdAt)}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 ml-4 shrink-0">
+                    <span className="text-sm font-semibold text-fg-muted ml-4 shrink-0">
                       {formatCurrency(Number(order.amount))}
                     </span>
                   </Link>
@@ -268,29 +274,29 @@ export default async function DashboardPage() {
         <div className="space-y-4">
           {/* Top clients */}
           <Card padding="none">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
-              <h2 className="font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-2">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-line-soft">
+              <h2 className="font-semibold text-fg flex items-center gap-2">
                 <Users size={16} /> Топ клиентов
               </h2>
             </div>
-            <div className="divide-y divide-gray-50 dark:divide-slate-700">
+            <div className="divide-y divide-line-soft">
               {data.topClients.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 dark:text-slate-500 py-6">Нет данных</p>
+                <p className="text-center text-sm text-fg-subtle py-6">Нет данных</p>
               ) : (
                 data.topClients.map((client, idx) => (
                   <Link
                     key={client.id}
                     href={`/clients/${client.id}`}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors"
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-surface-sunken dark:hover:bg-slate-700/50 transition-colors"
                   >
-                    <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-gray-400 dark:text-slate-500">
+                    <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-fg-subtle">
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{client.name}</p>
-                      <p className="text-xs text-gray-400 dark:text-slate-500">{client.ordersCount} заказ(ов)</p>
+                      <p className="text-sm font-medium text-fg truncate">{client.name}</p>
+                      <p className="text-xs text-fg-subtle">{client.ordersCount} заказ(ов)</p>
                     </div>
-                    <span className="text-xs font-semibold text-gray-700 dark:text-slate-200">
+                    <span className="text-xs font-semibold text-fg-muted">
                       {formatCurrency(client.totalAmount)}
                     </span>
                   </Link>
@@ -302,26 +308,26 @@ export default async function DashboardPage() {
           {/* Operator load */}
           {data.operatorLoad.length > 0 && (
             <Card padding="none">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
-                <Users size={16} className="text-violet-500" />
-                <h2 className="font-semibold text-gray-800 dark:text-slate-100">Загруженность</h2>
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-line-soft">
+                <Users size={16} className="text-accent" />
+                <h2 className="font-semibold text-fg">Загруженность</h2>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-slate-700">
+              <div className="divide-y divide-line-soft">
                 {data.operatorLoad.map((op) => (
                   <div key={op.id} className="flex items-center gap-3 px-5 py-3">
-                    <div className="w-7 h-7 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{op.name.charAt(0)}</span>
+                    <div className="w-7 h-7 bg-accent-soft rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-accent">{op.name.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{op.name}</p>
-                      <div className="mt-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <p className="text-sm font-medium text-fg truncate">{op.name}</p>
+                      <div className="mt-1 h-1.5 bg-surface-hover rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-violet-500 rounded-full"
+                          className="h-full bg-accent rounded-full"
                           style={{ width: `${Math.min((op.activeTasks / 10) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 ml-2 shrink-0">
+                    <span className="text-xs font-semibold text-fg-muted ml-2 shrink-0">
                       {op.activeTasks} задач
                     </span>
                   </div>
@@ -333,31 +339,31 @@ export default async function DashboardPage() {
           {/* Equipment load */}
           {data.equipmentLoad.length > 0 && (
             <Card padding="none">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-line-soft">
                 <Cpu size={16} className="text-blue-500" />
-                <h2 className="font-semibold text-gray-800 dark:text-slate-100">Загруженность оборудования</h2>
+                <h2 className="font-semibold text-fg">Загруженность оборудования</h2>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-slate-700">
+              <div className="divide-y divide-line-soft">
                 {data.equipmentLoad.map((eq) => (
                   <div key={eq.id} className="flex items-center gap-3 px-5 py-3">
                     <div className={`w-2 h-2 rounded-full shrink-0 ${eq.status === "MAINTENANCE" ? "bg-orange-400" : "bg-green-400"}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{eq.name}</p>
-                      <div className="mt-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <p className="text-sm font-medium text-fg truncate">{eq.name}</p>
+                      <div className="mt-1 h-1.5 bg-surface-hover rounded-full overflow-hidden">
                         <div
                           className="h-full bg-blue-500 rounded-full"
                           style={{ width: `${Math.min((eq.activeOrders / 5) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 ml-2 shrink-0">
+                    <span className="text-xs font-semibold text-fg-muted ml-2 shrink-0">
                       {eq.activeOrders} зак.
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-700">
-                <a href="/settings/equipment" className="text-xs text-violet-600 hover:underline">
+              <div className="px-5 py-3 border-t border-line-soft">
+                <a href="/settings/equipment" className="text-xs text-accent hover:underline">
                   Управление оборудованием →
                 </a>
               </div>
@@ -367,24 +373,24 @@ export default async function DashboardPage() {
           {/* Low stock alert */}
           {data.lowStock.length > 0 && (
             <Card padding="none">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-line-soft">
                 <Package size={16} className="text-orange-500" />
-                <h2 className="font-semibold text-gray-800 dark:text-slate-100">Заканчиваются расходники</h2>
+                <h2 className="font-semibold text-fg">Заканчиваются расходники</h2>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-slate-700">
+              <div className="divide-y divide-line-soft">
                 {data.lowStock.map((item) => (
                   <div key={item.id} className="flex items-center justify-between px-5 py-3">
-                    <p className="text-sm text-gray-700 dark:text-slate-300 truncate flex-1">{item.name}</p>
+                    <p className="text-sm text-fg-muted truncate flex-1">{item.name}</p>
                     <span className="text-xs text-orange-600 dark:text-orange-400 font-medium ml-2">
                       {item.stock} {item.unit}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-700">
+              <div className="px-5 py-3 border-t border-line-soft">
                 <Link
                   href="/consumables"
-                  className="text-xs text-violet-600 hover:underline"
+                  className="text-xs text-accent hover:underline"
                 >
                   Перейти к расходникам →
                 </Link>

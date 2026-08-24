@@ -7,6 +7,7 @@ import {
   PRIORITY_LABELS,
 } from "@/lib/constants";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -354,7 +355,7 @@ export default function AnalyticsPage() {
   if (loading || !data) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-gray-400 dark:text-slate-500">Загрузка данных...</div>
+        <div className="text-fg-subtle">Загрузка данных...</div>
       </div>
     );
   }
@@ -362,7 +363,7 @@ export default function AnalyticsPage() {
   const { summary } = data;
 
   const GrowthIndicator = ({ value }: { value: number | null }) => {
-    if (value === null) return <span className="text-gray-400 dark:text-slate-500 text-xs">—</span>;
+    if (value === null) return <span className="text-fg-subtle text-xs">—</span>;
     if (value > 0) return (
       <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
         <TrendingUp size={12} /> +{value.toFixed(1)}%
@@ -373,20 +374,18 @@ export default function AnalyticsPage() {
         <TrendingDown size={12} /> {value.toFixed(1)}%
       </span>
     );
-    return <span className="flex items-center gap-1 text-gray-400 dark:text-slate-500 text-xs"><Minus size={12} /> 0%</span>;
+    return <span className="flex items-center gap-1 text-fg-subtle text-xs"><Minus size={12} /> 0%</span>;
   };
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-            <BarChart3 size={24} className="text-violet-600" />
-            Аналитика
-          </h1>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap justify-end">
+      <PageHeader
+        icon={<BarChart3 size={18} className="text-accent" />}
+        title="Аналитика"
+        subtitle="Выручка, загрузка и структура заказов"
+        actions={
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="outline" onClick={handleExportExcel} loading={exporting}>
             <FileDown size={15} /> Excel
           </Button>
@@ -395,34 +394,34 @@ export default function AnalyticsPage() {
           </Button>
           {period === "custom" && (
             <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-gray-400 dark:text-slate-500" />
+              <Calendar size={14} className="text-fg-subtle" />
               <input
                 type="date"
                 value={dateFrom}
                 max={dateTo}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="px-2 py-1.5 text-sm border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="px-2 py-1.5 text-sm border border-line rounded-lg bg-surface text-fg-muted focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
               />
-              <span className="text-gray-400 dark:text-slate-500 text-sm">—</span>
+              <span className="text-fg-subtle text-sm">—</span>
               <input
                 type="date"
                 value={dateTo}
                 min={dateFrom}
                 max={todayStr}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="px-2 py-1.5 text-sm border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="px-2 py-1.5 text-sm border border-line rounded-lg bg-surface text-fg-muted focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
               />
             </div>
           )}
-          <div className="flex border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+          <div className="flex rounded-lg border border-line bg-surface p-0.5">
             {PERIODS.map((p) => (
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
-                className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                   period === p.value
-                    ? "bg-violet-600 text-white"
-                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50"
+                    ? "bg-accent-soft text-accent-fg"
+                    : "text-fg-muted hover:text-fg"
                 }`}
               >
                 {p.value === "custom" && <Calendar size={13} />}
@@ -431,18 +430,19 @@ export default function AnalyticsPage() {
             ))}
           </div>
         </div>
-      </div>
+        }
+      />
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Оборот</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.revenue)}</p>
+              <p className="text-sm text-fg-muted">Оборот</p>
+              <p className="text-xl font-bold text-fg mt-1">{formatCurrency(summary.revenue)}</p>
               <div className="mt-1"><GrowthIndicator value={summary.revGrowth} /></div>
             </div>
-            <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+            <div className="p-2 bg-accent-soft rounded-lg text-accent">
               <DollarSign size={18} />
             </div>
           </div>
@@ -450,12 +450,12 @@ export default function AnalyticsPage() {
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Расходы</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.totalExpenses)}</p>
+              <p className="text-sm text-fg-muted">Расходы</p>
+              <p className="text-xl font-bold text-fg mt-1">{formatCurrency(summary.totalExpenses)}</p>
               <div className="mt-1 space-y-0.5">
-                <p className="text-xs text-gray-400 dark:text-slate-500">Материалы: {formatCurrency(summary.materialCosts)}</p>
-                <p className="text-xs text-gray-400 dark:text-slate-500">Себест.: {formatCurrency(summary.productionCost)}</p>
-                <p className="text-xs text-gray-400 dark:text-slate-500">ЗП: {formatCurrency(summary.operatorWages)}</p>
+                <p className="text-xs text-fg-subtle">Материалы: {formatCurrency(summary.materialCosts)}</p>
+                <p className="text-xs text-fg-subtle">Себест.: {formatCurrency(summary.productionCost)}</p>
+                <p className="text-xs text-fg-subtle">ЗП: {formatCurrency(summary.operatorWages)}</p>
               </div>
             </div>
             <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-lg text-red-500 dark:text-red-400">
@@ -466,7 +466,7 @@ export default function AnalyticsPage() {
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Прибыль</p>
+              <p className="text-sm text-fg-muted">Прибыль</p>
               <p className={`text-xl font-bold mt-1 ${summary.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                 {formatCurrency(summary.profit)}
               </p>
@@ -480,9 +480,9 @@ export default function AnalyticsPage() {
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Заказов</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{summary.ordersCount}</p>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">было: {summary.prevOrdersCount}</p>
+              <p className="text-sm text-fg-muted">Заказов</p>
+              <p className="text-xl font-bold text-fg mt-1">{summary.ordersCount}</p>
+              <p className="text-xs text-fg-subtle mt-1">было: {summary.prevOrdersCount}</p>
             </div>
             <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
               <ShoppingCart size={18} />
@@ -492,8 +492,8 @@ export default function AnalyticsPage() {
         <Card padding="md">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-slate-400">Средний чек</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1">{formatCurrency(summary.avgCheck)}</p>
+              <p className="text-sm text-fg-muted">Средний чек</p>
+              <p className="text-xl font-bold text-fg mt-1">{formatCurrency(summary.avgCheck)}</p>
             </div>
             <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
               <Wallet size={18} />
@@ -504,7 +504,7 @@ export default function AnalyticsPage() {
 
       {/* Revenue chart */}
       <Card padding="md">
-        <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Выручка по месяцам (12 мес.)</h2>
+        <h2 className="font-semibold text-fg mb-4">Выручка по месяцам (12 мес.)</h2>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={data.monthlyRevenue}>
             <defs>
@@ -525,9 +525,9 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by equipment */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Выручка по оборудованию</h2>
+          <h2 className="font-semibold text-fg mb-4">Выручка по оборудованию</h2>
           {data.ordersByType.length === 0 ? (
-            <div className="h-40 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
+            <div className="h-40 flex items-center justify-center text-fg-subtle text-sm">Нет данных</div>
           ) : (
             <ResponsiveContainer width="100%" height={Math.max(180, data.ordersByType.length * 32)}>
               <BarChart data={data.ordersByType.map((d) => ({
@@ -552,9 +552,9 @@ export default function AnalyticsPage() {
 
         {/* Orders by status */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Заявки по статусам</h2>
+          <h2 className="font-semibold text-fg mb-4">Заявки по статусам</h2>
           {data.ordersByStatus.length === 0 ? (
-            <div className="h-40 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
+            <div className="h-40 flex items-center justify-center text-fg-subtle text-sm">Нет данных</div>
           ) : (
             <div className="flex items-center gap-4">
               <ResponsiveContainer width="50%" height={180}>
@@ -582,11 +582,11 @@ export default function AnalyticsPage() {
                   <div key={d.status} className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[idx % COLORS.length] }} />
-                      <span className="text-gray-600 dark:text-slate-400 text-xs">
+                      <span className="text-fg-muted text-xs">
                         {ORDER_STATUS_LABELS[d.status as keyof typeof ORDER_STATUS_LABELS] || d.status}
                       </span>
                     </span>
-                    <span className="font-medium text-gray-800 dark:text-slate-200">{d.count}</span>
+                    <span className="font-medium text-fg">{d.count}</span>
                   </div>
                 ))}
               </div>
@@ -596,20 +596,20 @@ export default function AnalyticsPage() {
 
         {/* Top services */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Топ-5 услуг по выручке</h2>
+          <h2 className="font-semibold text-fg mb-4">Топ-5 услуг по выручке</h2>
           {data.topServices.length === 0 ? (
-            <div className="h-32 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
+            <div className="h-32 flex items-center justify-center text-fg-subtle text-sm">Нет данных</div>
           ) : (
             <div className="space-y-3">
               {data.topServices.map((s, idx) => (
                 <div key={idx}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 dark:text-slate-300 truncate flex-1">{s.name}</span>
-                    <span className="font-semibold text-gray-900 dark:text-slate-100 ml-2">{formatCurrency(s.revenue)}</span>
+                    <span className="text-fg-muted truncate flex-1">{s.name}</span>
+                    <span className="font-semibold text-fg ml-2">{formatCurrency(s.revenue)}</span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-surface-hover rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-violet-500 rounded-full"
+                      className="h-full bg-accent rounded-full"
                       style={{
                         width: `${data.topServices[0] ? (s.revenue / data.topServices[0].revenue) * 100 : 0}%`,
                         background: COLORS[idx % COLORS.length],
@@ -624,9 +624,9 @@ export default function AnalyticsPage() {
 
         {/* Orders by priority */}
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Заявки по приоритетам</h2>
+          <h2 className="font-semibold text-fg mb-4">Заявки по приоритетам</h2>
           {data.ordersByPriority.length === 0 ? (
-            <div className="h-32 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Нет данных</div>
+            <div className="h-32 flex items-center justify-center text-fg-subtle text-sm">Нет данных</div>
           ) : (
             <div className="space-y-2">
               {data.ordersByPriority
@@ -640,14 +640,14 @@ export default function AnalyticsPage() {
                   return (
                     <div key={d.priority}>
                       <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-700 dark:text-slate-300">
+                        <span className="text-fg-muted">
                           {PRIORITY_LABELS[d.priority as keyof typeof PRIORITY_LABELS] || d.priority}
                         </span>
-                        <span className="font-medium text-gray-800 dark:text-slate-200">
+                        <span className="font-medium text-fg">
                           {d.count} ({pct.toFixed(0)}%)
                         </span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-surface-hover rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${pct}%`, background: "#6366f1" }}
@@ -664,8 +664,8 @@ export default function AnalyticsPage() {
       {/* Equipment load */}
       {data.equipmentLoad && data.equipmentLoad.length > 0 && (
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <BarChart3 size={16} className="text-violet-600" />
+          <h2 className="font-semibold text-fg mb-4 flex items-center gap-2">
+            <BarChart3 size={16} className="text-accent" />
             Загруженность оборудования (активные заявки)
           </h2>
           <div className="space-y-3">
@@ -676,13 +676,13 @@ export default function AnalyticsPage() {
               return (
                 <div key={idx}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 dark:text-slate-300 font-medium">{eq.name}</span>
+                    <span className="text-fg-muted font-medium">{eq.name}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 dark:text-slate-500">{eq.type}</span>
-                      <span className="font-semibold text-gray-900 dark:text-slate-100">{eq.orders} заявок</span>
+                      <span className="text-xs text-fg-subtle">{eq.type}</span>
+                      <span className="font-semibold text-fg">{eq.orders} заявок</span>
                     </div>
                   </div>
-                  <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-surface-hover rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
                   </div>
                 </div>
@@ -695,8 +695,8 @@ export default function AnalyticsPage() {
       {/* Operator load */}
       {data.operatorLoad && data.operatorLoad.length > 0 && (
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <BarChart3 size={16} className="text-violet-600" />
+          <h2 className="font-semibold text-fg mb-4 flex items-center gap-2">
+            <BarChart3 size={16} className="text-accent" />
             Загруженность сотрудников (задачи за период)
           </h2>
           <div className="space-y-3">
@@ -706,10 +706,10 @@ export default function AnalyticsPage() {
               return (
                 <div key={idx}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 dark:text-slate-300 font-medium">{op.name}</span>
-                    <span className="text-gray-500 dark:text-slate-500 font-semibold">{op.tasks} задач</span>
+                    <span className="text-fg-muted font-medium">{op.name}</span>
+                    <span className="text-fg-muted font-semibold">{op.tasks} задач</span>
                   </div>
-                  <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-surface-hover rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{ width: `${pct}%`, background: COLORS[idx % COLORS.length] }}
@@ -725,7 +725,7 @@ export default function AnalyticsPage() {
       {/* Operator earnings */}
       {data.operatorEarnings && data.operatorEarnings.length > 0 && (
         <Card padding="md">
-          <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-fg mb-4 flex items-center gap-2">
             <Wallet size={16} className="text-emerald-600" />
             ЗП операторов за период
           </h2>
@@ -736,13 +736,13 @@ export default function AnalyticsPage() {
               return (
                 <div key={idx}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 dark:text-slate-300 font-medium">{op.name}</span>
+                    <span className="text-fg-muted font-medium">{op.name}</span>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-400 dark:text-slate-500">{op.qty.toFixed(2)} ед.</span>
+                      <span className="text-xs text-fg-subtle">{op.qty.toFixed(2)} ед.</span>
                       <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(op.earnings)}</span>
                     </div>
                   </div>
-                  <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-surface-hover rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all bg-emerald-500"
                       style={{ width: `${pct}%` }}

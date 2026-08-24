@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { formatDate, formatFileSize } from "@/lib/utils";
 import { FILE_CATEGORY_LABELS, FILE_STATUS_LABELS, ALLOWED_FILE_TYPES } from "@/lib/constants";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import {
   FolderOpen, Folder, Upload, Download, Search, File, Image, FileText, AlertCircle,
-  Eye, X, Trash2, CheckCircle2, RotateCcw, GitBranch, MessageSquare, Send, ChevronRight, ArrowLeft,
+  Eye, X, Trash2, CheckCircle2, RotateCcw, GitBranch, MessageSquare, Send,
 } from "lucide-react";
 
 interface FileComment {
@@ -40,14 +41,14 @@ const FOLDER_META: Record<FolderKey, { color: string; iconColor: string; bg: str
   SOURCES:          { color: "text-blue-700 dark:text-blue-300",   iconColor: "text-blue-500",   bg: "bg-blue-50 dark:bg-blue-900/20" },
   PENDING_APPROVAL: { color: "text-yellow-700 dark:text-yellow-300", iconColor: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/20" },
   APPROVED:         { color: "text-green-700 dark:text-green-300",  iconColor: "text-green-500",  bg: "bg-green-50 dark:bg-green-900/20" },
-  READY:            { color: "text-violet-700 dark:text-violet-300", iconColor: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-900/20" },
-  ARCHIVE:          { color: "text-gray-600 dark:text-slate-400",   iconColor: "text-gray-400",   bg: "bg-gray-50 dark:bg-slate-800/50" },
+  READY:            { color: "text-accent-fg", iconColor: "text-accent", bg: "bg-accent-soft" },
+  ARCHIVE:          { color: "text-fg-muted",   iconColor: "text-fg-subtle",   bg: "bg-surface-sunken" },
 };
 
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith("image/")) return <Image size={16} className="text-blue-500" />;
   if (mimeType === "application/pdf") return <FileText size={16} className="text-red-500" />;
-  return <File size={16} className="text-gray-500 dark:text-slate-500" />;
+  return <File size={16} className="text-fg-muted" />;
 }
 
 export default function FilesPage() {
@@ -256,45 +257,30 @@ export default function FilesPage() {
       />
 
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {openFolder ? (
-            <button
-              onClick={() => { setOpenFolder(null); setSearch(""); }}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400 transition-colors"
-            >
-              <ArrowLeft size={18} />
-            </button>
-          ) : null}
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-              <FolderOpen size={24} className="text-violet-600" />
-              {openFolder ? (
-                <span className="flex items-center gap-1.5">
-                  <span className="text-gray-400 dark:text-slate-500 font-normal text-lg">Файловый хаб</span>
-                  <ChevronRight size={16} className="text-gray-300 dark:text-slate-600" />
-                  {FILE_CATEGORY_LABELS[openFolder]}
-                </span>
-              ) : (
-                "Файловый хаб"
-              )}
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-              {openFolder
-                ? `${files.filter((f) => f.category === openFolder).length} файлов`
-                : `${files.length} файлов в ${folderKeys.length} папках`}
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => fileInputRef.current?.click()} loading={uploading}>
-          <Upload size={16} /> Загрузить файл
-        </Button>
-      </div>
+      <PageHeader
+        icon={<FolderOpen size={18} className="text-accent" />}
+        onBack={
+          openFolder
+            ? { onClick: () => { setOpenFolder(null); setSearch(""); }, label: "Файловый хаб" }
+            : undefined
+        }
+        title={openFolder ? FILE_CATEGORY_LABELS[openFolder] : "Файловый хаб"}
+        subtitle={
+          openFolder
+            ? `${files.filter((f) => f.category === openFolder).length} файлов`
+            : `${files.length} файлов в ${folderKeys.length} папках`
+        }
+        actions={
+          <Button onClick={() => fileInputRef.current?.click()} loading={uploading}>
+            <Upload size={16} /> Загрузить файл
+          </Button>
+        }
+      />
 
       {/* Folder grid view */}
       {!openFolder && (
         loading ? (
-          <div className="text-center py-16 text-gray-400 dark:text-slate-500">Загрузка...</div>
+          <div className="text-center py-16 text-fg-subtle">Загрузка...</div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {folderKeys.map((key) => {
@@ -304,7 +290,7 @@ export default function FilesPage() {
                 <button
                   key={key}
                   onClick={() => setOpenFolder(key)}
-                  className="group text-left p-5 rounded-xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-md transition-all"
+                  className="group text-left p-5 rounded-xl border border-line-soft bg-surface hover:border-accent/40 hover:shadow-md transition-all"
                 >
                   <div className={`w-12 h-12 rounded-xl ${meta.bg} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
                     <Folder size={24} className={meta.iconColor} />
@@ -312,9 +298,9 @@ export default function FilesPage() {
                   <p className={`font-semibold text-sm leading-tight ${meta.color}`}>
                     {FILE_CATEGORY_LABELS[key]}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{count} файлов</p>
+                  <p className="text-xs text-fg-subtle mt-1">{count} файлов</p>
                   {count > 0 && (
-                    <p className="text-xs text-gray-300 dark:text-slate-600 mt-0.5">{formatFileSize(totalSize(key))}</p>
+                    <p className="text-xs text-fg-subtle mt-0.5">{formatFileSize(totalSize(key))}</p>
                   )}
                 </button>
               );
@@ -329,25 +315,25 @@ export default function FilesPage() {
           {/* Search inside folder */}
           <Card padding="sm">
             <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
               <input
                 type="text"
                 placeholder="Поиск файлов..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                className="w-full pl-9 pr-4 py-2 text-sm border border-line rounded-lg bg-surface text-fg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
               />
             </div>
           </Card>
 
           {folderFiles.length === 0 ? (
             <Card padding="md" className="text-center py-12">
-              <FolderOpen size={40} className="mx-auto text-gray-200 mb-3" />
-              <p className="text-gray-400 dark:text-slate-500 text-sm">
+              <FolderOpen size={40} className="mx-auto text-fg-subtle/50 mb-3" />
+              <p className="text-fg-subtle text-sm">
                 {search ? "Ничего не найдено" : "Папка пустая"}
               </p>
               {!search && (
-                <p className="text-xs text-gray-300 dark:text-slate-600 mt-1">
+                <p className="text-xs text-fg-subtle mt-1">
                   Нажмите «Загрузить файл» чтобы добавить
                 </p>
               )}
@@ -357,51 +343,51 @@ export default function FilesPage() {
               <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-                    <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Файл</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Размер</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Загрузил</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Дата</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Переместить</th>
+                  <tr className="border-b border-line-soft bg-surface-sunken">
+                    <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase">Файл</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Статус</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Размер</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Загрузил</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Дата</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Переместить</th>
                     <th className="px-5 py-3"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
+                <tbody className="divide-y divide-line-soft">
                   {folderFiles.map((file) => (
-                    <tr key={file.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                    <tr key={file.id} className="hover:bg-surface-hover">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           {getFileIcon(file.mimeType)}
                           <div>
-                            <p className="font-medium text-gray-800 dark:text-slate-200 text-sm truncate max-w-48">
+                            <p className="font-medium text-fg text-sm truncate max-w-48">
                               {file.originalName}
                             </p>
                             {file.version > 1 && (
-                              <span className="text-xs text-violet-500">v{file.version}</span>
+                              <span className="text-xs text-accent">v{file.version}</span>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-full">
+                        <span className="text-xs px-2 py-0.5 bg-surface-hover text-fg-muted rounded-full">
                           {FILE_STATUS_LABELS[file.status as keyof typeof FILE_STATUS_LABELS]}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-gray-500 dark:text-slate-400">
+                      <td className="px-4 py-3 text-right text-xs text-fg-muted">
                         {formatFileSize(file.size)}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-600 dark:text-slate-400">
+                      <td className="px-4 py-3 text-xs text-fg-muted">
                         {file.uploadedBy.name}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400">
+                      <td className="px-4 py-3 text-xs text-fg-muted">
                         {formatDate(file.createdAt)}
                       </td>
                       <td className="px-4 py-3">
                         <select
                           value={file.category}
                           onChange={(e) => changeCategory(file.id, e.target.value)}
-                          className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                          className="text-xs border border-line rounded-lg px-2 py-1 bg-surface text-fg-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                         >
                           {folderKeys.map((k) => (
                             <option key={k} value={k}>{FILE_CATEGORY_LABELS[k]}</option>
@@ -413,7 +399,7 @@ export default function FilesPage() {
                           {canPreview(file.mimeType) && (
                             <button
                               onClick={() => previewFile(file)}
-                              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-500 transition-colors"
+                              className="p-1.5 rounded hover:bg-surface-hover text-fg-muted transition-colors"
                               title="Просмотр"
                             >
                               <Eye size={14} />
@@ -421,7 +407,7 @@ export default function FilesPage() {
                           )}
                           <button
                             onClick={() => downloadFile(file)}
-                            className="p-1.5 rounded hover:bg-violet-50 text-violet-500 transition-colors"
+                            className="p-1.5 rounded hover:bg-accent-soft text-accent transition-colors"
                             title="Скачать"
                           >
                             <Download size={14} />
@@ -481,50 +467,50 @@ export default function FilesPage() {
       {commentFile && (
         <div className="fixed inset-0 z-40 flex">
           <div className="flex-1 bg-black/30" onClick={() => setCommentFile(null)} />
-          <div className="w-full max-w-sm bg-white dark:bg-slate-800 shadow-2xl flex flex-col h-full">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+          <div className="w-full max-w-sm bg-surface shadow-2xl flex flex-col h-full">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-800 dark:text-slate-200 truncate">{commentFile.originalName}</p>
-                <p className="text-xs text-gray-400 dark:text-slate-500">Комментарии</p>
+                <p className="text-sm font-semibold text-fg truncate">{commentFile.originalName}</p>
+                <p className="text-xs text-fg-subtle">Комментарии</p>
               </div>
-              <button onClick={() => setCommentFile(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-500">
+              <button onClick={() => setCommentFile(null)} className="p-1 rounded hover:bg-surface-hover text-fg-subtle">
                 <X size={16} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {commentsLoading ? (
-                <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-8">Загрузка...</p>
+                <p className="text-xs text-fg-subtle text-center py-8">Загрузка...</p>
               ) : comments.length === 0 ? (
-                <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-8">Комментариев пока нет</p>
+                <p className="text-xs text-fg-subtle text-center py-8">Комментариев пока нет</p>
               ) : (
                 comments.map((c) => (
                   <div key={c.id} className="flex gap-2">
-                    <div className="w-7 h-7 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{c.user.name.charAt(0)}</span>
+                    <div className="w-7 h-7 bg-accent-soft rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-accent">{c.user.name.charAt(0)}</span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-semibold text-gray-800 dark:text-slate-200">{c.user.name}</span>
-                        <span className="text-[11px] text-gray-400 dark:text-slate-500">{formatDate(c.createdAt)}</span>
+                        <span className="text-xs font-semibold text-fg">{c.user.name}</span>
+                        <span className="text-[11px] text-fg-subtle">{formatDate(c.createdAt)}</span>
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">{c.text}</p>
+                      <p className="text-sm text-fg-muted mt-0.5 whitespace-pre-wrap">{c.text}</p>
                     </div>
                   </div>
                 ))
               )}
             </div>
-            <form onSubmit={submitComment} className="px-4 py-3 border-t border-gray-100 dark:border-slate-700 flex gap-2">
+            <form onSubmit={submitComment} className="px-4 py-3 border-t border-line-soft flex gap-2">
               <input
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Написать комментарий..."
-                className="flex-1 text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                className="flex-1 text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
               />
               <button
                 type="submit"
                 disabled={!newComment.trim() || sendingComment}
-                className="p-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40 transition-colors"
+                className="p-2 rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-40 transition-colors"
               >
                 <Send size={14} />
               </button>
@@ -541,26 +527,26 @@ export default function FilesPage() {
       >
         <div className="space-y-4">
           {uploadFile && (
-            <div className="p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg text-sm text-gray-700 dark:text-slate-300">
+            <div className="p-3 bg-surface-sunken rounded-lg text-sm text-fg-muted">
               <span className="font-medium">{uploadFile.name}</span>
-              <span className="text-gray-400 dark:text-slate-500 ml-2">({formatFileSize(uploadFile.size)})</span>
+              <span className="text-fg-subtle ml-2">({formatFileSize(uploadFile.size)})</span>
             </div>
           )}
           {openFolder && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-sm text-fg-muted">
               <Folder size={14} className={FOLDER_META[openFolder].iconColor} />
-              Папка: <span className="font-medium text-gray-700 dark:text-slate-300">{FILE_CATEGORY_LABELS[openFolder]}</span>
+              Папка: <span className="font-medium text-fg-muted">{FILE_CATEGORY_LABELS[openFolder]}</span>
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Привязать к (необязательно)</label>
+            <label className="block text-sm font-medium text-fg-muted mb-1">Привязать к (необязательно)</label>
             <div className="flex gap-2 mb-2">
               {[["", "Без привязки"], ["ORDER", "Заявка"], ["TASK", "Задача"]].map(([v, l]) => (
                 <button
                   key={v}
                   type="button"
                   onClick={() => { setUploadLinkedTo(v); setUploadLinkedId(""); }}
-                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${uploadLinkedTo === v ? "bg-violet-600 text-white border-violet-600" : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:border-violet-300"}`}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${uploadLinkedTo === v ? "bg-accent text-white border-violet-600" : "bg-surface text-fg-muted border-line hover:border-violet-300"}`}
                 >
                   {l}
                 </button>
@@ -570,7 +556,7 @@ export default function FilesPage() {
               <select
                 value={uploadLinkedId}
                 onChange={(e) => setUploadLinkedId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                className="w-full px-3 py-2 text-sm border border-line rounded-lg bg-surface text-fg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
               >
                 <option value="">— выберите заявку —</option>
                 {uploadOrders.map((o) => <option key={o.id} value={o.id}>{o.number}</option>)}
@@ -580,7 +566,7 @@ export default function FilesPage() {
               <select
                 value={uploadLinkedId}
                 onChange={(e) => setUploadLinkedId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                className="w-full px-3 py-2 text-sm border border-line rounded-lg bg-surface text-fg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
               >
                 <option value="">— выберите задачу —</option>
                 {uploadTasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
@@ -612,18 +598,18 @@ export default function FilesPage() {
           }}
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col"
+            className="bg-surface rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700">
-              <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{previewName}</p>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
+              <p className="text-sm font-medium text-fg truncate">{previewName}</p>
               <button
                 onClick={() => { setPreviewUrl(null); setPreviewType(null); }}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-500 transition-colors"
+                className="p-1 rounded hover:bg-surface-hover text-fg-muted transition-colors"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-50 dark:bg-slate-800/50 min-h-64">
+            <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-surface-sunken min-h-64">
               {previewType === "image" && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={previewUrl} alt={previewName} className="max-w-full max-h-full object-contain rounded" />

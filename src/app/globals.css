@@ -2,28 +2,125 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================================
+   Neutral ramp — переопределяет палитры slate/gray Tailwind.
+   В коде вперемешку используются gray-* и slate-*; сводим их к одной шкале,
+   чтобы интерфейс перестал «плыть» по оттенкам.
+   ========================================================================= */
+@theme {
+  --color-slate-50:  #f7f8fa;
+  --color-slate-100: #eef0f4;
+  --color-slate-200: #e3e6ec;
+  --color-slate-300: #cdd2dc;
+  --color-slate-400: #99a1b2;
+  --color-slate-500: #6e7788;
+  --color-slate-600: #545c6b;
+  --color-slate-700: #363d49;
+  --color-slate-800: #232830;
+  --color-slate-900: #161a21;
+  --color-slate-950: #0d1016;
+
+  --color-gray-50:  #f7f8fa;
+  --color-gray-100: #eef0f4;
+  --color-gray-200: #e3e6ec;
+  --color-gray-300: #cdd2dc;
+  --color-gray-400: #99a1b2;
+  --color-gray-500: #6e7788;
+  --color-gray-600: #545c6b;
+  --color-gray-700: #363d49;
+  --color-gray-800: #232830;
+  --color-gray-900: #161a21;
+  --color-gray-950: #0d1016;
+
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  --shadow-card: 0 1px 2px 0 rgb(16 20 28 / 0.04);
+  --shadow-raised: 0 1px 2px 0 rgb(16 20 28 / 0.06),
+    0 8px 24px -12px rgb(16 20 28 / 0.18);
+  --shadow-pop: 0 12px 40px -12px rgb(16 20 28 / 0.28),
+    0 2px 8px -2px rgb(16 20 28 / 0.12);
+}
+
+/* ============================================================================
+   Семантические токены. Меняются вместе с темой, поэтому объявлены на :root/.dark
+   и подключены в тему через @theme inline.
+   ========================================================================= */
 :root {
-  --bg-base: #f1f3f5;
-  --bg-surface: #ffffff;
-  --bg-subtle: #f8fafc;
-  --text-primary: #1a2332;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --border-color: #e2e8f0;
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #94a3b8;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-active: #5b21b6;
+  --accent-soft: #f3eeff;
+  --accent-soft-strong: #e6dcff;
+  --accent-on-soft: #6d28d9;
+  --accent-ring: rgb(124 58 237 / 0.35);
+
+  --canvas: #f4f5f8;
+  --surface: #ffffff;
+  --surface-sunken: #f7f8fa;
+  --surface-hover: #f1f3f7;
+  --rail: #fbfbfd;
+
+  --line: #e3e6ec;
+  --line-soft: #edeff3;
+
+  --fg: #161a21;
+  --fg-muted: #6e7788;
+  --fg-subtle: #99a1b2;
+
+  --scrollbar-thumb: #cdd2dc;
+  --scrollbar-thumb-hover: #99a1b2;
 }
 
 .dark {
-  --bg-base: #0f172a;
-  --bg-surface: #1e293b;
-  --bg-subtle: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border-color: #334155;
-  --scrollbar-thumb: #334155;
-  --scrollbar-thumb-hover: #475569;
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-active: #6d28d9;
+  --accent-soft: #241d3d;
+  --accent-soft-strong: #2f2551;
+  --accent-on-soft: #c4b5fd;
+  --accent-ring: rgb(139 92 246 / 0.45);
+
+  --canvas: #0d1016;
+  --surface: #161a21;
+  --surface-sunken: #12161c;
+  --surface-hover: #1e232c;
+  --rail: #10141a;
+
+  --line: #262c36;
+  --line-soft: #1e232c;
+
+  --fg: #eef0f4;
+  --fg-muted: #99a1b2;
+  --fg-subtle: #6e7788;
+
+  --scrollbar-thumb: #2b323d;
+  --scrollbar-thumb-hover: #3d4653;
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-strong: var(--accent-soft-strong);
+  --color-accent-fg: var(--accent-on-soft);
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-hover: var(--surface-hover);
+  --color-rail: var(--rail);
+
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
 }
 
 * {
@@ -31,21 +128,53 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-base);
-  color: var(--text-primary);
+  background-color: var(--canvas);
+  color: var(--fg);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); background-clip: content-box; }
 
 @layer base {
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
+
+  ::selection { background: var(--accent-soft-strong); color: var(--accent-on-soft); }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+
+@layer components {
+  /* Полоса-акцент слева у активного пункта навигации */
+  .nav-indicator::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 1.125rem;
+    width: 3px;
+    border-radius: 0 99px 99px 0;
+    background: var(--accent);
+    transform: translateY(-50%);
+  }
+
+  /* Сетка-подложка для «пустых» состояний и шапок разделов */
+  .surface-grid {
+    background-image:
+      linear-gradient(to right, var(--line-soft) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line-soft) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
 }
 
 /* Login page background animations */
@@ -75,6 +204,17 @@ body {
 .login-dot-3 { animation: pulse-glow 3.8s ease-in-out infinite 2s; }
 .login-dot-4 { animation: pulse-glow 5s ease-in-out infinite 0.5s; }
 .login-dot-5 { animation: pulse-glow 4s ease-in-out infinite 1.5s; }
+
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-rise { animation: fade-rise 0.18s ease-out both; }
+.animate-overlay-in { animation: overlay-in 0.15s ease-out both; }
 
 /* Print styles */
 @media print {

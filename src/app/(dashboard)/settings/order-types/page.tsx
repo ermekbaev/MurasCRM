@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
+import PageHeader from "@/components/layout/PageHeader";
 import { Plus, Layers, Edit3, Trash2 } from "lucide-react";
 
 interface OrderType {
@@ -85,53 +86,54 @@ export default function OrderTypesPage() {
     }
   }
 
-  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Типы заявок</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Список типов, доступных при создании заявки</p>
-        </div>
-        <Button onClick={openCreate}>
-          <Plus size={16} /> Добавить тип
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        icon={<Layers size={18} />}
+        title="Типы заявок"
+        subtitle="Список типов, доступных при создании заявки"
+        actions={
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Добавить тип
+          </Button>
+        }
+      />
 
       {types.length === 0 ? (
         <Card padding="md">
-          <div className="py-12 text-center text-gray-400 dark:text-slate-500">
+          <div className="py-12 text-center text-fg-subtle">
             <Layers size={36} className="mx-auto mb-2 opacity-30" />
             <p>Типов пока нет</p>
           </div>
         </Card>
       ) : (
         <Card padding="none">
-          <div className="divide-y divide-gray-100 dark:divide-slate-800">
+          <div className="divide-y divide-line-soft">
             {types.map((t) => (
               <div key={t.id} className="group flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900 dark:text-slate-100 truncate">{t.label}</span>
+                    <span className="font-medium text-fg truncate">{t.label}</span>
                     {!t.isActive && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-surface-hover text-fg-muted">
                         Скрыт
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400 dark:text-slate-500 font-mono">{t.code}</span>
+                  <span className="text-xs text-fg-subtle font-mono">{t.code}</span>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => openEdit(t)}
-                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400"
+                    className="p-1.5 rounded hover:bg-surface-hover text-fg-muted"
                   >
                     <Edit3 size={14} />
                   </button>
                   <button
                     onClick={() => handleDelete(t)}
-                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-500 dark:text-slate-400 hover:text-red-600"
+                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-fg-muted hover:text-red-600"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -155,12 +157,12 @@ export default function OrderTypesPage() {
             placeholder="Гравировка, Сублимация..."
           />
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-fg-muted">
             <input
               type="checkbox"
               checked={form.isActive}
               onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
-              className="rounded border-gray-300 dark:border-slate-600"
+              className="rounded border-line"
             />
             Доступен при создании заявки
           </label>

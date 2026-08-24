@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { CLIENT_TYPE_LABELS, CLIENT_SOURCE_LABELS } from "@/lib/constants";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
@@ -176,12 +177,12 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
         </>
       )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Примечания</label>
+        <label className="block text-sm font-medium text-fg-muted mb-1">Примечания</label>
         <textarea
           value={form.notes}
           onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
           rows={2}
-          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+          className="w-full px-3 py-2 text-sm border border-line rounded-lg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 resize-none bg-surface text-fg"
         />
       </div>
       <div className="flex justify-end gap-3 pt-2">
@@ -289,33 +290,34 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
   return (
     <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Клиенты</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{clients.length} клиент(ов) в базе</p>
-        </div>
-        <Button onClick={openCreate}>
-          <Plus size={16} /> Добавить клиента
-        </Button>
-      </div>
+      <PageHeader
+        icon={<Users size={18} />}
+        title="Клиенты"
+        subtitle={`${clients.length} клиент(ов) в базе`}
+        actions={
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Добавить клиента
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <Card padding="sm">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
             <input
               type="text"
               placeholder="Поиск по имени, телефону, email, ИНН..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-line rounded-lg bg-surface text-fg placeholder:text-fg-subtle dark:placeholder:text-slate-500 focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
             />
           </div>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+            className="px-3 py-2 text-sm border border-line rounded-lg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
           >
             <option value="">Все типы</option>
             <option value="INDIVIDUAL">Физическое лицо</option>
@@ -330,76 +332,76 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Клиент</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Тип</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Контакты</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Источник</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Заказов</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Оборот</th>
+              <tr className="border-b border-line-soft bg-surface-sunken">
+                <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase tracking-wide">Клиент</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase tracking-wide">Тип</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase tracking-wide">Контакты</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase tracking-wide">Источник</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase tracking-wide">Заказов</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase tracking-wide">Оборот</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
+            <tbody className="divide-y divide-line-soft">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-slate-500">
+                  <td colSpan={7} className="text-center py-12 text-fg-subtle">
                     <Users size={32} className="mx-auto mb-2 opacity-30" />
                     Клиенты не найдены
                   </td>
                 </tr>
               ) : (
                 filtered.map((client) => (
-                  <tr key={client.id} className="hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors">
+                  <tr key={client.id} className="hover:bg-surface-sunken dark:hover:bg-slate-700/50 transition-colors">
                     <td className="px-5 py-3">
                       <Link href={`/clients/${client.id}`} className="flex items-center gap-3 group">
-                        <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
+                        <div className="w-8 h-8 bg-accent-soft rounded-full flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-accent">
                             {client.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800 dark:text-slate-200 group-hover:text-violet-600 transition-colors">
+                          <p className="font-medium text-fg group-hover:text-accent transition-colors">
                             {client.name}
                           </p>
                           {client.inn && (
-                            <p className="text-xs text-gray-400 dark:text-slate-500">ИНН: {client.inn}</p>
+                            <p className="text-xs text-fg-subtle">ИНН: {client.inn}</p>
                           )}
                         </div>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-full">
+                      <span className="text-xs px-2 py-0.5 bg-surface-hover text-fg-muted rounded-full">
                         {CLIENT_TYPE_LABELS[client.type as keyof typeof CLIENT_TYPE_LABELS]}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="space-y-0.5">
                         {client.phone && (
-                          <p className="text-xs text-gray-600 dark:text-slate-400 flex items-center gap-1">
+                          <p className="text-xs text-fg-muted flex items-center gap-1">
                             <Phone size={11} /> {client.phone}
                           </p>
                         )}
                         {client.email && (
-                          <p className="text-xs text-gray-600 dark:text-slate-400 flex items-center gap-1">
+                          <p className="text-xs text-fg-muted flex items-center gap-1">
                             <Mail size={11} /> {client.email}
                           </p>
                         )}
                         {!client.phone && !client.email && (
-                          <span className="text-xs text-gray-400 dark:text-slate-500">—</span>
+                          <span className="text-xs text-fg-subtle">—</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-gray-600 dark:text-slate-400">
+                      <span className="text-xs text-fg-muted">
                         {CLIENT_SOURCE_LABELS[client.source as keyof typeof CLIENT_SOURCE_LABELS]}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-medium text-gray-700 dark:text-slate-200">{client.ordersCount}</span>
+                      <span className="font-medium text-fg-muted">{client.ordersCount}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-semibold text-gray-800 dark:text-slate-200">
+                      <span className="font-semibold text-fg">
                         {formatCurrency(client.totalAmount)}
                       </span>
                     </td>
@@ -407,7 +409,7 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEdit(client)}
-                          className="p-1.5 rounded hover:bg-violet-50 text-violet-500 transition-colors"
+                          className="p-1.5 rounded hover:bg-accent-soft text-accent transition-colors"
                           title="Редактировать"
                         >
                           <Pencil size={14} />

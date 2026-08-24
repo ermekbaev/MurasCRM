@@ -129,12 +129,12 @@ export default function ClientEditButton({ client }: { client: Client }) {
             </>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Примечания</label>
+            <label className="block text-sm font-medium text-fg-muted mb-1">Примечания</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+              className="w-full px-3 py-2 text-sm border border-line rounded-lg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 resize-none bg-surface text-fg"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">

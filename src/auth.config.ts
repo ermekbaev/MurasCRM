@@ -28,8 +28,17 @@ const ROLE_ROUTES: Record<Role, string[]> = {
   ],
 };
 
+// Маршруты, доступные только точным совпадением — без вложенных путей.
+// Обзор настроек открыт всем, у кого есть хотя бы один раздел, но сами
+// разделы остаются за префиксами из ROLE_ROUTES.
+const ROLE_EXACT_ROUTES: Partial<Record<Role, string[]>> = {
+  MANAGER: ["/settings"],
+  ACCOUNTANT: ["/settings"],
+};
+
 function canAccess(role: Role, pathname: string): boolean {
   if (role === "ADMIN") return true;
+  if ((ROLE_EXACT_ROUTES[role] ?? []).includes(pathname)) return true;
   const allowed = ROLE_ROUTES[role] ?? [];
   return allowed.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
@@ -46,9 +47,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300",
-  APPROVED: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-  REJECTED: "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400",
+  PENDING: "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/25",
+  APPROVED: "bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/25",
+  REJECTED: "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
 };
 
 function formatCurrency(n: number) {
@@ -177,27 +178,29 @@ export default function DefectsPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-          <AlertTriangle size={22} className="text-amber-500" /> Журнал брака
-        </h1>
-        <Button onClick={openCreate}>
-          <Plus size={16} /> Добавить брак
-        </Button>
-      </div>
+      <PageHeader
+        icon={<AlertTriangle size={18} className="text-amber-500" />}
+        title="Журнал брака"
+        subtitle="Списания и потери по производству"
+        actions={
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Добавить брак
+          </Button>
+        }
+      />
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Card padding="md">
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Потери (подтверждённые)</p>
+          <p className="text-xs text-fg-muted mb-1">Потери (подтверждённые)</p>
           <p className="text-xl font-bold text-red-600">{formatCurrency(totalCost)}</p>
         </Card>
         <Card padding="md">
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Всего записей</p>
-          <p className="text-xl font-bold text-gray-800 dark:text-slate-200">{records.length}</p>
+          <p className="text-xs text-fg-muted mb-1">Всего записей</p>
+          <p className="text-xl font-bold text-fg">{records.length}</p>
         </Card>
         <Card padding="md">
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Ожидают проверки</p>
+          <p className="text-xs text-fg-muted mb-1">Ожидают проверки</p>
           <p className="text-xl font-bold text-yellow-600">{pendingCount}</p>
         </Card>
       </div>
@@ -207,7 +210,7 @@ export default function DefectsPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="px-3 py-1.5 text-sm border border-line rounded-lg bg-surface text-fg-muted focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
         >
           <option value="">Все статусы</option>
           <option value="PENDING">На проверке</option>
@@ -219,7 +222,7 @@ export default function DefectsPage() {
           <select
             value={operatorFilter}
             onChange={(e) => setOperatorFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="px-3 py-1.5 text-sm border border-line rounded-lg bg-surface text-fg-muted focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
           >
             <option value="">Все операторы</option>
             {operators.map((op) => (
@@ -231,49 +234,49 @@ export default function DefectsPage() {
 
       {/* Records table */}
       {loading ? (
-        <div className="text-center py-10 text-gray-400 dark:text-slate-500">Загрузка...</div>
+        <div className="text-center py-10 text-fg-subtle">Загрузка...</div>
       ) : records.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 dark:text-slate-500 text-sm">Записей нет</div>
+        <div className="text-center py-10 text-fg-subtle text-sm">Записей нет</div>
       ) : (
         <Card padding="none">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400">Дата</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400">Оператор</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400">Оборудование</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400">Заявка</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400">Кол-во</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400">Стоимость</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400">Причина</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400">Статус</th>
+                <tr className="border-b border-line-soft bg-surface-sunken">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted">Дата</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted">Оператор</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted">Оборудование</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted">Заявка</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-fg-muted">Кол-во</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-fg-muted">Стоимость</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted">Причина</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-fg-muted">Статус</th>
                   <th className="px-4 py-3 w-24" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
+              <tbody className="divide-y divide-line-soft/50">
                 {records.map((r) => (
                   <tr key={r.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/20">
-                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">{formatDate(r.createdAt)}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-slate-200 whitespace-nowrap">{r.operator.name}</td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-slate-300 whitespace-nowrap">{r.equipment.name}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-slate-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-fg-muted whitespace-nowrap">{formatDate(r.createdAt)}</td>
+                    <td className="px-4 py-3 font-medium text-fg whitespace-nowrap">{r.operator.name}</td>
+                    <td className="px-4 py-3 text-fg-muted whitespace-nowrap">{r.equipment.name}</td>
+                    <td className="px-4 py-3 text-fg-muted whitespace-nowrap">
                       {r.order ? `#${r.order.number}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-center whitespace-nowrap">
-                      <span className="font-medium text-gray-800 dark:text-slate-200">{r.qty}</span>{" "}
-                      <span className="text-xs text-gray-400">{r.unit}</span>
+                      <span className="font-medium text-fg">{r.qty}</span>{" "}
+                      <span className="text-xs text-fg-subtle">{r.unit}</span>
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       {r.cost > 0
                         ? <span className="font-medium text-red-600">{formatCurrency(r.cost)}</span>
-                        : <span className="text-gray-400 text-xs">—</span>}
+                        : <span className="text-fg-subtle text-xs">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-slate-400 max-w-50 truncate" title={r.reason || ""}>
-                      {r.reason || <span className="text-gray-300 dark:text-slate-600">—</span>}
+                    <td className="px-4 py-3 text-fg-muted max-w-50 truncate" title={r.reason || ""}>
+                      {r.reason || <span className="text-fg-subtle">—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[r.status]}`}>
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${STATUS_COLORS[r.status]}`}>
                         {STATUS_LABELS[r.status]}
                       </span>
                     </td>
@@ -284,14 +287,14 @@ export default function DefectsPage() {
                             <button
                               onClick={() => handleApprove(r.id, "APPROVED")}
                               title="Подтвердить"
-                              className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              className="p-1.5 rounded text-fg-subtle hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                             >
                               <Check size={14} />
                             </button>
                             <button
                               onClick={() => handleApprove(r.id, "REJECTED")}
                               title="Отклонить"
-                              className="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                              className="p-1.5 rounded text-fg-subtle hover:text-fg hover:bg-surface-hover transition-colors"
                             >
                               <X size={14} />
                             </button>
@@ -301,7 +304,7 @@ export default function DefectsPage() {
                           <button
                             onClick={() => handleDelete(r.id)}
                             title="Удалить"
-                            className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            className="p-1.5 rounded text-fg-subtle hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -362,7 +365,7 @@ export default function DefectsPage() {
 
           {previewCost && (
             <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-sm">
-              <span className="text-gray-600 dark:text-slate-400">Стоимость потерь: </span>
+              <span className="text-fg-muted">Стоимость потерь: </span>
               <span className="font-bold text-red-600">{formatCurrency(Number(previewCost))}</span>
             </div>
           )}

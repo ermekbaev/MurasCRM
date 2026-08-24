@@ -8,6 +8,15 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string;
 }
 
+/** Общие классы поля ввода — переиспользуются в Select и в инлайновых полях страниц. */
+export const fieldClass =
+  "h-9.5 w-full rounded-lg border border-line bg-surface px-3 text-[13px] text-fg " +
+  "placeholder:text-fg-subtle shadow-[inset_0_1px_1px_rgb(16_20_28/0.03)] " +
+  "transition-[border-color,box-shadow] duration-150 " +
+  "hover:border-slate-300 dark:hover:border-slate-600 " +
+  "focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/20 " +
+  "disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-fg-subtle";
+
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, hint, className, id, type, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
@@ -20,9 +29,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         id={inputId}
         type={isPassword && reveal ? "text" : type}
         className={cn(
-          "px-3 py-2 text-sm border rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:bg-slate-50 dark:disabled:bg-slate-900 disabled:text-slate-400",
-          error ? "border-red-400" : "border-slate-300 dark:border-slate-600",
-          isPassword && "w-full pr-10",
+          fieldClass,
+          error && "border-red-400 focus:border-red-500 focus:ring-red-500/20",
+          isPassword && "pr-10",
           className
         )}
         {...props}
@@ -30,9 +39,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     );
 
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-gray-700 dark:text-slate-300">
+          <label
+            htmlFor={inputId}
+            className="text-xs font-medium text-fg-muted"
+          >
             {label}
           </label>
         )}
@@ -44,16 +56,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               tabIndex={-1}
               onClick={() => setReveal((v) => !v)}
               aria-label={reveal ? "Скрыть пароль" : "Показать пароль"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-subtle transition-colors hover:text-fg"
             >
-              {reveal ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {reveal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         ) : (
           inputEl
         )}
-        {error && <p className="text-xs text-red-600">{error}</p>}
-        {hint && !error && <p className="text-xs text-gray-500 dark:text-slate-400">{hint}</p>}
+        {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+        {hint && !error && <p className="text-xs text-fg-subtle">{hint}</p>}
       </div>
     );
   }

@@ -38,9 +38,9 @@ export default function DashboardCharts() {
 
   return (
     <Card padding="md">
-      <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-4">Выручка за последние 30 дней</h2>
+      <h2 className="font-semibold text-fg mb-4">Выручка за последние 30 дней</h2>
       {loading ? (
-        <div className="h-48 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">
+        <div className="h-48 flex items-center justify-center text-fg-subtle text-sm">
           Загрузка...
         </div>
       ) : (

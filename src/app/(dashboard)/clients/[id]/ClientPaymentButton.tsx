@@ -69,15 +69,15 @@ export default function ClientPaymentButton({
           onClick={close}
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md"
+            className="bg-surface rounded-2xl p-6 w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             {!result ? (
               <>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-1">
+                <h3 className="text-lg font-semibold text-fg mb-1">
                   Принять оплату
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
+                <p className="text-sm text-fg-muted mb-4">
                   Долг клиента: <b>{formatCurrency(debt)}</b>. Сумма распределится по
                   заявкам от старых к новым.
                 </p>
@@ -88,13 +88,13 @@ export default function ClientPaymentButton({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="Сумма"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
                 />
                 {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
                 <div className="flex gap-2 justify-end mt-5">
                   <button
                     onClick={close}
-                    className="px-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300"
+                    className="px-4 py-2 text-sm rounded-lg border border-line text-fg-muted"
                   >
                     Отмена
                   </button>
@@ -109,10 +109,10 @@ export default function ClientPaymentButton({
               </>
             ) : (
               <>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">
+                <h3 className="text-lg font-semibold text-fg mb-2">
                   Оплата принята
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-slate-400 mb-3">
+                <p className="text-sm text-fg-muted mb-3">
                   Распределено: <b>{formatCurrency(result.allocated)}</b>
                   {result.leftover > 0 && (
                     <span className="text-orange-600">
@@ -124,8 +124,8 @@ export default function ClientPaymentButton({
                 <ul className="space-y-1 mb-5 text-sm">
                   {result.allocations.map((a) => (
                     <li key={a.number} className="flex justify-between">
-                      <span className="text-gray-700 dark:text-slate-300">{a.number}</span>
-                      <span className="text-gray-500 dark:text-slate-400">
+                      <span className="text-fg-muted">{a.number}</span>
+                      <span className="text-fg-muted">
                         {formatCurrency(a.pay)}{" "}
                         {a.status === "PAID" ? "· закрыта" : "· частично"}
                       </span>
@@ -135,7 +135,7 @@ export default function ClientPaymentButton({
                 <div className="flex justify-end">
                   <button
                     onClick={close}
-                    className="px-4 py-2 text-sm rounded-lg bg-violet-600 text-white"
+                    className="px-4 py-2 text-sm rounded-lg bg-accent text-white"
                   >
                     Готово
                   </button>

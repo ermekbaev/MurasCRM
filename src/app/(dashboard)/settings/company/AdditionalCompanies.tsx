@@ -100,19 +100,19 @@ export default function AdditionalCompanies() {
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center justify-between text-left"
       >
-        <span className="font-semibold text-gray-800 dark:text-slate-200 flex items-center gap-2">
+        <span className="font-semibold text-fg flex items-center gap-2">
           <Building2 size={16} /> Дополнительные компании
           {!fetching && companies.length > 0 && (
-            <span className="text-xs font-normal text-gray-400 dark:text-slate-500">({companies.length})</span>
+            <span className="text-xs font-normal text-fg-subtle">({companies.length})</span>
           )}
         </span>
-        {expanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+        {expanded ? <ChevronUp size={18} className="text-fg-subtle" /> : <ChevronDown size={18} className="text-fg-subtle" />}
       </button>
 
       {expanded && (
         <div className="mt-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-gray-500 dark:text-slate-400">
+            <p className="text-xs text-fg-muted">
               Доступны для выбора при создании счёта и акта. Основная компания берётся из реквизитов выше.
             </p>
             <Button type="button" variant="outline" size="sm" onClick={openCreate} className="shrink-0">
@@ -121,22 +121,22 @@ export default function AdditionalCompanies() {
           </div>
 
           {fetching ? (
-            <p className="text-sm text-gray-400 dark:text-slate-500">Загрузка...</p>
+            <p className="text-sm text-fg-subtle">Загрузка...</p>
           ) : companies.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-slate-500">Дополнительных компаний нет.</p>
+            <p className="text-sm text-fg-subtle">Дополнительных компаний нет.</p>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-slate-700 border border-gray-100 dark:border-slate-700 rounded-lg">
+            <div className="divide-y divide-line-soft border border-line-soft rounded-lg">
               {companies.map((c) => (
                 <div key={c.id} className="flex items-center justify-between px-4 py-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{c.name || "Без названия"}</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
+                    <p className="text-sm font-medium text-fg truncate">{c.name || "Без названия"}</p>
+                    <p className="text-xs text-fg-muted truncate">
                       {[c.inn ? `ИНН ${c.inn}` : "", c.legalAddress].filter(Boolean).join(" · ") || "Реквизиты не заполнены"}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button type="button" onClick={() => openEdit(c)} title="Редактировать"
-                      className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-700 dark:hover:text-slate-200 transition-colors">
+                      className="p-1.5 rounded-lg text-fg-subtle hover:bg-surface-hover hover:text-fg transition-colors">
                       <Pencil size={14} />
                     </button>
                     <button type="button" onClick={() => handleDelete(c.id)} title="Удалить"

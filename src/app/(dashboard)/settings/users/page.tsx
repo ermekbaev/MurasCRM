@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import PageHeader from "@/components/layout/PageHeader";
 import { ROLE_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { Plus, Shield, ShieldOff, Trash2, Users, Pencil, Send } from "lucide-react";
@@ -128,55 +129,54 @@ export default function UsersSettingsPage() {
     if (res.ok) setUsers((prev) => prev.filter((u) => u.id !== id));
   }
 
-  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-            <Users size={22} /> Пользователи
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{users.length} пользователей</p>
-        </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus size={16} /> Добавить пользователя
-        </Button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        icon={<Users size={18} />}
+        title="Пользователи"
+        subtitle={`${users.length} сотрудников в системе`}
+        actions={
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus size={16} /> Добавить пользователя
+          </Button>
+        }
+      />
 
       <Card padding="none">
         <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Пользователь</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Роль</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Telegram</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Статус</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Добавлен</th>
+            <tr className="border-b border-line-soft bg-surface-sunken">
+              <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase">Пользователь</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Роль</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Telegram</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Статус</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Добавлен</th>
               <th className="px-5 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
+          <tbody className="divide-y divide-line-soft">
             {users.map((user) => (
-              <tr key={user.id} className={`hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 ${user.isBlocked ? "opacity-60" : ""}`}>
+              <tr key={user.id} className={`hover:bg-surface-sunken dark:hover:bg-slate-700/50 ${user.isBlocked ? "opacity-60" : ""}`}>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{user.name.charAt(0)}</span>
+                    <div className="w-8 h-8 bg-accent-soft rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-accent">{user.name.charAt(0)}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800 dark:text-slate-200">{user.name}</p>
-                      <p className="text-xs text-gray-400 dark:text-slate-500">{user.email}</p>
+                      <p className="font-medium text-fg">{user.name}</p>
+                      <p className="text-xs text-fg-subtle">{user.email}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-xs px-2 py-0.5 bg-violet-50 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 rounded-full font-medium">
+                  <span className="text-xs px-2 py-0.5 bg-violet-50 dark:bg-violet-900/40 text-accent-fg rounded-full font-medium">
                     {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400">
+                <td className="px-4 py-3 text-xs text-fg-muted">
                   {user.telegramChatId ? (
                     <span className="flex items-center gap-1 text-green-600">
                       <Send size={11} /> {user.telegramChatId}
@@ -184,18 +184,18 @@ export default function UsersSettingsPage() {
                   ) : "—"}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user.isBlocked ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" : "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"}`}>
+                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${user.isBlocked ? "bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/25" : "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25"}`}>
                     {user.isBlocked ? "Заблокирован" : "Активен"}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400">
+                <td className="px-4 py-3 text-xs text-fg-muted">
                   {formatDate(user.createdAt)}
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => openEdit(user)}
-                      className="p-1.5 rounded-lg text-violet-500 hover:bg-violet-50 transition-colors"
+                      className="p-1.5 rounded-lg text-accent hover:bg-accent-soft transition-colors"
                       title="Редактировать"
                     >
                       <Pencil size={14} />
@@ -242,7 +242,7 @@ export default function UsersSettingsPage() {
               onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
               placeholder="Оставьте пустым, чтобы не менять"
             />
-            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Минимум 10 символов</p>
+            <p className="text-xs text-fg-subtle mt-1">Минимум 10 символов</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Телефон" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
@@ -253,8 +253,8 @@ export default function UsersSettingsPage() {
                 onChange={(e) => setEditForm({ ...editForm, telegramChatId: e.target.value })}
                 placeholder="123456789"
               />
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-                Узнать ID: написать <span className="font-medium text-gray-500 dark:text-slate-500">@userinfobot</span> в Telegram
+              <p className="text-xs text-fg-subtle mt-1">
+                Узнать ID: написать <span className="font-medium text-fg-muted">@userinfobot</span> в Telegram
               </p>
             </div>
           </div>

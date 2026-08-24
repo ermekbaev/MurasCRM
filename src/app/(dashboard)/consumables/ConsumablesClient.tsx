@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { CONSUMABLE_TYPE_LABELS } from "@/lib/constants";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
@@ -192,22 +193,25 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
   return (
     <div className="p-4 sm:p-6 space-y-5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Расходники</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+      <PageHeader
+        icon={<Package size={18} />}
+        title="Расходники"
+        subtitle={
+          <>
             {consumables.length} позиций
             {lowCount > 0 && (
-              <span className="ml-2 text-orange-600 font-medium">
+              <span className="ml-2 font-medium text-orange-600 dark:text-orange-400">
                 · {lowCount} заканчиваются
               </span>
             )}
-          </p>
-        </div>
-        <Button onClick={openCreate}>
-          <Plus size={16} /> Добавить расходник
-        </Button>
-      </div>
+          </>
+        }
+        actions={
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Добавить расходник
+          </Button>
+        }
+      />
 
       {/* Alert */}
       {lowCount > 0 && (
@@ -228,13 +232,13 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
       {/* Filters */}
       <Card padding="sm">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
           <input
             type="text"
             placeholder="Поиск расходников..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:text-slate-500 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-line rounded-lg bg-surface text-fg placeholder:text-fg-subtle dark:placeholder:text-slate-500 focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
           />
         </div>
       </Card>
@@ -244,81 +248,81 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
         <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-              <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Материал</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Тип</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Остаток</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Мин. остаток</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Цена закупки</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Поставщик</th>
+            <tr className="border-b border-line-soft bg-surface-sunken">
+              <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase">Материал</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Тип</th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Остаток</th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Мин. остаток</th>
+              <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Цена закупки</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Поставщик</th>
               <th className="px-5 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
+          <tbody className="divide-y divide-line-soft">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-slate-500">
+                <td colSpan={7} className="text-center py-12 text-fg-subtle">
                   <Package size={32} className="mx-auto mb-2 opacity-30" />
                   Расходники не найдены
                 </td>
               </tr>
             ) : (
               filtered.map((c) => (
-                <tr key={c.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 ${c.isLow ? "bg-orange-50/40" : ""}`}>
+                <tr key={c.id} className={`hover:bg-surface-hover ${c.isLow ? "bg-orange-50/40" : ""}`}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
                       {c.isLow && <AlertTriangle size={14} className="text-orange-500 flex-shrink-0" />}
                       <div>
-                        <p className="font-medium text-gray-800 dark:text-slate-200">{c.name}</p>
-                        {c.article && <p className="text-xs text-gray-400 dark:text-slate-500">Арт: {c.article}</p>}
+                        <p className="font-medium text-fg">{c.name}</p>
+                        {c.article && <p className="text-xs text-fg-subtle">Арт: {c.article}</p>}
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-full">
+                    <span className="text-xs px-2 py-0.5 bg-surface-hover text-fg-muted rounded-full">
                       {CONSUMABLE_TYPE_LABELS[c.type as keyof typeof CONSUMABLE_TYPE_LABELS]}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={`font-semibold ${c.isLow ? "text-orange-600" : "text-gray-800 dark:text-slate-200"}`}>
+                    <span className={`font-semibold ${c.isLow ? "text-orange-600" : "text-fg"}`}>
                       {c.stock} {c.unit}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-500 dark:text-slate-400 text-sm">
+                  <td className="px-4 py-3 text-right text-fg-muted text-sm">
                     {c.minStock} {c.unit}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-700 dark:text-slate-300 text-sm">
+                  <td className="px-4 py-3 text-right text-fg-muted text-sm">
                     {formatCurrency(c.purchasePrice)} / {c.unit}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400">
+                  <td className="px-4 py-3 text-sm text-fg-muted">
                     {c.supplier?.name || "—"}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => { setSelectedConsumable(c); setMovementModalOpen(true); }}
-                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                        className="p-1.5 text-fg-subtle hover:text-accent hover:bg-accent-soft rounded transition-colors"
                         title="Записать движение"
                       >
                         <RefreshCw size={13} />
                       </button>
                       <button
                         onClick={() => openHistory(c)}
-                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="p-1.5 text-fg-subtle hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         title="История движений"
                       >
                         <History size={13} />
                       </button>
                       <button
                         onClick={() => openEdit(c)}
-                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                        className="p-1.5 text-fg-subtle hover:text-accent hover:bg-accent-soft rounded transition-colors"
                         title="Редактировать"
                       >
                         <Pencil size={13} />
                       </button>
                       <button
                         onClick={() => handleDelete(c.id, c.name)}
-                        className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="p-1.5 text-fg-subtle hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                         title="Удалить"
                       >
                         <Trash2 size={13} />
@@ -380,11 +384,11 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
       >
         <div className="space-y-2">
           {historyLoading ? (
-            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">Загрузка...</p>
+            <p className="text-sm text-fg-subtle text-center py-6">Загрузка...</p>
           ) : historyItems.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">Движений нет</p>
+            <p className="text-sm text-fg-subtle text-center py-6">Движений нет</p>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-slate-700 max-h-96 overflow-y-auto">
+            <div className="divide-y divide-line-soft max-h-96 overflow-y-auto">
               {historyItems.map((m) => (
                 <div key={m.id} className="flex items-center justify-between py-2.5">
                   <div className="flex items-center gap-3">
@@ -400,15 +404,15 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-slate-200">
+                      <p className="text-sm font-medium text-fg">
                         {m.direction === "IN" ? "+" : m.direction === "OUT" ? "−" : m.qty < 0 ? "−" : "+"}{Math.abs(m.qty)} {selectedConsumable?.unit}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-slate-500">{m.note || (m.orderId ? "Авто-списание по заявке" : "—")}</p>
+                      <p className="text-xs text-fg-subtle">{m.note || (m.orderId ? "Авто-списание по заявке" : "—")}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500 dark:text-slate-500">{formatDate(m.date)}</p>
-                    {m.totalCost && <p className="text-xs text-gray-400 dark:text-slate-500">{m.totalCost.toLocaleString("ru-RU")} сом</p>}
+                    <p className="text-xs text-fg-muted">{formatDate(m.date)}</p>
+                    {m.totalCost && <p className="text-xs text-fg-subtle">{m.totalCost.toLocaleString("ru-RU")} сом</p>}
                   </div>
                 </div>
               ))}
@@ -424,9 +428,9 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
         title={`Движение: ${selectedConsumable?.name}`}
       >
         <form onSubmit={handleMovement} className="space-y-4">
-          <div className="p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg text-sm">
-            <span className="text-gray-500 dark:text-slate-500">Текущий остаток: </span>
-            <span className="font-semibold text-gray-900 dark:text-slate-100">
+          <div className="p-3 bg-surface-sunken rounded-lg text-sm">
+            <span className="text-fg-muted">Текущий остаток: </span>
+            <span className="font-semibold text-fg">
               {selectedConsumable?.stock} {selectedConsumable?.unit}
             </span>
           </div>
@@ -441,7 +445,7 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
                 type="button"
                 onClick={() => setMovementForm({ ...movementForm, direction: d.value })}
                 className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  movementForm.direction === d.value ? `${d.color} text-white` : "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600"
+                  movementForm.direction === d.value ? `${d.color} text-white` : "bg-surface-hover text-fg-muted hover:bg-gray-200 dark:hover:bg-slate-600"
                 }`}
               >
                 {d.icon} {d.label}

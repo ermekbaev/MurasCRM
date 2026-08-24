@@ -365,7 +365,7 @@ export default function OrderDetailClient({
       <div>
         <Link
           href="/orders"
-          className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-500 hover:text-gray-700 dark:text-slate-300 mb-3"
+          className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-fg-subtle transition-colors hover:text-fg"
         >
           <ArrowLeft size={14} /> Все заявки
         </Link>
@@ -383,17 +383,17 @@ export default function OrderDetailClient({
                 <button onClick={saveTitle} disabled={saving} className="p-1.5 rounded text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30">
                   <Check size={18} />
                 </button>
-                <button onClick={() => setEditingTitle(false)} className="p-1.5 rounded text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700">
+                <button onClick={() => setEditingTitle(false)} className="p-1.5 rounded text-fg-muted hover:bg-surface-hover">
                   <X size={18} />
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 truncate">{order.title || order.number}</h1>
+                <h1 className="truncate text-xl font-semibold tracking-tight text-fg sm:text-[22px]">{order.title || order.number}</h1>
                 {canEdit && (
                   <button
                     onClick={() => { setTitleDraft(order.title || ""); setEditingTitle(true); }}
-                    className="p-1 rounded text-gray-400 hover:text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="rounded p-1 text-fg-subtle opacity-0 transition-opacity hover:text-accent group-hover:opacity-100"
                   >
                     <Pencil size={16} />
                   </button>
@@ -401,14 +401,14 @@ export default function OrderDetailClient({
               </div>
             )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {order.title && <span className="text-xs text-gray-400 dark:text-slate-500">{order.number}</span>}
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS]}`}>
+              {order.title && <span className="text-xs text-fg-subtle">{order.number}</span>}
+              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS]}`}>
                 {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
               </span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[order.priority as keyof typeof PRIORITY_COLORS]}`}>
+              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PRIORITY_COLORS[order.priority as keyof typeof PRIORITY_COLORS]}`}>
                 {PRIORITY_LABELS[order.priority as keyof typeof PRIORITY_LABELS]}
               </span>
-              <span className="text-xs text-gray-400 dark:text-slate-500">· {formatDate(order.createdAt)}</span>
+              <span className="text-xs text-fg-subtle">· {formatDate(order.createdAt)}</span>
             </div>
           </div>
           {canEdit && (
@@ -433,27 +433,27 @@ export default function OrderDetailClient({
         <div className="space-y-4">
           {/* Client */}
           <Card padding="md">
-            <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
               <User size={15} /> Клиент
             </h2>
-            <Link href={`/clients/${order.client.id}`} className="font-medium text-violet-600 hover:underline text-sm">
+            <Link href={`/clients/${order.client.id}`} className="font-medium text-accent hover:underline text-sm">
               {order.client.name}
             </Link>
             {order.client.phone && (
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{order.client.phone}</p>
+              <p className="text-xs text-fg-muted mt-1">{order.client.phone}</p>
             )}
           </Card>
 
           {/* Order info */}
           <Card padding="md">
-            <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
               <AlertCircle size={15} /> Параметры
             </h2>
             <dl className="space-y-2">
               {canEdit ? (
                 <>
                   <div>
-                    <dt className="text-xs text-gray-500 dark:text-slate-400 mb-1">Тип заявки</dt>
+                    <dt className="text-xs text-fg-muted mb-1">Тип заявки</dt>
                     <Select
                       value={order.type}
                       onChange={(e) => updateField("type", e.target.value)}
@@ -461,7 +461,7 @@ export default function OrderDetailClient({
                     />
                   </div>
                   <div>
-                    <dt className="text-xs text-gray-500 dark:text-slate-400 mb-1">Приоритет</dt>
+                    <dt className="text-xs text-fg-muted mb-1">Приоритет</dt>
                     <Select
                       value={order.priority}
                       onChange={(e) => updateField("priority", e.target.value)}
@@ -469,48 +469,48 @@ export default function OrderDetailClient({
                     />
                   </div>
                   <div>
-                    <dt className="text-xs text-gray-500 dark:text-slate-400 mb-1">Срок сдачи</dt>
+                    <dt className="text-xs text-fg-muted mb-1">Срок сдачи</dt>
                     <input
                       type="datetime-local"
                       value={order.deadline ? order.deadline.slice(0, 16) : ""}
                       onChange={(e) => updateField("deadline", e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                      className="w-full px-3 py-2 text-sm border border-line rounded-lg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
                     />
                   </div>
                 </>
               ) : (
                 <>
                   <div className="flex justify-between text-sm">
-                    <dt className="text-gray-500 dark:text-slate-500">Тип</dt>
-                    <dd className="text-gray-800 dark:text-slate-200">{typeLabels[order.type] ?? order.type}</dd>
+                    <dt className="text-fg-muted">Тип</dt>
+                    <dd className="text-fg">{typeLabels[order.type] ?? order.type}</dd>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <dt className="text-gray-500 dark:text-slate-500">Приоритет</dt>
-                    <dd className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[order.priority as keyof typeof PRIORITY_COLORS]}`}>
+                    <dt className="text-fg-muted">Приоритет</dt>
+                    <dd className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PRIORITY_COLORS[order.priority as keyof typeof PRIORITY_COLORS]}`}>
                       {PRIORITY_LABELS[order.priority as keyof typeof PRIORITY_LABELS]}
                     </dd>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <dt className="text-gray-500 dark:text-slate-500">Срок сдачи</dt>
-                    <dd className="text-gray-800 dark:text-slate-200">{formatDate(order.deadline)}</dd>
+                    <dt className="text-fg-muted">Срок сдачи</dt>
+                    <dd className="text-fg">{formatDate(order.deadline)}</dd>
                   </div>
                 </>
               )}
               <div className="flex justify-between text-sm">
-                <dt className="text-gray-500 dark:text-slate-500">Менеджер</dt>
-                <dd className="text-gray-800 dark:text-slate-200">{order.manager?.name || "—"}</dd>
+                <dt className="text-fg-muted">Менеджер</dt>
+                <dd className="text-fg">{order.manager?.name || "—"}</dd>
               </div>
             </dl>
           </Card>
 
           {/* Amount */}
           <Card padding="md">
-            <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
               <CreditCard size={15} /> Оплата
             </h2>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900 dark:text-slate-100">{formatCurrency(order.amount)}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PAYMENT_STATUS_COLORS[order.paymentStatus as keyof typeof PAYMENT_STATUS_COLORS]}`}>
+              <span className="text-2xl font-bold text-fg">{formatCurrency(order.amount)}</span>
+              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PAYMENT_STATUS_COLORS[order.paymentStatus as keyof typeof PAYMENT_STATUS_COLORS]}`}>
                 {PAYMENT_STATUS_LABELS[order.paymentStatus as keyof typeof PAYMENT_STATUS_LABELS]}
               </span>
             </div>
@@ -519,28 +519,28 @@ export default function OrderDetailClient({
           {/* Assignees */}
           <Card padding="md">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-gray-800 dark:text-slate-200 flex items-center gap-2">
+              <h2 className="font-semibold text-fg flex items-center gap-2">
                 <User size={15} /> Исполнители
               </h2>
               {canEdit && !addingAssignee && (
-                <button onClick={() => setAddingAssignee(true)} className="p-1 rounded hover:bg-gray-100 dark:bg-slate-700 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-500 hover:text-violet-600 transition-colors">
+                <button onClick={() => setAddingAssignee(true)} className="p-1 rounded hover:bg-surface-hover dark:hover:bg-slate-700 text-fg-subtle hover:text-accent transition-colors">
                   <UserPlus size={15} />
                 </button>
               )}
             </div>
             {order.assignees.length === 0 && !addingAssignee && (
-              <p className="text-sm text-gray-400 dark:text-slate-500">Не назначены</p>
+              <p className="text-sm text-fg-subtle">Не назначены</p>
             )}
             {order.assignees.length > 0 && (
               <ul className="space-y-1 mb-2">
                 {order.assignees.map((a) => (
                   <li key={a.id} className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-violet-100 dark:bg-violet-900/40 rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">{a.name.charAt(0)}</span>
+                    <div className="w-6 h-6 bg-accent-soft rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-accent">{a.name.charAt(0)}</span>
                     </div>
-                    <span className="text-sm text-gray-700 dark:text-slate-300 flex-1">{a.name}</span>
+                    <span className="text-sm text-fg-muted flex-1">{a.name}</span>
                     {canEdit && (
-                      <button onClick={() => removeAssignee(a.id)} className="p-0.5 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors">
+                      <button onClick={() => removeAssignee(a.id)} className="p-0.5 rounded hover:bg-red-50 text-fg-subtle hover:text-red-500 transition-colors">
                         <X size={13} />
                       </button>
                     )}
@@ -553,17 +553,17 @@ export default function OrderDetailClient({
                 <select
                   value={selectedAssigneeId}
                   onChange={(e) => setSelectedAssigneeId(e.target.value)}
-                  className="flex-1 text-sm border border-gray-200 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                  className="flex-1 text-sm border border-line rounded px-2 py-1 bg-surface text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                 >
                   <option value="">— выбрать —</option>
                   {users.filter((u) => !order.assignees.some((a) => a.id === u.id)).map((u) => (
                     <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
-                <button onClick={addAssignee} disabled={!selectedAssigneeId} className="p-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-40">
+                <button onClick={addAssignee} disabled={!selectedAssigneeId} className="p-1.5 rounded bg-accent text-white hover:bg-accent-hover disabled:opacity-40">
                   <Check size={13} />
                 </button>
-                <button onClick={() => { setAddingAssignee(false); setSelectedAssigneeId(""); }} className="p-1.5 rounded border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 dark:hover:bg-slate-700">
+                <button onClick={() => { setAddingAssignee(false); setSelectedAssigneeId(""); }} className="p-1.5 rounded border border-line text-fg-muted hover:bg-surface-sunken dark:hover:bg-slate-700/50 dark:hover:bg-slate-700">
                   <X size={13} />
                 </button>
               </div>
@@ -572,8 +572,8 @@ export default function OrderDetailClient({
 
           {order.notes && (
             <Card padding="md">
-              <h2 className="font-semibold text-gray-800 dark:text-slate-200 mb-2">Примечание</h2>
-              <p className="text-sm text-gray-600 dark:text-slate-400 whitespace-pre-line">{order.notes}</p>
+              <h2 className="font-semibold text-fg mb-2">Примечание</h2>
+              <p className="text-sm text-fg-muted whitespace-pre-line">{order.notes}</p>
             </Card>
           )}
         </div>
@@ -581,26 +581,26 @@ export default function OrderDetailClient({
         {/* Right column - tabs */}
         <div className="lg:col-span-2 space-y-4">
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 dark:border-slate-700">
+          <div className="flex border-b border-line">
             {(["items", "files", "tasks", "comments", "history"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab
-                    ? "border-violet-600 text-violet-600"
-                    : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:text-slate-300 dark:hover:text-slate-200"
+                    ? "border-violet-600 text-accent"
+                    : "border-transparent text-fg-muted hover:text-fg-muted dark:hover:text-slate-200"
                 }`}
               >
                 {{ items: "Позиции", files: "Файлы", tasks: "Задачи", comments: "Комментарии", history: "История" }[tab]}
                 {tab === "files" && order.files.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded text-xs">{order.files.length}</span>
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.files.length}</span>
                 )}
                 {tab === "tasks" && order.tasks.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded text-xs">{order.tasks.length}</span>
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.tasks.length}</span>
                 )}
                 {tab === "comments" && order.comments.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded text-xs">{order.comments.length}</span>
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.comments.length}</span>
                 )}
               </button>
             ))}
@@ -610,7 +610,7 @@ export default function OrderDetailClient({
           {activeTab === "items" && (
             <Card padding="none">
               {canEdit && (
-                <div className="flex justify-end px-4 py-2 border-b border-gray-100 dark:border-slate-700">
+                <div className="flex justify-end px-4 py-2 border-b border-line-soft">
                   {editingItems ? (
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setEditingItems(false)}>
@@ -628,20 +628,20 @@ export default function OrderDetailClient({
                 </div>
               )}
               {!editingItems && order.items.length === 0 ? (
-                <div className="py-10 text-center text-gray-400 dark:text-slate-500 text-sm">Позиций нет</div>
+                <div className="py-10 text-center text-fg-subtle text-sm">Позиций нет</div>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-                      <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-500 uppercase">Наименование</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-500 uppercase">Кол-во</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-500 uppercase">Цена</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-500 uppercase">Скидка%</th>
-                      <th className="text-right px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-500 uppercase">Итого</th>
+                    <tr className="border-b border-line-soft bg-surface-sunken">
+                      <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase">Наименование</th>
+                      <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Кол-во</th>
+                      <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Цена</th>
+                      <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Скидка%</th>
+                      <th className="text-right px-5 py-3 text-xs font-medium text-fg-muted uppercase">Итого</th>
                       {editingItems && <th className="px-2 py-3 w-8"></th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
+                  <tbody className="divide-y divide-line-soft">
                     {editingItems ? (
                       <>
                         {editItems.map((item, idx) => (
@@ -650,7 +650,7 @@ export default function OrderDetailClient({
                               <input
                                 value={item.name}
                                 onChange={(e) => updateEditItem(idx, "name", e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                                className="w-full px-2 py-1 text-sm border border-line rounded focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                                 placeholder="Наименование"
                               />
                             </td>
@@ -659,12 +659,12 @@ export default function OrderDetailClient({
                                 <input
                                   type="number" min="0.01" step="any" value={item.qty}
                                   onChange={(e) => updateEditItem(idx, "qty", parseFloat(e.target.value) || 0)}
-                                  className="w-16 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                                  className="w-16 px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                                 />
                                 <input
                                   value={item.unit}
                                   onChange={(e) => updateEditItem(idx, "unit", e.target.value)}
-                                  className="w-12 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                                  className="w-12 px-2 py-1 text-sm border border-line rounded focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                                 />
                               </div>
                             </td>
@@ -672,17 +672,17 @@ export default function OrderDetailClient({
                               <input
                                 type="number" min="0" step="any" value={item.price}
                                 onChange={(e) => updateEditItem(idx, "price", parseFloat(e.target.value) || 0)}
-                                className="w-28 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                                className="w-28 px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                               />
                             </td>
                             <td className="px-2 py-2">
                               <input
                                 type="number" min="0" max="100" step="any" value={item.discount}
                                 onChange={(e) => updateEditItem(idx, "discount", parseFloat(e.target.value) || 0)}
-                                className="w-16 px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                                className="w-16 px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                               />
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-gray-700 dark:text-slate-300">
+                            <td className="px-3 py-2 text-right font-medium text-fg-muted">
                               {formatCurrency(Number(item.qty) * Number(item.price) * (1 - Number(item.discount) / 100))}
                             </td>
                             <td className="px-2 py-2">
@@ -698,14 +698,14 @@ export default function OrderDetailClient({
                         ))}
                         <tr>
                           <td colSpan={6} className="px-3 py-2">
-                            <button onClick={addEditItem} className="flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium">
+                            <button onClick={addEditItem} className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover font-medium">
                               <Plus size={13} /> Добавить позицию
                             </button>
                           </td>
                         </tr>
-                        <tr className="bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-700">
-                          <td colSpan={4} className="px-5 py-3 text-right font-semibold text-gray-700 dark:text-slate-300">Итого:</td>
-                          <td className="px-5 py-3 text-right font-bold text-gray-900 dark:text-slate-100 text-base">{formatCurrency(editTotal)}</td>
+                        <tr className="bg-surface-sunken border-t border-line">
+                          <td colSpan={4} className="px-5 py-3 text-right font-semibold text-fg-muted">Итого:</td>
+                          <td className="px-5 py-3 text-right font-bold text-fg text-base">{formatCurrency(editTotal)}</td>
                           <td></td>
                         </tr>
                       </>
@@ -713,16 +713,16 @@ export default function OrderDetailClient({
                       <>
                         {order.items.map((item) => (
                           <tr key={item.id}>
-                            <td className="px-5 py-3 font-medium text-gray-800 dark:text-slate-200">{item.name}</td>
-                            <td className="px-4 py-3 text-right text-gray-600 dark:text-slate-400">{item.qty} {item.unit}</td>
-                            <td className="px-4 py-3 text-right text-gray-600 dark:text-slate-400">{formatCurrency(item.price)}</td>
-                            <td className="px-4 py-3 text-right text-gray-600 dark:text-slate-400">{item.discount}%</td>
-                            <td className="px-5 py-3 text-right font-semibold text-gray-800 dark:text-slate-200">{formatCurrency(item.total)}</td>
+                            <td className="px-5 py-3 font-medium text-fg">{item.name}</td>
+                            <td className="px-4 py-3 text-right text-fg-muted">{item.qty} {item.unit}</td>
+                            <td className="px-4 py-3 text-right text-fg-muted">{formatCurrency(item.price)}</td>
+                            <td className="px-4 py-3 text-right text-fg-muted">{item.discount}%</td>
+                            <td className="px-5 py-3 text-right font-semibold text-fg">{formatCurrency(item.total)}</td>
                           </tr>
                         ))}
-                        <tr className="bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-700">
-                          <td colSpan={4} className="px-5 py-3 text-right font-semibold text-gray-700 dark:text-slate-300">Итого:</td>
-                          <td className="px-5 py-3 text-right font-bold text-gray-900 dark:text-slate-100 text-base">{formatCurrency(order.amount)}</td>
+                        <tr className="bg-surface-sunken border-t border-line">
+                          <td colSpan={4} className="px-5 py-3 text-right font-semibold text-fg-muted">Итого:</td>
+                          <td className="px-5 py-3 text-right font-bold text-fg text-base">{formatCurrency(order.amount)}</td>
                         </tr>
                       </>
                     )}
@@ -743,9 +743,9 @@ export default function OrderDetailClient({
               {isDraggingTab && (
                 <div className="absolute inset-0 z-10 rounded-xl border-2 border-dashed border-violet-400 bg-violet-50/90 dark:bg-violet-900/50 flex items-center justify-center pointer-events-none">
                   <div className="text-center">
-                    <Upload size={28} className="mx-auto mb-1 text-violet-500" />
-                    <p className="text-sm font-medium text-violet-600">Отпустите для загрузки</p>
-                    <p className="text-xs text-violet-400">Изображения → скрин-превью, остальное → файлы</p>
+                    <Upload size={28} className="mx-auto mb-1 text-accent" />
+                    <p className="text-sm font-medium text-accent">Отпустите для загрузки</p>
+                    <p className="text-xs text-accent">Изображения → скрин-превью, остальное → файлы</p>
                   </div>
                 </div>
               )}
@@ -774,16 +774,16 @@ export default function OrderDetailClient({
                 if (screenshots.length === 0) return null;
                 return (
                   <div>
-                    <p className="text-xs font-medium text-gray-500 dark:text-slate-500 uppercase mb-2">Скрин-превью</p>
+                    <p className="text-xs font-medium text-fg-muted uppercase mb-2">Скрин-превью</p>
                     <div className="grid grid-cols-2 gap-2">
                       {screenshots.map((of) => {
                         const previewUrl = localPreviewsRef.current.get(of.id) || of.file.downloadUrl;
                         return (
-                          <div key={of.id} className="relative group rounded-lg overflow-hidden border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+                          <div key={of.id} className="relative group rounded-lg overflow-hidden border border-line-soft bg-surface-sunken">
                             {previewUrl ? (
                               <img src={previewUrl} alt={of.file.originalName} className="w-full object-contain max-h-48" />
                             ) : (
-                              <div className="h-32 flex items-center justify-center text-gray-300">
+                              <div className="h-32 flex items-center justify-center text-fg-subtle">
                                 <ImageIcon size={32} />
                               </div>
                             )}
@@ -792,13 +792,13 @@ export default function OrderDetailClient({
                               <div className="flex items-center gap-1 shrink-0 ml-2">
                                 {of.file.downloadUrl && (
                                   <a href={of.file.downloadUrl} target="_blank" rel="noreferrer"
-                                    className="p-0.5 rounded bg-white dark:bg-slate-800/20 hover:bg-white dark:bg-slate-800/40 text-white">
+                                    className="p-0.5 rounded bg-surface/20 hover:bg-surface/40 text-white">
                                     <Download size={12} />
                                   </a>
                                 )}
                                 {canEdit && (
                                   <button onClick={() => handleDeleteFile(of.id)}
-                                    className="p-0.5 rounded bg-white dark:bg-slate-800/20 hover:bg-red-500/80 text-white">
+                                    className="p-0.5 rounded bg-surface/20 hover:bg-red-500/80 text-white">
                                     <X size={12} />
                                   </button>
                                 )}
@@ -819,23 +819,23 @@ export default function OrderDetailClient({
                 return (
                   <Card padding="none">
                     {isEmpty ? (
-                      <div className="py-10 text-center text-gray-400 dark:text-slate-500 text-sm">
+                      <div className="py-10 text-center text-fg-subtle text-sm">
                         <Paperclip size={28} className="mx-auto mb-2 opacity-30" />
                         <p>Файлов нет</p>
-                        {canEdit && <p className="text-xs mt-1 text-gray-300">Перетащите сюда или нажмите Ctrl+V для скриншота</p>}
+                        {canEdit && <p className="text-xs mt-1 text-fg-subtle">Перетащите сюда или нажмите Ctrl+V для скриншота</p>}
                       </div>
                     ) : regularFiles.length === 0 ? (
-                      <div className="py-6 text-center text-gray-400 dark:text-slate-500 text-sm">
-                        <p className="text-xs text-gray-300">Файлов нет — только скрины выше</p>
+                      <div className="py-6 text-center text-fg-subtle text-sm">
+                        <p className="text-xs text-fg-subtle">Файлов нет — только скрины выше</p>
                       </div>
                     ) : (
-                      <div className="divide-y divide-gray-50 dark:divide-slate-700">
+                      <div className="divide-y divide-line-soft">
                         {regularFiles.map((of) => (
-                          <div key={of.id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors">
-                            <FileText size={18} className="shrink-0 text-gray-400 dark:text-slate-500" />
+                          <div key={of.id} className="flex items-center gap-3 px-5 py-3 hover:bg-surface-sunken dark:hover:bg-slate-700/50 transition-colors">
+                            <FileText size={18} className="shrink-0 text-fg-subtle" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{of.file.originalName}</p>
-                              <p className="text-xs text-gray-400 dark:text-slate-500">
+                              <p className="text-sm font-medium text-fg truncate">{of.file.originalName}</p>
+                              <p className="text-xs text-fg-subtle">
                                 {formatFileSize(of.file.size)} · v{of.version} · {of.file.uploadedBy.name} · {formatDate(of.createdAt)}
                               </p>
                             </div>
@@ -873,28 +873,28 @@ export default function OrderDetailClient({
               )}
               <Card padding="none">
                 {order.tasks.length === 0 ? (
-                  <div className="py-10 text-center text-gray-400 dark:text-slate-500 text-sm">
+                  <div className="py-10 text-center text-fg-subtle text-sm">
                     <CheckSquare size={28} className="mx-auto mb-2 opacity-30" />
                     Задач нет
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-50 dark:divide-slate-700">
+                  <div className="divide-y divide-line-soft">
                     {order.tasks.map((task) => (
                       <Link
                         key={task.id}
                         href={`/tasks/${task.id}`}
-                        className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 transition-colors"
+                        className="flex items-center justify-between px-5 py-3 hover:bg-surface-sunken dark:hover:bg-slate-700/50 transition-colors"
                       >
                         <div>
-                          <p className="font-medium text-gray-800 dark:text-slate-200 text-sm">{task.title}</p>
+                          <p className="font-medium text-fg text-sm">{task.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-gray-400 dark:text-slate-500">{TASK_TYPE_LABELS[task.type as keyof typeof TASK_TYPE_LABELS]}</span>
+                            <span className="text-xs text-fg-subtle">{TASK_TYPE_LABELS[task.type as keyof typeof TASK_TYPE_LABELS]}</span>
                             {task.assignee && (
-                              <span className="text-xs text-gray-400 dark:text-slate-500">· {task.assignee.name}</span>
+                              <span className="text-xs text-fg-subtle">· {task.assignee.name}</span>
                             )}
                           </div>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TASK_STATUS_COLORS[task.status as keyof typeof TASK_STATUS_COLORS]}`}>
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${TASK_STATUS_COLORS[task.status as keyof typeof TASK_STATUS_COLORS]}`}>
                           {TASK_STATUS_LABELS[task.status as keyof typeof TASK_STATUS_LABELS]}
                         </span>
                       </Link>
@@ -909,17 +909,17 @@ export default function OrderDetailClient({
           {activeTab === "comments" && (
             <div className="space-y-3">
               <Card padding="none">
-                <div className="divide-y divide-gray-50 dark:divide-slate-700">
+                <div className="divide-y divide-line-soft">
                   {order.comments.length === 0 ? (
-                    <div className="py-8 text-center text-gray-400 dark:text-slate-500 text-sm">Комментариев нет</div>
+                    <div className="py-8 text-center text-fg-subtle text-sm">Комментариев нет</div>
                   ) : (
                     order.comments.map((c) => (
-                      <div key={c.id} className={`px-5 py-3 ${c.user.id === currentUserId ? "bg-violet-50 dark:bg-violet-900/20" : ""}`}>
+                      <div key={c.id} className={`px-5 py-3 ${c.user.id === currentUserId ? "bg-accent-soft" : ""}`}>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-gray-800 dark:text-slate-200">{c.user.name}</span>
-                          <span className="text-xs text-gray-400 dark:text-slate-500">{formatDateTime(c.createdAt)}</span>
+                          <span className="text-sm font-medium text-fg">{c.user.name}</span>
+                          <span className="text-xs text-fg-subtle">{formatDateTime(c.createdAt)}</span>
                         </div>
-                        <p className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-line">{c.text}</p>
+                        <p className="text-sm text-fg-muted whitespace-pre-line">{c.text}</p>
                       </div>
                     ))
                   )}
@@ -931,7 +931,7 @@ export default function OrderDetailClient({
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Написать комментарий..."
-                  className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                  className="flex-1 px-4 py-2 text-sm border border-line rounded-lg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
                 />
                 <Button type="submit" loading={commentLoading} disabled={!commentText.trim()}>
                   <Send size={14} />
@@ -944,18 +944,18 @@ export default function OrderDetailClient({
           {activeTab === "history" && (
             <Card padding="none">
               {order.changeLogs.length === 0 ? (
-                <div className="py-8 text-center text-gray-400 dark:text-slate-500 text-sm">Изменений нет</div>
+                <div className="py-8 text-center text-fg-subtle text-sm">Изменений нет</div>
               ) : (
-                <div className="divide-y divide-gray-50 dark:divide-slate-700">
+                <div className="divide-y divide-line-soft">
                   {order.changeLogs.map((log) => (
                     <div key={log.id} className="px-5 py-3">
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 mb-0.5">
+                      <div className="flex items-center gap-2 text-xs text-fg-muted mb-0.5">
                         <Clock size={11} />
                         <span>{formatDateTime(log.createdAt)}</span>
                         <span>·</span>
-                        <span className="font-medium text-gray-700 dark:text-slate-300">{log.user.name}</span>
+                        <span className="font-medium text-fg-muted">{log.user.name}</span>
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-slate-300">
+                      <p className="text-sm text-fg-muted">
                         Изменил <span className="font-medium">{log.field}</span>
                         {log.oldValue && (
                           <> с <span className="text-red-600">{log.oldValue}</span></>

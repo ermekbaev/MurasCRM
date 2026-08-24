@@ -17,28 +17,24 @@ export default function Pagination({ page, pages, total, limit, onPage, loading 
   const from = (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
 
+  const btn =
+    "flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface text-fg-muted " +
+    "transition-colors hover:bg-surface-hover hover:text-fg disabled:pointer-events-none disabled:opacity-40";
+
   return (
-    <div className="flex items-center justify-between px-1 py-2 text-sm text-gray-500 dark:text-slate-400">
-      <span className="text-xs">
+    <div className="flex items-center justify-between gap-3 px-1 py-2">
+      <span className="text-xs text-fg-subtle tabular-nums">
         {from}–{to} из {total}
       </span>
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => onPage(page - 1)}
-          disabled={page <= 1 || loading}
-          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft size={16} />
+      <div className="flex items-center gap-1.5">
+        <button onClick={() => onPage(page - 1)} disabled={page <= 1 || loading} className={btn} aria-label="Назад">
+          <ChevronLeft size={15} />
         </button>
-        <span className="px-2 text-xs font-medium">
-          {page} / {pages}
+        <span className="px-1 text-xs font-medium text-fg-muted tabular-nums">
+          {page} <span className="text-fg-subtle">/</span> {pages}
         </span>
-        <button
-          onClick={() => onPage(page + 1)}
-          disabled={page >= pages || loading}
-          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight size={16} />
+        <button onClick={() => onPage(page + 1)} disabled={page >= pages || loading} className={btn} aria-label="Вперёд">
+          <ChevronRight size={15} />
         </button>
       </div>
     </div>

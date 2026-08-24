@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import PageHeader from "@/components/layout/PageHeader";
 import { EQUIPMENT_STATUS_LABELS } from "@/lib/constants";
 import { Plus, Cpu, Pencil, Trash2, Package, X, ToggleLeft, ToggleRight } from "lucide-react";
 
@@ -252,81 +253,83 @@ export default function EquipmentSettingsPage() {
     (c) => !consConfigs.find((cfg) => cfg.consumableId === c.id)
   );
 
-  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-          <Cpu size={22} /> Оборудование
-        </h1>
-        <Button onClick={openCreate}>
-          <Plus size={16} /> Добавить
-        </Button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        icon={<Cpu size={18} />}
+        title="Оборудование"
+        subtitle={`${equipment.length} единиц · тарифы и привязка расходников`}
+        actions={
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Добавить
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {equipment.length === 0 ? (
-          <p className="text-gray-400 dark:text-slate-500 text-sm col-span-3 text-center py-8">Оборудования нет</p>
+          <p className="text-fg-subtle text-sm col-span-3 text-center py-8">Оборудования нет</p>
         ) : (
           equipment.map((eq) => (
             <Card key={eq.id} padding="md">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/40 rounded-lg flex items-center justify-center shrink-0">
-                    <Cpu size={16} className="text-violet-600" />
+                  <div className="w-8 h-8 bg-accent-soft rounded-lg flex items-center justify-center shrink-0">
+                    <Cpu size={16} className="text-accent" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800 dark:text-slate-200 text-sm">{eq.name}</p>
-                    <p className="text-xs text-gray-400 dark:text-slate-500">{TYPE_LABELS[eq.type] || eq.type}</p>
+                    <p className="font-semibold text-fg text-sm">{eq.name}</p>
+                    <p className="text-xs text-fg-subtle">{TYPE_LABELS[eq.type] || eq.type}</p>
                   </div>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${eq.status === "ACTIVE" ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" : "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300"}`}>
+                <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${eq.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25" : "bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/25"}`}>
                   {EQUIPMENT_STATUS_LABELS[eq.status as keyof typeof EQUIPMENT_STATUS_LABELS]}
                 </span>
               </div>
               {(eq.workWidth || eq.pricePerLm || eq.costPerLm || eq.operatorRate) && (
                 <div className="flex gap-3 mt-2 flex-wrap">
                   {eq.workWidth && (
-                    <p className="text-xs text-gray-500 dark:text-slate-400">Ширина: <span className="font-medium text-gray-700 dark:text-slate-300">{eq.workWidth} м</span></p>
+                    <p className="text-xs text-fg-muted">Ширина: <span className="font-medium text-fg-muted">{eq.workWidth} м</span></p>
                   )}
                   {eq.pricePerLm && (
-                    <p className="text-xs text-gray-500 dark:text-slate-400">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
+                    <p className="text-xs text-fg-muted">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
                   )}
                   {eq.costPerLm && (
-                    <p className="text-xs text-gray-500 dark:text-slate-400">Себест.: <span className="font-medium text-amber-600">{eq.costPerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
+                    <p className="text-xs text-fg-muted">Себест.: <span className="font-medium text-amber-600">{eq.costPerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
                   )}
                   {eq.operatorRate && (
-                    <p className="text-xs text-gray-500 dark:text-slate-400">Ставка оператора: <span className="font-medium text-emerald-600">{eq.operatorRate} сом/{PRICING_UNIT_MEASURE[eq.pricingUnit] || "ед"}</span></p>
+                    <p className="text-xs text-fg-muted">Ставка оператора: <span className="font-medium text-emerald-600">{eq.operatorRate} сом/{PRICING_UNIT_MEASURE[eq.pricingUnit] || "ед"}</span></p>
                   )}
                 </div>
               )}
               {eq.materials.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {eq.materials.map((m) => (
-                    <span key={m} className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-1.5 py-0.5 rounded">{m}</span>
+                    <span key={m} className="text-xs bg-surface-hover text-fg-muted px-1.5 py-0.5 rounded">{m}</span>
                   ))}
                 </div>
               )}
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-slate-700">
-                <p className="text-xs text-gray-400 dark:text-slate-500">{eq._count.orderItems} позиц(ий)</p>
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-line-soft">
+                <p className="text-xs text-fg-subtle">{eq._count.orderItems} позиц(ий)</p>
                 <div className="flex gap-1">
                   <button
                     onClick={() => openConsumables(eq)}
                     title="Расходники"
-                    className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                    className="p-1.5 text-fg-subtle hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
                   >
                     <Package size={13} />
                   </button>
                   <button
                     onClick={() => openEdit(eq)}
-                    className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                    className="p-1.5 text-fg-subtle hover:text-accent hover:bg-accent-soft rounded transition-colors"
                   >
                     <Pencil size={13} />
                   </button>
                   <button
                     onClick={() => handleDelete(eq.id, eq.name)}
-                    className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                    className="p-1.5 text-fg-subtle hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -439,23 +442,23 @@ export default function EquipmentSettingsPage() {
         title={`Расходники — ${consEquipment?.name}`}
       >
         {consLoading ? (
-          <div className="py-6 text-center text-gray-400 dark:text-slate-500 text-sm">Загрузка...</div>
+          <div className="py-6 text-center text-fg-subtle text-sm">Загрузка...</div>
         ) : (
           <div className="space-y-3">
             {consConfigs.length === 0 && !showConsForm && (
-              <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-4">
+              <p className="text-sm text-fg-subtle text-center py-4">
                 Расходники не привязаны. Нажмите «+» чтобы добавить.
               </p>
             )}
 
             {consConfigs.map((cfg) => (
-              <div key={cfg.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+              <div key={cfg.id} className="flex items-center gap-3 p-3 bg-surface-sunken rounded-lg">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 dark:text-slate-200 truncate">{cfg.consumable.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                  <p className="text-sm font-medium text-fg truncate">{cfg.consumable.name}</p>
+                  <p className="text-xs text-fg-muted">
                     {cfg.consumptionPerUnit} {cfg.consumable.unit}/{PRICING_UNIT_MEASURE[consEquipment?.pricingUnit || "LM"] || "ед"}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">{TRIGGER_LABELS[cfg.trigger]}</p>
+                  <p className="text-xs text-fg-subtle">{TRIGGER_LABELS[cfg.trigger]}</p>
                 </div>
                 <button
                   onClick={() => toggleAutoDeduct(cfg)}
@@ -464,11 +467,11 @@ export default function EquipmentSettingsPage() {
                 >
                   {cfg.autoDeduct
                     ? <ToggleRight size={22} className="text-emerald-500" />
-                    : <ToggleLeft size={22} className="text-gray-300" />}
+                    : <ToggleLeft size={22} className="text-fg-subtle" />}
                 </button>
                 <button
                   onClick={() => handleRemoveConsumable(cfg.consumableId)}
-                  className="p-1 text-gray-300 hover:text-red-500 rounded transition-colors shrink-0"
+                  className="p-1 text-fg-subtle hover:text-red-500 rounded transition-colors shrink-0"
                 >
                   <X size={14} />
                 </button>
@@ -476,7 +479,7 @@ export default function EquipmentSettingsPage() {
             ))}
 
             {showConsForm ? (
-              <form onSubmit={handleAddConsumable} className="space-y-3 pt-2 border-t border-gray-100 dark:border-slate-700">
+              <form onSubmit={handleAddConsumable} className="space-y-3 pt-2 border-t border-line-soft">
                 <Select
                   label="Расходник *"
                   value={consForm.consumableId}
@@ -505,7 +508,7 @@ export default function EquipmentSettingsPage() {
                     { value: "MANUAL", label: "Только вручную" },
                   ]}
                 />
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-fg-muted cursor-pointer">
                   <input
                     type="checkbox"
                     checked={consForm.autoDeduct}
@@ -522,7 +525,7 @@ export default function EquipmentSettingsPage() {
             ) : (
               <button
                 onClick={() => setShowConsForm(true)}
-                className="w-full flex items-center justify-center gap-1 py-2 text-sm text-violet-600 hover:bg-violet-50 rounded-lg border border-dashed border-violet-200 transition-colors"
+                className="w-full flex items-center justify-center gap-1 py-2 text-sm text-accent hover:bg-accent-soft rounded-lg border border-dashed border-violet-200 transition-colors"
               >
                 <Plus size={14} /> Привязать расходник
               </button>

@@ -23,12 +23,12 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  NEW: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300",
-  IN_PROGRESS: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300",
-  REVIEW: "bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300",
-  READY: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300",
-  ISSUED: "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300",
-  CANCELLED: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+  NEW: "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/25",
+  IN_PROGRESS: "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/25",
+  REVIEW: "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/25",
+  READY: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25",
+  ISSUED: "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+  CANCELLED: "bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/25",
 };
 
 // Запасные подписи встроенных типов. Актуальный список — в справочнике (/api/order-types)
@@ -50,10 +50,10 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
 };
 
 export const PRIORITY_COLORS: Record<Priority, string> = {
-  LOW: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300",
-  NORMAL: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
-  URGENT: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
-  VERY_URGENT: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
+  LOW: "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+  NORMAL: "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/25",
+  URGENT: "bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/25",
+  VERY_URGENT: "bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/25",
 };
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
@@ -64,10 +64,10 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 };
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-  UNPAID: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
-  PARTIAL: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
-  ADVANCE: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300",
-  PAID: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
+  UNPAID: "bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/25",
+  PARTIAL: "bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/25",
+  ADVANCE: "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/25",
+  PAID: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25",
 };
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -78,10 +78,10 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
-  TODO: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
-  IN_PROGRESS: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
-  REVIEW: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
-  DONE: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
+  TODO: "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+  IN_PROGRESS: "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/25",
+  REVIEW: "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/25",
+  DONE: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25",
 };
 
 export const TASK_TYPE_LABELS: Record<TaskType, string> = {

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Card from "@/components/ui/Card";
+import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
@@ -35,7 +36,7 @@ interface Invoice {
 
 const EMPTY_ITEM: ActItem = { name: "", qty: 1, unit: "шт", price: 0 };
 
-const ITEM_CLASS = "w-full px-2 py-1 text-sm border border-gray-200 dark:border-slate-700 rounded focus:ring-1 focus:ring-violet-500 outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100";
+const ITEM_CLASS = "w-full px-2 py-1 text-sm border border-line rounded focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none bg-surface text-fg";
 
 function ItemsTable({
   items,
@@ -52,24 +53,24 @@ function ItemsTable({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-medium text-gray-700 dark:text-slate-300">Позиции</label>
-        <button type="button" onClick={onAdd} className="text-xs text-violet-600 hover:text-violet-700 font-medium">
+        <label className="text-sm font-medium text-fg-muted">Позиции</label>
+        <button type="button" onClick={onAdd} className="text-xs text-accent hover:text-accent-hover font-medium">
           + Добавить строку
         </button>
       </div>
-      <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <div className="border border-line rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-700">
+          <thead className="bg-surface-sunken border-b border-line">
             <tr>
-              <th className="text-left px-3 py-2 text-xs text-gray-500 dark:text-slate-400 font-medium">Наименование</th>
-              <th className="text-right px-3 py-2 text-xs text-gray-500 dark:text-slate-400 font-medium w-16">Кол-во</th>
-              <th className="text-left px-3 py-2 text-xs text-gray-500 dark:text-slate-400 font-medium w-16">Ед.</th>
-              <th className="text-right px-3 py-2 text-xs text-gray-500 dark:text-slate-400 font-medium w-24">Цена</th>
-              <th className="text-right px-3 py-2 text-xs text-gray-500 dark:text-slate-400 font-medium w-24">Сумма</th>
+              <th className="text-left px-3 py-2 text-xs text-fg-muted font-medium">Наименование</th>
+              <th className="text-right px-3 py-2 text-xs text-fg-muted font-medium w-16">Кол-во</th>
+              <th className="text-left px-3 py-2 text-xs text-fg-muted font-medium w-16">Ед.</th>
+              <th className="text-right px-3 py-2 text-xs text-fg-muted font-medium w-24">Цена</th>
+              <th className="text-right px-3 py-2 text-xs text-fg-muted font-medium w-24">Сумма</th>
               <th className="w-8"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+          <tbody className="divide-y divide-line-soft">
             {items.map((item, idx) => (
               <tr key={idx}>
                 <td className="px-2 py-1.5">
@@ -84,12 +85,12 @@ function ItemsTable({
                 <td className="px-2 py-1.5">
                   <input type="number" value={item.price} onChange={(e) => onChange(idx, "price", e.target.value)} min={0} step="any" required className={ITEM_CLASS + " text-right"} />
                 </td>
-                <td className="px-3 py-1.5 text-right text-sm font-medium text-gray-800 dark:text-slate-200">
+                <td className="px-3 py-1.5 text-right text-sm font-medium text-fg">
                   {formatCurrency(Number(item.qty) * Number(item.price))}
                 </td>
                 <td className="px-1 py-1.5">
                   {items.length > 1 && (
-                    <button type="button" onClick={() => onRemove(idx)} className="p-1 text-gray-400 dark:text-slate-500 hover:text-red-500 transition-colors">
+                    <button type="button" onClick={() => onRemove(idx)} className="p-1 text-fg-subtle hover:text-red-500 transition-colors">
                       <Trash2 size={13} />
                     </button>
                   )}
@@ -100,7 +101,7 @@ function ItemsTable({
         </table>
       </div>
       <div className="flex justify-end mt-2">
-        <span className="text-sm font-bold text-gray-800 dark:text-slate-200">Итого: {formatCurrency(total)}</span>
+        <span className="text-sm font-bold text-fg">Итого: {formatCurrency(total)}</span>
       </div>
     </div>
   );
@@ -243,85 +244,84 @@ export default function ActsPage() {
     if (res.ok) loadActs(page);
   }
 
-  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
 
   return (
     <div className="p-4 sm:p-6 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-            <ClipboardList size={22} /> Акты выполненных работ
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{total} актов</p>
-        </div>
-        <Button onClick={openCreate}>
-          <Plus size={16} /> Создать акт
-        </Button>
-      </div>
+      <PageHeader
+        icon={<ClipboardList size={18} />}
+        title="Акты выполненных работ"
+        subtitle={`${total} актов`}
+        actions={
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Создать акт
+          </Button>
+        }
+      />
 
       <Card padding="none">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Акт</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Клиент</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Счёт</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Заявка</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Дата</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Сумма</th>
+              <tr className="border-b border-line-soft bg-surface-sunken">
+                <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase">Акт</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Клиент</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Счёт</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Заявка</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Дата</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Сумма</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
+            <tbody className="divide-y divide-line-soft">
               {acts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-400 dark:text-slate-500">
+                  <td colSpan={7} className="text-center py-12 text-fg-subtle">
                     <ClipboardList size={32} className="mx-auto mb-2 opacity-30" />
                     Актов нет
                   </td>
                 </tr>
               ) : (
                 acts.map((act) => (
-                  <tr key={act.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                    <td className="px-5 py-3 font-medium text-gray-800 dark:text-slate-200">{act.number}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-300">
+                  <tr key={act.id} className="hover:bg-surface-hover">
+                    <td className="px-5 py-3 font-medium text-fg">{act.number}</td>
+                    <td className="px-4 py-3 text-sm text-fg-muted">
                       {act.invoice?.client ? (
-                        <Link href={`/clients/${act.invoice.client.id}`} className="hover:text-violet-600">
+                        <Link href={`/clients/${act.invoice.client.id}`} className="hover:text-accent">
                           {act.invoice.client.name}
                         </Link>
                       ) : "—"}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {act.invoice ? (
-                        <Link href={`/invoices/${act.invoice.id}`} className="text-violet-600 hover:underline">
+                        <Link href={`/invoices/${act.invoice.id}`} className="text-accent hover:underline">
                           {act.invoice.number}
                         </Link>
                       ) : "—"}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {act.order ? (
-                        <Link href={`/orders/${act.order.id}`} className="text-violet-600 hover:underline">
+                        <Link href={`/orders/${act.order.id}`} className="text-accent hover:underline">
                           {act.order.number}
                         </Link>
                       ) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-400">{formatDate(act.date)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-gray-800 dark:text-slate-200">
+                    <td className="px-4 py-3 text-sm text-fg-muted">{formatDate(act.date)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-fg">
                       {formatCurrency(act.total)}
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/acts/${act.id}`}
-                          className="p-1.5 rounded-lg text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors"
+                          className="p-1.5 rounded-lg text-accent hover:bg-accent-soft transition-colors"
                           title="Печать / PDF"
                         >
                           <FileText size={14} />
                         </Link>
                         <button
                           onClick={() => openEdit(act)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-700 dark:hover:text-slate-200 transition-colors"
+                          className="p-1.5 rounded-lg text-fg-subtle hover:bg-surface-hover hover:text-fg transition-colors"
                           title="Редактировать"
                         >
                           <Pencil size={14} />
@@ -349,11 +349,11 @@ export default function ActsPage() {
         <form onSubmit={handleCreate} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Счёт (необязательно)</label>
+              <label className="block text-sm font-medium text-fg-muted mb-1.5">Счёт (необязательно)</label>
               <select
                 value={form.invoiceId}
                 onChange={(e) => onInvoiceChange(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                className="w-full px-3 py-2 text-sm border border-line rounded-lg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
               >
                 <option value="">— Без счёта —</option>
                 {invoices.map((inv) => (
@@ -373,11 +373,11 @@ export default function ActsPage() {
           </div>
           {companies.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Компания (от кого)</label>
+              <label className="block text-sm font-medium text-fg-muted mb-1.5">Компания (от кого)</label>
               <select
                 value={form.companyId}
                 onChange={(e) => setForm({ ...form, companyId: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                className="w-full px-3 py-2 text-sm border border-line rounded-lg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 bg-surface text-fg"
               >
                 <option value="">Основная компания</option>
                 {companies.map((c) => (

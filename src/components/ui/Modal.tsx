@@ -8,7 +8,9 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  description?: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
 }
 
@@ -19,7 +21,15 @@ const sizes = {
   xl: "max-w-4xl",
 };
 
-export default function Modal({ isOpen, onClose, title, children, size = "md" }: ModalProps) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  size = "md",
+}: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const mouseDownOnOverlay = useRef(false);
 
@@ -47,7 +57,7 @@ export default function Modal({ isOpen, onClose, title, children, size = "md" }:
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      className="animate-overlay-in fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
       onMouseDown={(e) => {
         mouseDownOnOverlay.current = e.target === overlayRef.current;
       }}
@@ -56,17 +66,36 @@ export default function Modal({ isOpen, onClose, title, children, size = "md" }:
         mouseDownOnOverlay.current = false;
       }}
     >
-      <div className={cn("bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full flex flex-col max-h-[90vh]", sizes[size])}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700 shrink-0">
-          <h2 className="text-base font-semibold text-gray-800 dark:text-slate-100">{title}</h2>
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={cn(
+          "animate-fade-rise flex max-h-[92vh] w-full flex-col overflow-hidden border border-line bg-surface shadow-pop",
+          "rounded-t-2xl sm:max-h-[90vh] sm:rounded-2xl",
+          sizes[size]
+        )}
+      >
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line-soft px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="truncate text-[15px] font-semibold tracking-tight text-fg">{title}</h2>
+            {description && <p className="mt-0.5 text-xs text-fg-subtle">{description}</p>}
+          </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
+            aria-label="Закрыть"
+            className="-mr-1 -mt-0.5 rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg"
           >
-            <X size={18} />
+            <X size={17} />
           </button>
         </div>
-        <div className="px-6 py-4 overflow-y-auto">{children}</div>
+
+        <div className="overflow-y-auto px-5 py-5">{children}</div>
+
+        {footer && (
+          <div className="flex shrink-0 items-center justify-end gap-2 border-t border-line-soft bg-surface-sunken px-5 py-3.5">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

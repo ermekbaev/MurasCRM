@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
+import PageHeader from "@/components/layout/PageHeader";
 import { Plus, Tag, Edit3, Trash2 } from "lucide-react";
 
 interface TagItem {
@@ -84,23 +85,24 @@ export default function TagsPage() {
     if (res.ok) setTags((prev) => prev.filter((t) => t.id !== id));
   }
 
-  if (loading) return <div className="p-6 text-gray-400 dark:text-slate-500">Загрузка...</div>;
+  if (loading) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Теги</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Используются для задач и файлов</p>
-        </div>
-        <Button onClick={openCreate}>
-          <Plus size={16} /> Добавить тег
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        icon={<Tag size={18} />}
+        title="Теги"
+        subtitle="Метки для заявок, задач и файлов"
+        actions={
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Добавить тег
+          </Button>
+        }
+      />
 
       {tags.length === 0 ? (
         <Card padding="md">
-          <div className="py-12 text-center text-gray-400 dark:text-slate-500">
+          <div className="py-12 text-center text-fg-subtle">
             <Tag size={36} className="mx-auto mb-2 opacity-30" />
             <p>Тегов пока нет</p>
           </div>
@@ -153,7 +155,7 @@ export default function TagsPage() {
           />
 
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Цвет</p>
+            <p className="text-sm font-medium text-fg-muted mb-2">Цвет</p>
             <div className="flex flex-wrap gap-2 mb-3">
               {PRESET_COLORS.map((c) => (
                 <button
@@ -169,9 +171,9 @@ export default function TagsPage() {
                 type="color"
                 value={form.color}
                 onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
-                className="w-10 h-10 rounded cursor-pointer border border-gray-200 dark:border-slate-700"
+                className="w-10 h-10 rounded cursor-pointer border border-line"
               />
-              <span className="text-sm text-gray-500 dark:text-slate-400">Свой цвет</span>
+              <span className="text-sm text-fg-muted">Свой цвет</span>
               <span
                 className="ml-2 px-3 py-1 rounded-full text-sm font-medium"
                 style={{ background: `${form.color}20`, color: form.color }}
