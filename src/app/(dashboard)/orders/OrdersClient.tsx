@@ -303,6 +303,21 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
     setLoading(false);
   }
 
+  const canDeleteOrder = ["ADMIN", "MANAGER"].includes(currentRole);
+  const [deletingOrder, setDeletingOrder] = useState<string | null>(null);
+
+  async function handleDeleteOrder(id: string, number: string) {
+    if (!confirm(`Удалить заявку ${number}? Вместе с ней удалятся её позиции, задачи, файлы и комментарии.`)) return;
+    setDeletingOrder(id);
+    try {
+      const res = await fetch(`/api/orders/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Не удалось удалить заявку");
+      setOrders((prev) => prev.filter((o) => o.id !== id));
+    } finally {
+      setDeletingOrder(null);
+    }
+  }
+
   async function handleCreateClient() {
     const name = newClient?.name.trim();
     if (!name) return;
@@ -418,12 +433,13 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                 <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Срок</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Оплата</th>
                 <th className="text-right px-5 py-3 text-xs font-medium text-fg-muted uppercase">Сумма</th>
+                {canDeleteOrder && <th className="px-3 py-3 w-10"><span className="sr-only">Действия</span></th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-line-soft">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-fg-subtle">
+                  <td colSpan={canDeleteOrder ? 8 : 7} className="text-center py-12 text-fg-subtle">
                     <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
                     Заявки не найдены
                   </td>
@@ -484,6 +500,20 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                     <td className="px-5 py-3 text-right">
                       <span className="font-semibold text-fg">{formatCurrency(order.amount)}</span>
                     </td>
+                    {canDeleteOrder && (
+                      <td className="px-3 py-3 text-right">
+                        <button
+                          type="button"
+                          title={`Удалить заявку ${order.number}`}
+                          aria-label={`Удалить заявку ${order.number}`}
+                          disabled={deletingOrder === order.id}
+                          onClick={() => handleDeleteOrder(order.id, order.number)}
+                          className="rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40 dark:hover:bg-red-950"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
