@@ -64,6 +64,75 @@ interface ClientFormProps {
 }
 
 function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }: ClientFormProps) {
+  // Автозаполнение реквизитов через DaData: по ИНН — карточка организации,
+  // по БИК — банк. Ошибки показываем текстом рядом с полем, форму не блокируем.
+  const [lookup, setLookup] = useState<"party" | "bank" | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+
+  async function fillFromInn() {
+    const query = form.inn.trim();
+    if (!query) return;
+    setLookup("party");
+    setLookupError(null);
+    try {
+      const res = await fetch("/api/dadata/party", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Не удалось получить данные");
+      const d = json?.suggestions?.[0]?.data;
+      if (!d) {
+        setLookupError("Организация с таким ИНН не найдена");
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        name: d.name?.short_with_opf || d.name?.full_with_opf || f.name,
+        inn: d.inn || f.inn,
+        kpp: d.kpp || f.kpp,
+        ogrn: d.ogrn || f.ogrn,
+        legalAddress: d.address?.unrestricted_value || f.legalAddress,
+      }));
+    } catch (e) {
+      setLookupError(e instanceof Error ? e.message : "Ошибка запроса");
+    } finally {
+      setLookup(null);
+    }
+  }
+
+  async function fillFromBik() {
+    const query = form.bankBik.trim();
+    if (!query) return;
+    setLookup("bank");
+    setLookupError(null);
+    try {
+      const res = await fetch("/api/dadata/bank", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Не удалось получить данные");
+      const d = json?.suggestions?.[0]?.data;
+      if (!d) {
+        setLookupError("Банк с таким БИК не найден");
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        bankName: d.name?.payment || d.name?.short || f.bankName,
+        bankBik: d.bic || f.bankBik,
+        corrAccount: d.correspondent_account || f.corrAccount,
+      }));
+    } catch (e) {
+      setLookupError(e instanceof Error ? e.message : "Ошибка запроса");
+    } finally {
+      setLookup(null);
+    }
+  }
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -128,12 +197,30 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
       </div>
       {form.type !== "INDIVIDUAL" && (
         <>
+          {lookupError && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">{lookupError}</p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Input
-              label="ИНН"
-              value={form.inn}
-              onChange={(e) => setForm((f) => ({ ...f, inn: e.target.value }))}
-            />
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Input
+                  label="ИНН"
+                  value={form.inn}
+                  onChange={(e) => setForm((f) => ({ ...f, inn: e.target.value }))}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                title="Заполнить реквизиты по ИНН"
+                loading={lookup === "party"}
+                disabled={!form.inn.trim()}
+                onClick={fillFromInn}
+              >
+                Найти
+              </Button>
+            </div>
             <Input
               label="КПП"
               value={form.kpp}
@@ -156,11 +243,26 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
               value={form.bankName}
               onChange={(e) => setForm((f) => ({ ...f, bankName: e.target.value }))}
             />
-            <Input
-              label="БИК"
-              value={form.bankBik}
-              onChange={(e) => setForm((f) => ({ ...f, bankBik: e.target.value }))}
-            />
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Input
+                  label="БИК"
+                  value={form.bankBik}
+                  onChange={(e) => setForm((f) => ({ ...f, bankBik: e.target.value }))}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                title="Заполнить банк по БИК"
+                loading={lookup === "bank"}
+                disabled={!form.bankBik.trim()}
+                onClick={fillFromBik}
+              >
+                Найти
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
