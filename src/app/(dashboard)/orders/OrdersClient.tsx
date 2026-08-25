@@ -644,7 +644,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               <label className="text-sm font-medium text-fg-muted">Позиции</label>
               {itemsTotal > 0 && (
                 <span className="text-sm font-semibold text-violet-700">
-                  Итого: {itemsTotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} сом
+                  Итого: {itemsTotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
                 </span>
               )}
             </div>

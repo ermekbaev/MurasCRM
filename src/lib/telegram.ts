@@ -174,7 +174,7 @@ export async function notifyInvoiceCreated(invoiceId: string): Promise<void> {
   const text =
     `💳 <b>Выставлен счёт ${esc(invoice.number)}</b>\n` +
     `👤 Клиент: ${esc(invoice.client.name)}\n` +
-    `💰 Сумма: ${Number(invoice.total).toLocaleString("ru-RU")} сом\n` +
+    `💰 Сумма: ${Number(invoice.total).toLocaleString("ru-RU")} ₽\n` +
     `🔗 /invoices/${invoice.id}`;
 
   await sendToRole("ACCOUNTANT", text);

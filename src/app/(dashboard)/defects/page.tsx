@@ -53,7 +53,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function formatCurrency(n: number) {
-  return n.toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " сом";
+  return n.toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " ₽";
 }
 
 function formatDate(s: string) {
@@ -331,7 +331,7 @@ export default function DefectsPage() {
               ...equipment.map((eq) => ({
                 value: eq.id,
                 label: eq.costPerLm
-                  ? `${eq.name} (себест. ${eq.costPerLm} сом/${PRICING_UNIT_MEASURE[eq.pricingUnit] || "ед"})`
+                  ? `${eq.name} (себест. ${eq.costPerLm} ₽/${PRICING_UNIT_MEASURE[eq.pricingUnit] || "ед"})`
                   : eq.name,
               })),
             ]}

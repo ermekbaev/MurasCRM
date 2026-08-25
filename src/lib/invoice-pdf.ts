@@ -1,4 +1,4 @@
-// Сумма прописью (сом/тыйын)
+// Сумма прописью (рубли/копейки)
 const ones  = ["","один","два","три","четыре","пять","шесть","семь","восемь","девять","десять","одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
 const onesF = ["","одна","две","три","четыре","пять","шесть","семь","восемь","девять","десять","одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
 const tens = ["","десять","двадцать","тридцать","сорок","пятьдесят","шестьдесят","семьдесят","восемьдесят","девяносто"];
@@ -22,22 +22,22 @@ function numWord(n: number, one: string, two: string, five: string): string {
 }
 
 export function numberToWords(amount: number): string {
-  const soms = Math.floor(amount);
-  const tiyin = Math.round((amount - soms) * 100);
-  const billions = Math.floor(soms / 1_000_000_000);
-  const millions = Math.floor((soms % 1_000_000_000) / 1_000_000);
-  const thousands = Math.floor((soms % 1_000_000) / 1_000);
-  const remainder = soms % 1_000;
+  const rubles = Math.floor(amount);
+  const kopecks = Math.round((amount - rubles) * 100);
+  const billions = Math.floor(rubles / 1_000_000_000);
+  const millions = Math.floor((rubles % 1_000_000_000) / 1_000_000);
+  const thousands = Math.floor((rubles % 1_000_000) / 1_000);
+  const remainder = rubles % 1_000;
   const parts: string[] = [];
   if (billions)  { parts.push(threeDigits(billions));       parts.push(numWord(billions,  "миллиард",  "миллиарда",  "миллиардов")); }
   if (millions)  { parts.push(threeDigits(millions));       parts.push(numWord(millions,  "миллион",   "миллиона",   "миллионов")); }
   if (thousands) { parts.push(threeDigits(thousands, true)); parts.push(numWord(thousands, "тысяча",    "тысячи",     "тысяч")); }
-  if (remainder || soms === 0) parts.push(threeDigits(remainder));
-  const somsStr = parts.filter(Boolean).join(" ") || "ноль";
-  const somsWord = numWord(remainder === 0 ? soms : remainder, "сом", "сома", "сом");
-  const tiyinStr = tiyin.toString().padStart(2, "0");
-  const tiyinWord = numWord(tiyin, "тыйын", "тыйына", "тыйын");
-  return (somsStr.charAt(0).toUpperCase() + somsStr.slice(1)) + ` ${somsWord} ${tiyinStr} ${tiyinWord}`;
+  if (remainder || rubles === 0) parts.push(threeDigits(remainder));
+  const rublesStr = parts.filter(Boolean).join(" ") || "ноль";
+  const rublesWord = numWord(remainder === 0 ? rubles : remainder, "рубль", "рубля", "рублей");
+  const kopecksStr = kopecks.toString().padStart(2, "0");
+  const kopecksWord = numWord(kopecks, "копейка", "копейки", "копеек");
+  return (rublesStr.charAt(0).toUpperCase() + rublesStr.slice(1)) + ` ${rublesWord} ${kopecksStr} ${kopecksWord}`;
 }
 
 function fmt(n: number) {
@@ -215,7 +215,7 @@ export async function generateInvoicePDF(invoice: Invoice, company: Company | nu
       </tbody>
     </table>
 
-    <p style="margin:8px 0 2px 0;font-size:10px;">Всего наименований ${invoice.items.length}, на сумму <strong>${fmt(total)} сом</strong></p>
+    <p style="margin:8px 0 2px 0;font-size:10px;">Всего наименований ${invoice.items.length}, на сумму <strong>${fmt(total)} руб.</strong></p>
     <p style="margin:0 0 ${invoice.dueDate ? "4" : "8"}px 0;font-size:10px;font-weight:700;">${numberToWords(total)}</p>
     ${invoice.dueDate ? `<p style="margin:0 0 8px 0;font-size:10px;">Оплатить не позднее ${fmtDate(invoice.dueDate)}</p>` : ""}
 

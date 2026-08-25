@@ -48,10 +48,10 @@ const PRICING_UNIT_LABELS: Record<string, string> = {
 };
 
 const PRICING_UNIT_SHORT: Record<string, string> = {
-  LM: "сом/пог.м",
-  SQM: "сом/м²",
-  PCS: "сом/шт",
-  CUT: "сом/мм",
+  LM: "₽/пог.м",
+  SQM: "₽/м²",
+  PCS: "₽/шт",
+  CUT: "₽/мм",
 };
 
 const PRICING_UNIT_MEASURE: Record<string, string> = {
@@ -294,13 +294,13 @@ export default function EquipmentSettingsPage() {
                     <p className="text-xs text-fg-muted">Ширина: <span className="font-medium text-fg-muted">{eq.workWidth} м</span></p>
                   )}
                   {eq.pricePerLm && (
-                    <p className="text-xs text-fg-muted">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
+                    <p className="text-xs text-fg-muted">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "₽/ед"}</span></p>
                   )}
                   {eq.costPerLm && (
-                    <p className="text-xs text-fg-muted">Себест.: <span className="font-medium text-amber-600">{eq.costPerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "сом/ед"}</span></p>
+                    <p className="text-xs text-fg-muted">Себест.: <span className="font-medium text-amber-600">{eq.costPerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "₽/ед"}</span></p>
                   )}
                   {eq.operatorRate && (
-                    <p className="text-xs text-fg-muted">Ставка оператора: <span className="font-medium text-emerald-600">{eq.operatorRate} сом/{PRICING_UNIT_MEASURE[eq.pricingUnit] || "ед"}</span></p>
+                    <p className="text-xs text-fg-muted">Ставка оператора: <span className="font-medium text-emerald-600">{eq.operatorRate} ₽/{PRICING_UNIT_MEASURE[eq.pricingUnit] || "ед"}</span></p>
                   )}
                 </div>
               )}
@@ -396,7 +396,7 @@ export default function EquipmentSettingsPage() {
             />
           </div>
           <Input
-            label={`Себестоимость (сом/${PRICING_UNIT_MEASURE[form.pricingUnit] || "ед"}) — необязательно`}
+            label={`Себестоимость (₽/${PRICING_UNIT_MEASURE[form.pricingUnit] || "ед"}) — необязательно`}
             type="number"
             min={0}
             step={0.01}
@@ -405,7 +405,7 @@ export default function EquipmentSettingsPage() {
             placeholder="500"
           />
           <Input
-            label={`Ставка оператора (сом/${PRICING_UNIT_MEASURE[form.pricingUnit] || "ед"}) — необязательно`}
+            label={`Ставка оператора (₽/${PRICING_UNIT_MEASURE[form.pricingUnit] || "ед"}) — необязательно`}
             type="number"
             min={0}
             step={0.01}

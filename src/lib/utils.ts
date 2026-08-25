@@ -6,13 +6,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number | string | null | undefined): string {
-  if (amount === null || amount === undefined) return "0 сом";
+  if (amount === null || amount === undefined) return "0 ₽";
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   return (
     new Intl.NumberFormat("ru-RU", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
-    }).format(num) + " сом"
+    }).format(num) + " ₽"
   );
 }
 

@@ -329,7 +329,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
           {/* Sum in words */}
           <p style={{ margin: "8px 0 2px 0", fontSize: "10px" }}>
             Всего наименований {displayItems.length}, на сумму{" "}
-            <strong>{fmt(displayTotal)} сом</strong>
+            <strong>{fmt(displayTotal)} руб.</strong>
           </p>
           <p style={{ margin: "0 0 14px 0", fontSize: "10px", fontWeight: 700 }}>
             {numberToWords(displayTotal)}

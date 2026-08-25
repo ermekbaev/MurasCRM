@@ -119,7 +119,7 @@ export default function AnalyticsPage() {
     try {
       const { utils, writeFile } = await import("xlsx");
 
-      const MONEY = '#,##0" сом"';
+      const MONEY = '#,##0" ₽"';
       const QTY = "#,##0.00";
       const PCT = '0.0"%"';
 
@@ -284,15 +284,15 @@ export default function AnalyticsPage() {
         startY: 42,
         head: [["Показатель", "Значение"]],
         body: [
-          ["Оборот (выручка)", `${data.summary.revenue.toLocaleString("ru-RU")} сом`],
-          ["Расходы (всего)", `${data.summary.totalExpenses.toLocaleString("ru-RU")} сом`],
-          ["  в т.ч. материалы", `${data.summary.materialCosts.toLocaleString("ru-RU")} сом`],
-          ["  в т.ч. себестоимость", `${data.summary.productionCost.toLocaleString("ru-RU")} сом`],
-          ["  в т.ч. ЗП операторов", `${data.summary.operatorWages.toLocaleString("ru-RU")} сом`],
-          ["Прибыль", `${data.summary.profit.toLocaleString("ru-RU")} сом`],
-          ["Выручка (пред. период)", `${data.summary.prevRevenue.toLocaleString("ru-RU")} сом`],
+          ["Оборот (выручка)", `${data.summary.revenue.toLocaleString("ru-RU")} ₽`],
+          ["Расходы (всего)", `${data.summary.totalExpenses.toLocaleString("ru-RU")} ₽`],
+          ["  в т.ч. материалы", `${data.summary.materialCosts.toLocaleString("ru-RU")} ₽`],
+          ["  в т.ч. себестоимость", `${data.summary.productionCost.toLocaleString("ru-RU")} ₽`],
+          ["  в т.ч. ЗП операторов", `${data.summary.operatorWages.toLocaleString("ru-RU")} ₽`],
+          ["Прибыль", `${data.summary.profit.toLocaleString("ru-RU")} ₽`],
+          ["Выручка (пред. период)", `${data.summary.prevRevenue.toLocaleString("ru-RU")} ₽`],
           ["Заказов", String(data.summary.ordersCount)],
-          ["Средний чек", `${data.summary.avgCheck.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} сом`],
+          ["Средний чек", `${data.summary.avgCheck.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽`],
           ["Рост выручки", data.summary.revGrowth !== null ? `${data.summary.revGrowth.toFixed(1)}%` : "—"],
           ["Рост прибыли", data.summary.profitGrowth !== null ? `${data.summary.profitGrowth.toFixed(1)}%` : "—"],
         ],
