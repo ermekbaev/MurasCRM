@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
+import { deleteObject } from "@/lib/s3";
 import { z } from "zod";
 import { notifyFilePendingApproval } from "@/lib/telegram";
 
@@ -63,5 +64,14 @@ export async function DELETE(
   }
 
   await prisma.file.delete({ where: { id } });
+
+  // Сам объект убираем из хранилища после записи: key уникален, поэтому файл
+  // ни с чем больше не связан. Сбой хранилища не должен ломать удаление.
+  try {
+    await deleteObject(file.key);
+  } catch {
+    // намеренно игнорируем — запись уже удалена
+  }
+
   return NextResponse.json({ ok: true });
 }

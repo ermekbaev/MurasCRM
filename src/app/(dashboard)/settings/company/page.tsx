@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import AdditionalCompanies from "./AdditionalCompanies";
 import PageHeader from "@/components/layout/PageHeader";
-import { Building2, CreditCard, Phone, Check, ImagePlus } from "lucide-react";
+import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2 } from "lucide-react";
 
 interface Settings {
   name: string; inn: string; kpp: string; ogrn: string;
@@ -59,6 +59,7 @@ export default function CompanySettingsPage() {
     logoKey: null, stampKey: null, signatureKey: null,
   });
   const [uploading, setUploading] = useState<BrandingField | null>(null);
+  const [deleting, setDeleting] = useState<BrandingField | null>(null);
   const inputRefs = useRef<Record<BrandingField, HTMLInputElement | null>>({
     logoKey: null, stampKey: null, signatureKey: null,
   });
@@ -91,6 +92,18 @@ export default function CompanySettingsPage() {
       setUploading(null);
       const ref = inputRefs.current[field];
       if (ref) ref.value = "";
+    }
+  }
+
+  async function handleBrandingDelete(field: BrandingField, label: string) {
+    if (!confirm(`Удалить «${label}»?`)) return;
+    setDeleting(field);
+    try {
+      const res = await fetch(`/api/settings/logo?field=${field}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setBrandingUrls((prev) => ({ ...prev, [field]: null }));
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -167,6 +180,7 @@ export default function CompanySettingsPage() {
             {BRANDING.map((item) => {
               const url = brandingUrls[item.field];
               const isUploading = uploading === item.field;
+              const isDeleting = deleting === item.field;
               return (
                 <div key={item.field} className="flex flex-col gap-2 justify-between">
                   <p className="text-sm font-medium text-fg-muted">{item.label}</p>
@@ -185,14 +199,31 @@ export default function CompanySettingsPage() {
                     ref={(el) => { inputRefs.current[item.field] = el; }}
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleBrandingUpload(item.field, f); }}
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    loading={isUploading}
-                    onClick={() => inputRefs.current[item.field]?.click()}
-                  >
-                    {url ? "Заменить" : "Загрузить"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      loading={isUploading}
+                      onClick={() => inputRefs.current[item.field]?.click()}
+                      className="flex-1"
+                    >
+                      {url ? "Заменить" : "Загрузить"}
+                    </Button>
+                    {url && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        title={`Удалить «${item.label}»`}
+                        aria-label={`Удалить «${item.label}»`}
+                        loading={isDeleting}
+                        onClick={() => handleBrandingDelete(item.field, item.label)}
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                      >
+                        {!isDeleting && <Trash2 size={16} />}
+                      </Button>
+                    )}
+                  </div>
                   <p className="text-xs text-fg-subtle">{item.hint}</p>
                 </div>
               );
