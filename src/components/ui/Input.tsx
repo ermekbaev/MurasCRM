@@ -18,9 +18,14 @@ export const fieldClass =
   "disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-fg-subtle";
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, className, id, type, ...props }, ref) => {
+  ({ label, error, hint, className, id, type, onClick, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
     const isPassword = type === "password";
+    // У date/time-полей нативный вызов календаря — крошечная иконка у правого
+    // края, её легко не заметить. Открываем пикер кликом по всему полю.
+    const isDateLike =
+      type === "date" || type === "datetime-local" || type === "time" ||
+      type === "month" || type === "week";
     const [reveal, setReveal] = useState(false);
 
     const inputEl = (
@@ -28,8 +33,20 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         ref={ref}
         id={inputId}
         type={isPassword && reveal ? "text" : type}
+        onClick={(e) => {
+          if (isDateLike) {
+            const el = e.currentTarget as HTMLInputElement & { showPicker?: () => void };
+            try {
+              el.showPicker?.();
+            } catch {
+              // showPicker бросает, если пикер уже открыт или вызов вне жеста — не мешаем вводу
+            }
+          }
+          onClick?.(e);
+        }}
         className={cn(
           fieldClass,
+          isDateLike && "cursor-pointer",
           error && "border-red-400 focus:border-red-500 focus:ring-red-500/20",
           isPassword && "pr-10",
           className

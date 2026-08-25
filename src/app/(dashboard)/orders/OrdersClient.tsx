@@ -106,6 +106,12 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
     deadline: "",
     notes: "",
   });
+  // Быстрое создание клиента прямо в форме заявки: раньше приходилось
+  // уходить в раздел клиентов и возвращаться.
+  const [clientList, setClientList] = useState<Client[]>(clients);
+  const [newClient, setNewClient] = useState<{ name: string; phone: string } | null>(null);
+  const [creatingClient, setCreatingClient] = useState(false);
+  const canCreateClient = ["ADMIN", "MANAGER"].includes(currentRole);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingScreenshots, setPendingScreenshots] = useState<File[]>([]);
@@ -186,6 +192,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   function closeModal() {
     setModalOpen(false);
     setForm({ clientId: "", title: "", type: "DTF", priority: "NORMAL", deadline: "", notes: "" });
+    setNewClient(null);
     setFormItems([emptyItem()]);
     setSelectedAssignees([]);
     setPendingFiles([]);
@@ -294,6 +301,26 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       closeModal();
     }
     setLoading(false);
+  }
+
+  async function handleCreateClient() {
+    const name = newClient?.name.trim();
+    if (!name) return;
+    setCreatingClient(true);
+    try {
+      const res = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone: newClient?.phone.trim() || undefined }),
+      });
+      if (!res.ok) throw new Error("Не удалось создать клиента");
+      const created: Client = await res.json();
+      setClientList((prev) => [...prev, created]);
+      setForm((prev) => ({ ...prev, clientId: created.id }));
+      setNewClient(null);
+    } finally {
+      setCreatingClient(false);
+    }
   }
 
   const isOverdue = (deadline: string | null) => {
@@ -488,13 +515,56 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               options={Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }))}
             />
           </div>
-          <Select
-            label="Клиент *"
-            value={form.clientId}
-            onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-            placeholder="Выберите клиента"
-            options={clients.map((c) => ({ value: c.id, label: c.name }))}
-          />
+          <div className="flex flex-col gap-2">
+            <Select
+              label="Клиент *"
+              value={newClient ? "__new__" : form.clientId}
+              onChange={(e) => {
+                if (e.target.value === "__new__") {
+                  setNewClient({ name: "", phone: "" });
+                  setForm({ ...form, clientId: "" });
+                } else {
+                  setNewClient(null);
+                  setForm({ ...form, clientId: e.target.value });
+                }
+              }}
+              placeholder="Выберите клиента"
+              options={[
+                ...clientList.map((c) => ({ value: c.id, label: c.name })),
+                ...(canCreateClient ? [{ value: "__new__", label: "+ Новый клиент" }] : []),
+              ]}
+            />
+            {newClient && (
+              <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface-sunken p-3">
+                <Input
+                  label="Название или ФИО *"
+                  value={newClient.name}
+                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                  placeholder="ООО «Ромашка» или Иванов Иван"
+                />
+                <Input
+                  label="Телефон"
+                  value={newClient.phone}
+                  onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                  placeholder="+996 555 12-34-56"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    loading={creatingClient}
+                    disabled={!newClient.name.trim()}
+                    onClick={handleCreateClient}
+                  >
+                    Создать и выбрать
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setNewClient(null)}>
+                    Отмена
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
           <Input
             label="Срок сдачи"
             type="datetime-local"
