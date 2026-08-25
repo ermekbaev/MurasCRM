@@ -6,6 +6,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
+  /** Небольшое действие внутри поля справа — как кнопка показа пароля. */
+  trailing?: React.ReactNode;
 }
 
 /** Общие классы поля ввода — переиспользуются в Select и в инлайновых полях страниц. */
@@ -18,7 +20,7 @@ export const fieldClass =
   "disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-fg-subtle";
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, className, id, type, onClick, ...props }, ref) => {
+  ({ label, error, hint, trailing, className, id, type, onClick, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
     const isPassword = type === "password";
     // У date/time-полей нативный вызов календаря — крошечная иконка у правого
@@ -48,7 +50,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           fieldClass,
           isDateLike && "cursor-pointer",
           error && "border-red-400 focus:border-red-500 focus:ring-red-500/20",
-          isPassword && "pr-10",
+          (isPassword || trailing) && "pr-10",
           className
         )}
         {...props}
@@ -65,9 +67,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        {isPassword ? (
+        {isPassword || trailing ? (
           <div className="relative flex">
             {inputEl}
+            {trailing && !isPassword && (
+              <span className="absolute right-2 top-1/2 -translate-y-1/2">{trailing}</span>
+            )}
+            {isPassword && (
             <button
               type="button"
               tabIndex={-1}
@@ -77,6 +83,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             >
               {reveal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
+            )}
           </div>
         ) : (
           inputEl
