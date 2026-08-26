@@ -1,3 +1,5 @@
+import { legalName } from "@/lib/utils";
+
 function fmt(n: number) {
   return n.toLocaleString("ru", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -27,7 +29,7 @@ interface Act {
   date: string;
   total: number;
   items: ActItem[];
-  invoice?: { number: string; client: { name: string; inn?: string | null; kpp?: string | null; legalAddress?: string | null; }; } | null;
+  invoice?: { number: string; client: { name: string; fullName?: string | null; inn?: string | null; kpp?: string | null; legalAddress?: string | null; }; } | null;
 }
 
 interface Company {
@@ -45,7 +47,7 @@ export async function generateActPDF(act: Act, company: Company | null) {
 
   const client = act.invoice?.client;
   const supplierLine = [company?.name, company?.inn ? `ИНН ${company.inn}` : "", company?.kpp ? `КПП ${company.kpp}` : "", company?.legalAddress].filter(Boolean).join(", ");
-  const clientLine = [client?.name, client?.inn ? `ИНН ${client.inn}` : "", client?.kpp ? `КПП ${client.kpp}` : "", client?.legalAddress].filter(Boolean).join(", ");
+  const clientLine = [legalName(client), client?.inn ? `ИНН ${client.inn}` : "", client?.kpp ? `КПП ${client.kpp}` : "", client?.legalAddress].filter(Boolean).join(", ");
 
   const container = document.createElement("div");
   container.style.cssText = ["position:fixed","top:-9999px","left:-9999px","width:794px","background:white","font-family:Arial,Helvetica,sans-serif","color:#000","font-size:11px","line-height:1.4"].join(";");
@@ -122,7 +124,7 @@ export async function generateActPDF(act: Act, company: Company | null) {
       </div>
       <div style="flex:1;">
         <p style="font-size:10px;color:#555;margin:0 0 2px 0;font-weight:600;">ЗАКАЗЧИК</p>
-        <p style="font-size:10px;margin:0 0 8px 0;">${client?.name ?? ""}</p>
+        <p style="font-size:10px;margin:0 0 8px 0;">${legalName(client)}</p>
         <div style="display:flex;align-items:flex-end;gap:10px;">
           <span style="font-size:11px;font-weight:600;white-space:nowrap;">Руководитель</span>
           <div style="flex:1;">

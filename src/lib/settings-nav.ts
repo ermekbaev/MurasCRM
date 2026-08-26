@@ -6,6 +6,7 @@ import {
   Truck,
   Tag,
   Layers,
+  Megaphone,
   FileCode,
 } from "lucide-react";
 
@@ -57,6 +58,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     description: "Справочник видов работ для заявок",
     href: "/settings/order-types",
     icon: Layers,
+    roles: ["ADMIN", "MANAGER"],
+    group: "Справочники",
+  },
+  {
+    label: "Источники клиентов",
+    description: "Откуда приходят клиенты — список для карточки",
+    href: "/settings/client-sources",
+    icon: Megaphone,
     roles: ["ADMIN", "MANAGER"],
     group: "Справочники",
   },

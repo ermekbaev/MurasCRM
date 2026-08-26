@@ -9,6 +9,7 @@ const CLIENT_WRITE_ROLES = ["ADMIN", "MANAGER"];
 const updateSchema = z.object({
   type: z.enum(["INDIVIDUAL", "LEGAL", "IP"]).optional(),
   name: z.string().min(1).optional(),
+  fullName: z.string().optional(),
   inn: z.string().optional(),
   kpp: z.string().optional(),
   ogrn: z.string().optional(),
@@ -22,7 +23,7 @@ const updateSchema = z.object({
   bankAccount: z.string().optional(),
   bankBik: z.string().optional(),
   corrAccount: z.string().optional(),
-  source: z.enum(["REFERRAL", "ADVERTISING", "COLD_CALL", "SOCIAL_MEDIA", "OTHER"]).optional(),
+  source: z.string().optional(),
   notes: z.string().optional(),
 });
 

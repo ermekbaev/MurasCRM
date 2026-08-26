@@ -28,6 +28,7 @@ const TEMPLATE_TYPE_LABELS: Record<string, string> = {
 
 const TEMPLATE_VARS = [
   "{{client_name}}",
+  "{{client_full_name}}",
   "{{order_number}}",
   "{{total}}",
   "{{date}}",

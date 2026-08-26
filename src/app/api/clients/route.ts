@@ -6,6 +6,7 @@ import { z } from "zod";
 const clientSchema = z.object({
   type: z.enum(["INDIVIDUAL", "LEGAL", "IP"]).default("INDIVIDUAL"),
   name: z.string().min(1),
+  fullName: z.string().optional(),
   inn: z.string().optional(),
   kpp: z.string().optional(),
   ogrn: z.string().optional(),
@@ -19,7 +20,7 @@ const clientSchema = z.object({
   bankAccount: z.string().optional(),
   bankBik: z.string().optional(),
   corrAccount: z.string().optional(),
-  source: z.enum(["REFERRAL", "ADVERTISING", "COLD_CALL", "SOCIAL_MEDIA", "OTHER"]).default("OTHER"),
+  source: z.string().default("OTHER"),
   notes: z.string().optional(),
 });
 

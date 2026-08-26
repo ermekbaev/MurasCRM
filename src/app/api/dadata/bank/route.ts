@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       Accept: "application/json",
       Authorization: `Token ${apiKey}`,
     },
-    body: JSON.stringify({ query: parsed.data.query }),
+    body: JSON.stringify({ query: parsed.data.query, count: 20 }),
   });
 
   if (!res.ok) {

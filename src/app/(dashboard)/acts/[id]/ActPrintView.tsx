@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, legalName } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
 import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X } from "lucide-react";
@@ -28,6 +28,7 @@ interface Props {
     invoice: {
       number: string;
       client: {
+        fullName: string | null;
         name: string;
         inn: string | null;
         kpp: string | null;
@@ -130,7 +131,7 @@ className="bg-white max-w-3xl mx-auto p-10 border border-gray-200 rounded-xl pri
             <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Заказчик</p>
             {client ? (
               <>
-                <p className="font-semibold text-gray-900">{client.name}</p>
+                <p className="font-semibold text-gray-900">{legalName(client)}</p>
                 {client.inn && (
                   <p className="text-sm text-gray-600 mt-1">
                     ИНН: {client.inn}{client.kpp ? ` / КПП: ${client.kpp}` : ""}

@@ -1,9 +1,10 @@
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getClientSourceLabels } from "@/lib/clientSources";
 import { notFound } from "next/navigation";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import {
   CLIENT_TYPE_LABELS,
-  CLIENT_SOURCE_LABELS,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
   PAYMENT_STATUS_LABELS,
@@ -23,6 +24,7 @@ import {
   FileText,
   Wallet,
 } from "lucide-react";
+import ClientContacts from "./ClientContacts";
 import ClientEditButton from "./ClientEditButton";
 import ClientPaymentButton from "./ClientPaymentButton";
 
@@ -32,6 +34,9 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
+  const canEditContacts = ["ADMIN", "MANAGER"].includes(session?.user.role ?? "");
+  const sourceLabels = await getClientSourceLabels();
 
   const client = await prisma.client.findUnique({
     where: { id },
@@ -41,6 +46,7 @@ export default async function ClientDetailPage({
         include: { _count: { select: { items: true } } },
       },
       invoices: { orderBy: { date: "desc" }, take: 10 },
+      contacts: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
       payments: {
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -79,6 +85,9 @@ export default async function ClientDetailPage({
             </div>
             <div>
               <h1 className="text-xl font-semibold tracking-tight text-fg sm:text-[22px]">{client.name}</h1>
+              {client.fullName && client.fullName !== client.name && (
+                <p className="mt-0.5 text-xs text-fg-subtle">{client.fullName}</p>
+              )}
               <div className="flex items-center gap-2 mt-1">
                 <span className="rounded-md bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-fg-muted ring-1 ring-inset ring-line">
                   {CLIENT_TYPE_LABELS[client.type]}
@@ -121,7 +130,7 @@ export default async function ClientDetailPage({
         <Card padding="md">
           <p className="text-xs text-fg-muted">Источник</p>
           <p className="text-lg font-semibold text-fg mt-1">
-            {CLIENT_SOURCE_LABELS[client.source]}
+            {sourceLabels[client.source] ?? client.source}
           </p>
         </Card>
       </div>
@@ -173,6 +182,12 @@ export default async function ClientDetailPage({
               )}
             </div>
           </Card>
+
+          <ClientContacts
+            clientId={client.id}
+            initial={client.contacts}
+            canEdit={canEditContacts}
+          />
 
           {(client.inn || client.kpp || client.ogrn) && (
             <Card padding="md">

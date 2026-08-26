@@ -17,6 +17,8 @@ import {
   BarChart3,
   History,
   Settings,
+  Cpu,
+  Truck,
   LogOut,
   Sun,
   Moon,
@@ -64,7 +66,9 @@ const navGroups: NavGroup[] = [
   {
     label: "Производство",
     items: [
+      { label: "Оборудование", href: "/settings/equipment", icon: Cpu, roles: ["ADMIN"] },
       { label: "Расходники", href: "/consumables", icon: Package, roles: ["ADMIN", "MANAGER"] },
+      { label: "Поставщики", href: "/settings/suppliers", icon: Truck, roles: ["ADMIN", "MANAGER"] },
       { label: "Журнал брака", href: "/defects", icon: AlertTriangle, roles: ["ADMIN", "MANAGER", "OPERATOR"] },
       { label: "Журнал изменений", href: "/changelog", icon: History, roles: ["ADMIN"] },
     ],
@@ -88,7 +92,11 @@ export default function Sidebar({ role, userName, userEmail, onClose }: SidebarP
 
   // Настройки — один пункт меню; внутренние разделы живут в собственной навигации.
   const showSettings = settingsSectionsFor(role).length > 0;
-  const settingsActive = pathname === "/settings" || pathname.startsWith("/settings/");
+  // Оборудование и Поставщики живут под /settings/*, но продублированы в основном
+  // меню — на них подсвечивается свой пункт, а не «Настройки».
+  const promoted = navGroups.some((g) => g.items.some((i) => i.href === pathname));
+  const settingsActive =
+    !promoted && (pathname === "/settings" || pathname.startsWith("/settings/"));
 
   const itemClass = (active: boolean) =>
     cn(

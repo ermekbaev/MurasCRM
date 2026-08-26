@@ -23,6 +23,7 @@ export default async function ClientsPage() {
     id: c.id,
     type: c.type,
     name: c.name,
+    fullName: c.fullName,
     inn: c.inn,
     kpp: c.kpp,
     ogrn: c.ogrn,

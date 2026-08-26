@@ -21,7 +21,6 @@ import {
   PrismaClient,
   Role,
   ClientType,
-  ClientSource,
   OrderStatus,
   Priority,
   PaymentStatus,
@@ -417,7 +416,7 @@ async function main() {
       phone: "+7 (495) 500-11-22",
       email: "zakaz@teplyden.ru",
       legalAddress: "г. Москва, ул. Кофейная, д. 5",
-      source: ClientSource.ADVERTISING,
+      source: "ADVERTISING",
       notes: "Постоянный клиент, заказывает меню-борды и упаковку.",
     },
   });
@@ -430,7 +429,7 @@ async function main() {
       kpp: "770601001",
       phone: "+7 (495) 600-22-33",
       email: "marketing@fitnessmax.ru",
-      source: ClientSource.SOCIAL_MEDIA,
+      source: "SOCIAL_MEDIA",
     },
   });
   const clAuto = await prisma.client.create({
@@ -442,7 +441,7 @@ async function main() {
       kpp: "770701001",
       phone: "+7 (495) 700-33-44",
       email: "info@drive-service.ru",
-      source: ClientSource.COLD_CALL,
+      source: "COLD_CALL",
     },
   });
   const clEvent = await prisma.client.create({
@@ -453,7 +452,7 @@ async function main() {
       inn: "770801122334",
       phone: "+7 (916) 800-44-55",
       email: "korol@prazdnik-plus.ru",
-      source: ClientSource.REFERRAL,
+      source: "REFERRAL",
     },
   });
   const clInd = await prisma.client.create({
@@ -463,7 +462,7 @@ async function main() {
       name: "Смирнов Алексей Петрович",
       phone: "+7 (916) 900-55-66",
       email: "smirnov.a@mail.ru",
-      source: ClientSource.SOCIAL_MEDIA,
+      source: "SOCIAL_MEDIA",
     },
   });
   const clShop = await prisma.client.create({
@@ -475,7 +474,7 @@ async function main() {
       kpp: "770901001",
       phone: "+7 (495) 900-66-77",
       email: "shop@uyut-store.ru",
-      source: ClientSource.OTHER,
+      source: "OTHER",
     },
   });
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatDate } from "@/lib/utils";
+import { legalName } from "@/lib/utils";
 import { numberToWords } from "@/lib/invoice-pdf";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
@@ -33,6 +34,7 @@ interface Props {
     isPaid: boolean;
     client: {
       name: string;
+      fullName: string | null;
       inn: string | null;
       kpp: string | null;
       legalAddress: string | null;
@@ -111,7 +113,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
   ].filter(Boolean).join(", ");
 
   const clientLine = [
-    invoice.client.name,
+    legalName(invoice.client),
     invoice.client.inn ? `ИНН ${invoice.client.inn}` : "",
     invoice.client.legalAddress,
   ].filter(Boolean).join(", ");

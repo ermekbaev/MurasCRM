@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
-import { CLIENT_TYPE_LABELS, CLIENT_SOURCE_LABELS } from "@/lib/constants";
+import { CLIENT_TYPE_LABELS } from "@/lib/constants";
+import { useClientSources } from "@/hooks/useClientSources";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
@@ -17,6 +18,7 @@ interface ClientRow {
   type: string;
   name: string;
   inn: string | null;
+  fullName: string | null;
   kpp: string | null;
   ogrn: string | null;
   phone: string | null;
@@ -38,6 +40,7 @@ interface ClientRow {
 const EMPTY_FORM = {
   type: "INDIVIDUAL",
   name: "",
+  fullName: "",
   phone: "",
   email: "",
   inn: "",
@@ -84,6 +87,7 @@ interface ClientFormProps {
 function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }: ClientFormProps) {
   // Автозаполнение реквизитов через DaData: по ИНН — карточка организации,
   // по БИК — банк. Ошибки показываем текстом рядом с полем, форму не блокируем.
+  const { options: sourceOptions } = useClientSources();
   const [lookup, setLookup] = useState<"party" | "bank" | null>(null);
   const [partyError, setPartyError] = useState<string | null>(null);
   const [bankError, setBankError] = useState<string | null>(null);
@@ -109,6 +113,7 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
       setForm((f) => ({
         ...f,
         name: d.name?.short_with_opf || d.name?.full_with_opf || f.name,
+        fullName: d.name?.full_with_opf || d.name?.short_with_opf || f.fullName,
         inn: d.inn || f.inn,
         kpp: d.kpp || f.kpp,
         ogrn: d.ogrn || f.ogrn,
@@ -122,8 +127,12 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
   }
 
   async function fillFromBik() {
-    const query = form.bankBik.trim();
+    const query = form.bankBik.replace(/\D/g, "");
     if (!query) return;
+    if (query.length !== 9) {
+      setBankError("БИК состоит из 9 цифр");
+      return;
+    }
     setLookup("bank");
     setBankError(null);
     try {
@@ -134,11 +143,34 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Не удалось получить данные");
-      const d = json?.suggestions?.[0]?.data;
+
+      // На один БИК DaData может отдать несколько записей — головной банк и
+      // ликвидированные филиалы. Берём только точное совпадение и действующий банк,
+      // иначе подставится чужое название и устаревший корсчёт.
+      type BankSuggestion = {
+        data?: {
+          bic?: string;
+          correspondent_account?: string | null;
+          name?: { payment?: string; short?: string };
+          state?: { status?: string };
+        };
+      };
+      const all: BankSuggestion[] = Array.isArray(json?.suggestions) ? json.suggestions : [];
+      const exact = all.filter((s) => s.data?.bic === query);
+      const d = (exact.find((s) => s.data?.state?.status === "ACTIVE") ?? exact[0])?.data;
+
       if (!d) {
-        setBankError("Банк с таким БИК не найден");
+        setBankError(
+          all.length > 0
+            ? "Точного совпадения по БИК нет — проверьте номер"
+            : "Банк с таким БИК не найден",
+        );
         return;
       }
+      if (d.state?.status && d.state.status !== "ACTIVE") {
+        setBankError("Внимание: по этому БИК банк не действующий");
+      }
+
       setForm((f) => ({
         ...f,
         bankName: d.name?.payment || d.name?.short || f.bankName,
@@ -169,13 +201,7 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
           label="Источник"
           value={form.source}
           onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
-          options={[
-            { value: "REFERRAL", label: "Рекомендация" },
-            { value: "ADVERTISING", label: "Реклама" },
-            { value: "COLD_CALL", label: "Звонок" },
-            { value: "SOCIAL_MEDIA", label: "Соцсети" },
-            { value: "OTHER", label: "Другое" },
-          ]}
+          options={sourceOptions}
         />
       </div>
       <Input
@@ -216,6 +242,13 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
       </div>
       {form.type !== "INDIVIDUAL" && (
         <>
+          <Input
+            label="Полное наименование"
+            value={form.fullName}
+            onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+            placeholder="Общество с ограниченной ответственностью «Пример»"
+            hint="Подставляется в счета и акты. Короткое имя выше используется в списках."
+          />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input
               label="ИНН"
@@ -296,6 +329,7 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
 }
 
 export default function ClientsClient({ initialData }: { initialData: ClientRow[] }) {
+  const { labels: sourceLabels } = useClientSources();
   const [clients, setClients] = useState(initialData);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -332,6 +366,7 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
       telegram: client.telegram || "",
       whatsapp: client.whatsapp || "",
       legalAddress: client.legalAddress || "",
+      fullName: client.fullName || "",
       bankName: client.bankName || "",
       bankAccount: client.bankAccount || "",
       bankBik: client.bankBik || "",
@@ -494,7 +529,7 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-xs text-fg-muted">
-                        {CLIENT_SOURCE_LABELS[client.source as keyof typeof CLIENT_SOURCE_LABELS]}
+                        {sourceLabels[client.source] ?? client.source}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">

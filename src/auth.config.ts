@@ -16,6 +16,8 @@ const ROLE_ROUTES: Record<Role, string[]> = {
     "/defects",
     "/settings/suppliers",
     "/settings/tags",
+    "/settings/client-sources",
+    "/settings/order-types",
   ],
   DESIGNER: ["/dashboard", "/tasks", "/files"],
   OPERATOR: ["/dashboard", "/tasks", "/defects"],

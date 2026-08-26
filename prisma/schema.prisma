@@ -22,14 +22,6 @@ enum ClientType {
   IP
 }
 
-enum ClientSource {
-  REFERRAL
-  ADVERTISING
-  COLD_CALL
-  SOCIAL_MEDIA
-  OTHER
-}
-
 enum OrderStatus {
   NEW
   IN_PROGRESS
@@ -155,7 +147,10 @@ model User {
 model Client {
   id            String       @id @default(cuid())
   type          ClientType   @default(INDIVIDUAL)
+  /// Короткое/отображаемое имя: списки, интерфейс.
   name          String
+  /// Полное наименование с ОПФ — для печатных форм. Пусто у физлиц.
+  fullName      String?
   inn           String?
   kpp           String?
   ogrn          String?
@@ -169,7 +164,8 @@ model Client {
   bankAccount   String?
   bankBik       String?
   corrAccount   String?
-  source        ClientSource @default(OTHER)
+  /// Код из справочника ClientSourceOption.
+  source        String       @default("OTHER")
   notes         String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -177,6 +173,28 @@ model Client {
   orders   Order[]
   invoices Invoice[]
   payments Payment[]
+  contacts ClientContact[]
+}
+
+// ─── ClientContact (сотрудники клиента, с кем ведутся дела) ───────────────────
+
+model ClientContact {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  position  String?
+  phone     String?
+  email     String?
+  telegram  String?
+  whatsapp  String?
+  note      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
 }
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
@@ -605,6 +623,16 @@ model Tag {
 
 // Справочник типов заявок (редактируется вручную в настройках)
 model OrderTypeOption {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  label     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClientSourceOption {
   id        String   @id @default(cuid())
   code      String   @unique
   label     String

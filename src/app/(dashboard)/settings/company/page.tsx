@@ -35,6 +35,14 @@ const BRANDING: BrandingItem[] = [
   { field: "signatureKey", label: "Подпись",  hint: "PNG с прозрачным фоном. 400×150px.",   urlKey: "signatureUrl", size: "w-full h-24", accept: "image/png,image/jpeg,image/webp" },
 ];
 
+const FIELD_LABELS: Record<string, string> = {
+  name: "Название организации", inn: "ИНН", kpp: "КПП", ogrn: "ОГРН",
+  legalAddress: "Юридический адрес", phone: "Телефон", email: "Email",
+  website: "Сайт", bankName: "Банк", bankAccount: "Расчётный счёт",
+  bankBik: "БИК", corrAccount: "Корр. счёт",
+  director: "Директор", accountant: "Бухгалтер",
+};
+
 // Defined at module scope — if declared inside the page component it would be a new
 // function identity on every render, remounting its inputs and losing focus after one keystroke.
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
@@ -54,6 +62,7 @@ export default function CompanySettingsPage() {
   });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [fetching, setFetching] = useState(true);
   const [brandingUrls, setBrandingUrls] = useState<Record<BrandingField, string | null>>({
     logoKey: null, stampKey: null, signatureKey: null,
@@ -115,13 +124,35 @@ export default function CompanySettingsPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch("/api/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+        return;
+      }
+      // Раньше провал сохранения проходил молча: кнопка гасла, реквизиты
+      // оставались незаписанными, а в счёте оказывались пустые поля.
+      const body = await res.json().catch(() => null);
+      const fieldErrors = body?.error?.fieldErrors as Record<string, string[]> | undefined;
+      const firstField = fieldErrors && Object.keys(fieldErrors)[0];
+      setError(
+        firstField
+          ? `Не сохранено: поле «${FIELD_LABELS[firstField] ?? firstField}» заполнено неверно`
+          : res.status === 403
+            ? "Недостаточно прав: реквизиты меняет администратор"
+            : "Не удалось сохранить реквизиты",
+      );
+    } catch {
+      setError("Нет связи с сервером — реквизиты не сохранены");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (fetching) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
@@ -138,6 +169,12 @@ export default function CompanySettingsPage() {
           </Button>
         }
       />
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-5">
         <Section title="Основная информация" icon={<Building2 size={16} />}>

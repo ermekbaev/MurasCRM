@@ -53,3 +53,16 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} КБ`;
   return `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
 }
+
+/**
+ * Наименование контрагента для печатных форм.
+ * В документах юрлицо указывается целиком, поэтому берём полное наименование,
+ * а короткое (`name`) остаётся для списков и интерфейса.
+ */
+export function legalName(
+  entity: { name?: string | null; fullName?: string | null } | null | undefined,
+): string {
+  if (!entity) return "";
+  const full = entity.fullName?.trim();
+  return full || entity.name?.trim() || "";
+}

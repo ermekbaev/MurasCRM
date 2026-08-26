@@ -77,7 +77,8 @@ export async function POST(
       vars.total          = fmt(Number(order.amount));
       // Client from order
       if (order.client) {
-        vars.client_name    = order.client.name;
+        vars.client_name      = order.client.name;
+        vars.client_full_name = order.client.fullName || order.client.name;
         vars.client_inn     = order.client.inn ?? "";
         vars.client_kpp     = order.client.kpp ?? "";
         vars.client_ogrn    = order.client.ogrn ?? "";
@@ -110,7 +111,8 @@ export async function POST(
       vars.vat_rate        = String(Number(invoice.vatRate));
       vars.total           = fmt(Number(invoice.total));
       if (invoice.client) {
-        vars.client_name    = vars.client_name || invoice.client.name;
+        vars.client_name      = vars.client_name || invoice.client.name;
+        vars.client_full_name = vars.client_full_name || invoice.client.fullName || invoice.client.name;
         vars.client_inn     = vars.client_inn || (invoice.client.inn ?? "");
         vars.client_kpp     = vars.client_kpp || (invoice.client.kpp ?? "");
         vars.client_address = vars.client_address || (invoice.client.legalAddress ?? "");
@@ -122,7 +124,8 @@ export async function POST(
   if (clientId && !vars.client_name) {
     const client = await prisma.client.findUnique({ where: { id: clientId } });
     if (client) {
-      vars.client_name    = client.name;
+      vars.client_name      = client.name;
+      vars.client_full_name = client.fullName || client.name;
       vars.client_inn     = client.inn ?? "";
       vars.client_kpp     = client.kpp ?? "";
       vars.client_ogrn    = client.ogrn ?? "";

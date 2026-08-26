@@ -1,3 +1,5 @@
+import { legalName } from "@/lib/utils";
+
 // Сумма прописью (рубли/копейки)
 const ones  = ["","один","два","три","четыре","пять","шесть","семь","восемь","девять","десять","одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
 const onesF = ["","одна","две","три","четыре","пять","шесть","семь","восемь","девять","десять","одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
@@ -75,7 +77,7 @@ interface Invoice {
   vatAmount: number;
   total: number;
   items: InvoiceItem[];
-  client: { name: string; inn?: string | null; kpp?: string | null; legalAddress?: string | null; bankName?: string | null; bankAccount?: string | null; bankBik?: string | null; };
+  client: { name: string; fullName?: string | null; inn?: string | null; kpp?: string | null; legalAddress?: string | null; bankName?: string | null; bankAccount?: string | null; bankBik?: string | null; };
 }
 
 interface Company {
@@ -107,7 +109,7 @@ export async function generateInvoicePDF(invoice: Invoice, company: Company | nu
   ].filter(Boolean).join(", ");
 
   const clientFullLine = [
-    invoice.client?.name,
+    legalName(invoice.client),
     invoice.client?.inn ? `ИНН ${invoice.client.inn}` : "",
     invoice.client?.legalAddress,
   ].filter(Boolean).join(", ");

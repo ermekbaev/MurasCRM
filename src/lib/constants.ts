@@ -6,7 +6,6 @@ import {
   TaskType,
   Role,
   ClientType,
-  ClientSource,
   FileCategory,
   FileStatus,
   ConsumableType,
@@ -108,7 +107,8 @@ export const CLIENT_TYPE_LABELS: Record<ClientType, string> = {
   IP: "ИП",
 };
 
-export const CLIENT_SOURCE_LABELS: Record<ClientSource, string> = {
+/** Запасные подписи. Актуальный список — справочник (/api/settings/client-sources). */
+export const CLIENT_SOURCE_LABELS: Record<string, string> = {
   REFERRAL: "Рекомендация",
   ADVERTISING: "Реклама",
   COLD_CALL: "Звонок",
