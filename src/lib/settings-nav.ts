@@ -7,6 +7,7 @@ import {
   Tag,
   Layers,
   Megaphone,
+  Columns3,
   FileCode,
 } from "lucide-react";
 
@@ -66,6 +67,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     description: "Откуда приходят клиенты — список для карточки",
     href: "/settings/client-sources",
     icon: Megaphone,
+    roles: ["ADMIN", "MANAGER"],
+    group: "Справочники",
+  },
+  {
+    label: "Этапы задач",
+    description: "Колонки канбан-доски: названия, порядок, цвета",
+    href: "/settings/task-columns",
+    icon: Columns3,
     roles: ["ADMIN", "MANAGER"],
     group: "Справочники",
   },

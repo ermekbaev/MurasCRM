@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getTaskColumns } from "@/lib/taskColumns.server";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
@@ -29,6 +30,12 @@ import { Cpu } from "lucide-react";
 async function getDashboardData() {
   const now = new Date();
   const startMonth = startOfMonth(now);
+
+  // Этапы задач настраиваются клиентом, поэтому «в работе» — это всё, что не
+  // на завершающем этапе, а не жёсткий список кодов.
+  const finishedCodes = (await getTaskColumns())
+    .filter((c) => c.isFinal)
+    .map((c) => c.code);
 
   const [
     totalOrders,
@@ -71,7 +78,7 @@ async function getDashboardData() {
     >`SELECT id, name, CAST(stock AS TEXT), CAST("minStock" AS TEXT), unit FROM "Consumable" WHERE stock < "minStock" LIMIT 5`,
     prisma.task.groupBy({
       by: ["assigneeId"],
-      where: { status: { in: ["TODO", "IN_PROGRESS"] }, assigneeId: { not: null } },
+      where: { status: { notIn: finishedCodes }, assigneeId: { not: null } },
       _count: { id: true },
     }),
     prisma.orderItem.findMany({

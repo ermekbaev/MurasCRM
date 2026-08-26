@@ -5,12 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import {
-  TASK_STATUS_LABELS,
-  TASK_STATUS_COLORS,
   TASK_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
 } from "@/lib/constants";
+import { useTaskColumns } from "@/hooks/useTaskColumns";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
@@ -56,6 +55,7 @@ function formatFileSize(bytes: number) {
 export default function TaskDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { visible: boardColumns, labels: statusLabels, colors: statusColors } = useTaskColumns();
   const [task, setTask] = useState<Task | null>(null);
   const [taskFiles, setTaskFiles] = useState<TaskFile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,8 +182,12 @@ export default function TaskDetailPage() {
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-fg sm:text-[22px]">{task.title}</h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${TASK_STATUS_COLORS[task.status as keyof typeof TASK_STATUS_COLORS]}`}>
-                {TASK_STATUS_LABELS[task.status as keyof typeof TASK_STATUS_LABELS]}
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-fg-muted ring-1 ring-inset ring-line">
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: statusColors[task.status] ?? "#64748b" }}
+                />
+                {statusLabels[task.status] ?? task.status}
               </span>
               <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS]}`}>
                 {PRIORITY_LABELS[task.priority as keyof typeof PRIORITY_LABELS]}
@@ -199,7 +203,7 @@ export default function TaskDetailPage() {
           <Select
             value={task.status}
             onChange={(e) => updateTask({ status: e.target.value })}
-            options={Object.entries(TASK_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+            options={boardColumns.map((c) => ({ value: c.code, label: c.name }))}
           />
         </div>
       </div>

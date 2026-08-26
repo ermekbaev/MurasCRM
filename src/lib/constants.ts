@@ -2,7 +2,6 @@ import {
   OrderStatus,
   Priority,
   PaymentStatus,
-  TaskStatus,
   TaskType,
   Role,
   ClientType,
@@ -69,14 +68,15 @@ export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   PAID: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25",
 };
 
-export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+/** Запасные подписи. Актуальные этапы — справочник (/api/settings/task-columns). */
+export const TASK_STATUS_LABELS: Record<string, string> = {
   TODO: "К выполнению",
   IN_PROGRESS: "В работе",
   REVIEW: "На проверке",
   DONE: "Готово",
 };
 
-export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
+export const TASK_STATUS_COLORS: Record<string, string> = {
   TODO: "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
   IN_PROGRESS: "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/25",
   REVIEW: "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/25",

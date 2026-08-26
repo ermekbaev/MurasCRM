@@ -18,6 +18,7 @@ const ROLE_ROUTES: Record<Role, string[]> = {
     "/settings/tags",
     "/settings/client-sources",
     "/settings/order-types",
+    "/settings/task-columns",
   ],
   DESIGNER: ["/dashboard", "/tasks", "/files"],
   OPERATOR: ["/dashboard", "/tasks", "/defects"],

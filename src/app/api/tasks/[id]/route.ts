@@ -3,11 +3,12 @@ import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notifyTaskAssigned } from "@/lib/telegram";
+import { getTaskColumns } from "@/lib/taskColumns.server";
 
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  status: z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE"]).optional(),
+  status: z.string().optional(),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).optional(),
   assigneeId: z.string().nullable().optional(),
   dueDate: z.string().nullable().optional(),
@@ -72,14 +73,20 @@ export async function PATCH(
     }
   }
 
-  // Auto-set startedAt при переходе в IN_PROGRESS; finishedAt — только при входе/выходе из DONE
+  // Этапы настраиваются клиентом, поэтому «начало работы» и «завершение»
+  // определяются флагами этапа (isStart/isFinal), а не жёсткими кодами.
   const extraData: Record<string, unknown> = {};
-  if (rest.status === "IN_PROGRESS" && !existing.startedAt) {
-    extraData.startedAt = new Date();
-  }
-  if (rest.status !== undefined && rest.status !== existing.status) {
-    if (rest.status === "DONE") extraData.finishedAt = new Date();
-    else if (existing.status === "DONE") extraData.finishedAt = null;
+  if (rest.status !== undefined) {
+    const columns = await getTaskColumns();
+    const next = columns.find((c) => c.code === rest.status);
+    const prev = columns.find((c) => c.code === existing.status);
+
+    if (next?.isStart && !existing.startedAt) extraData.startedAt = new Date();
+
+    if (rest.status !== existing.status) {
+      if (next?.isFinal) extraData.finishedAt = new Date();
+      else if (prev?.isFinal) extraData.finishedAt = null;
+    }
   }
 
   const task = await prisma.task.update({

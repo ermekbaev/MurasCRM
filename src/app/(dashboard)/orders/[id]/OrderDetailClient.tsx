@@ -10,10 +10,9 @@ import {
   PRIORITY_COLORS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_COLORS,
-  TASK_STATUS_LABELS,
-  TASK_STATUS_COLORS,
   TASK_TYPE_LABELS,
 } from "@/lib/constants";
+import { useTaskColumns } from "@/hooks/useTaskColumns";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -119,6 +118,7 @@ export default function OrderDetailClient({
   currentUserId,
   currentRole,
 }: OrderDetailClientProps) {
+  const { labels: taskStatusLabels, colors: taskStatusColors } = useTaskColumns();
   const [order, setOrder] = useState(initialOrder);
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
@@ -894,8 +894,12 @@ export default function OrderDetailClient({
                             )}
                           </div>
                         </div>
-                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${TASK_STATUS_COLORS[task.status as keyof typeof TASK_STATUS_COLORS]}`}>
-                          {TASK_STATUS_LABELS[task.status as keyof typeof TASK_STATUS_LABELS]}
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-fg-muted ring-1 ring-inset ring-line">
+                          <span
+                            className="h-1.5 w-1.5 shrink-0 rounded-full"
+                            style={{ background: taskStatusColors[task.status] ?? "#64748b" }}
+                          />
+                          {taskStatusLabels[task.status] ?? task.status}
                         </span>
                       </Link>
                     ))}

@@ -55,13 +55,6 @@ enum TaskType {
   QC
 }
 
-enum TaskStatus {
-  TODO
-  IN_PROGRESS
-  REVIEW
-  DONE
-}
-
 enum FileCategory {
   SOURCES
   PENDING_APPROVAL
@@ -319,7 +312,8 @@ model Task {
   orderId     String?
   assigneeId  String?
   type        TaskType   @default(DESIGN)
-  status      TaskStatus @default(TODO)
+  /// Код этапа из справочника TaskColumn.
+  status      String     @default("TODO")
   priority    Priority   @default(NORMAL)
   dueDate     DateTime?
   startedAt   DateTime?
@@ -628,6 +622,22 @@ model OrderTypeOption {
   label     String
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Этапы (колонки канбана) задач — настраиваются клиентом.
+model TaskColumn {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  /// Вход в этот этап проставляет задаче startedAt.
+  isStart   Boolean  @default(false)
+  /// Завершающий этап: проставляет finishedAt, задача считается закрытой.
+  isFinal   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

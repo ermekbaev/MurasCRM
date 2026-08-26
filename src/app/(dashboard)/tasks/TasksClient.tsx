@@ -4,12 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import {
-  TASK_STATUS_LABELS,
-  TASK_STATUS_COLORS,
   TASK_TYPE_LABELS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
 } from "@/lib/constants";
+import { useTaskColumns } from "@/hooks/useTaskColumns";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/layout/PageHeader";
 import Button from "@/components/ui/Button";
@@ -47,14 +46,10 @@ interface Props {
   currentRole: string;
 }
 
-const STATUS_COLUMNS = [
-  { key: "TODO", label: "К выполнению" },
-  { key: "IN_PROGRESS", label: "В работе" },
-  { key: "REVIEW", label: "На проверке" },
-  { key: "DONE", label: "Готово" },
-] as const;
-
 export default function TasksClient({ initialTasks, users, orders, currentUserId, currentRole }: Props) {
+  const { visible: boardColumns, labels: statusLabels, colors: statusColors } = useTaskColumns();
+  const [dragTaskId, setDragTaskId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [tasks, setTasks] = useState(initialTasks);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -116,16 +111,31 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
   }
 
   async function updateTaskStatus(taskId: string, newStatus: string) {
+    const previous = tasks.find((t) => t.id === taskId)?.status;
+    if (previous === newStatus) return;
+
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
+    );
+
     const res = await fetch(`/api/tasks/${taskId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
-    if (res.ok) {
+
+    if (!res.ok && previous !== undefined) {
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+        prev.map((t) => (t.id === taskId ? { ...t, status: previous } : t)),
       );
     }
+  }
+
+  function handleDrop(status: string) {
+    setDropTarget(null);
+    const id = dragTaskId;
+    setDragTaskId(null);
+    if (id) updateTaskStatus(id, status);
   }
 
   return (
@@ -184,25 +194,52 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
 
       {/* Kanban Board */}
       {viewMode === "board" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {STATUS_COLUMNS.map((col) => {
-            const colTasks = filtered.filter((t) => t.status === col.key);
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {boardColumns.map((col) => {
+            const colTasks = filtered.filter((t) => t.status === col.code);
             return (
-              <div key={col.key} className="flex flex-col gap-3">
+              <div
+                key={col.code}
+                className="flex w-72 shrink-0 flex-col gap-3"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDropTarget(col.code);
+                }}
+                onDragLeave={() => setDropTarget((prev) => (prev === col.code ? null : prev))}
+                onDrop={() => handleDrop(col.code)}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-fg-muted">{col.label}</h3>
-                  <span className="text-xs bg-surface-hover text-fg-muted rounded-full px-2 py-0.5">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-fg-muted">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: col.color ?? "#64748b" }}
+                    />
+                    {col.name}
+                  </h3>
+                  <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs text-fg-muted">
                     {colTasks.length}
                   </span>
                 </div>
-                <div className="space-y-2 min-h-20">
+                <div
+                  className={`min-h-20 space-y-2 rounded-lg transition-colors ${
+                    dropTarget === col.code ? "bg-accent-soft/60 ring-1 ring-inset ring-accent/25" : ""
+                  }`}
+                >
                   {colTasks.map((task) => {
                     const done = task.checklistItems.filter((c) => c.isCompleted).length;
                     const total = task.checklistItems.length;
                     return (
                       <div
                         key={task.id}
-                        className="bg-surface border border-line rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
+                        draggable
+                        onDragStart={() => setDragTaskId(task.id)}
+                        onDragEnd={() => {
+                          setDragTaskId(null);
+                          setDropTarget(null);
+                        }}
+                        className={`cursor-grab rounded-lg border border-line bg-surface p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing ${
+                          dragTaskId === task.id ? "opacity-50" : ""
+                        }`}
                       >
                         <Link href={`/tasks/${task.id}`} className="block">
                           <p className="text-sm font-medium text-fg mb-1.5 line-clamp-2">
@@ -252,26 +289,26 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                             <p className="text-xs text-fg-subtle truncate">{task.assignee.name}</p>
                           )}
                         </Link>
-                        {col.key !== "DONE" && (
-                          <div className="mt-2 pt-2 border-t border-line-soft">
-                            <select
-                              value={task.status}
-                              onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                              className="w-full text-xs border border-line rounded px-2 py-1 bg-surface text-fg focus:outline-none"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {Object.entries(TASK_STATUS_LABELS).map(([v, l]) => (
-                                <option key={v} value={v}>{l}</option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
+                        <div className="mt-2 border-t border-line-soft pt-2">
+                          <select
+                            value={task.status}
+                            onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                            className="w-full rounded border border-line bg-surface px-2 py-1 text-xs text-fg focus:outline-none"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {boardColumns.map((c) => (
+                              <option key={c.code} value={c.code}>{c.name}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     );
                   })}
                   {colTasks.length === 0 && (
-                    <div className="border-2 border-dashed border-line rounded-lg h-20 flex items-center justify-center">
-                      <span className="text-xs text-fg-subtle">Пусто</span>
+                    <div className="flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-line">
+                      <span className="text-xs text-fg-subtle">
+                        {dragTaskId ? "Перенести сюда" : "Пусто"}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -316,8 +353,12 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                       {TASK_TYPE_LABELS[task.type as keyof typeof TASK_TYPE_LABELS]}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${TASK_STATUS_COLORS[task.status as keyof typeof TASK_STATUS_COLORS]}`}>
-                        {TASK_STATUS_LABELS[task.status as keyof typeof TASK_STATUS_LABELS]}
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-fg-muted ring-1 ring-inset ring-line">
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{ background: statusColors[task.status] ?? "#64748b" }}
+                        />
+                        {statusLabels[task.status] ?? task.status}
                       </span>
                     </td>
                     <td className="px-4 py-3">

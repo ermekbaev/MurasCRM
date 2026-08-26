@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { notifyTaskAssigned } from "@/lib/telegram";
+import { getTaskColumns } from "@/lib/taskColumns.server";
 
 const taskSchema = z.object({
   title: z.string().min(1),
@@ -11,6 +12,7 @@ const taskSchema = z.object({
   assigneeId: z.string().optional(),
   type: z.enum(["DESIGN", "FILE_PREP", "PRINT", "CUT", "LAMINATION", "MOUNTING", "QC"]).default("DESIGN"),
   priority: z.enum(["LOW", "NORMAL", "URGENT", "VERY_URGENT"]).default("NORMAL"),
+  status: z.string().optional(),
   dueDate: z.string().optional(),
   tags: z.array(z.string()).optional(),
   checklistItems: z.array(z.object({ text: z.string() })).optional(),
@@ -72,11 +74,17 @@ export async function POST(req: Request) {
   const parsed = taskSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { checklistItems = [], dueDate, ...rest } = parsed.data;
+  const { checklistItems = [], dueDate, status, ...rest } = parsed.data;
+
+  // Этапы настраиваемые, поэтому стартовый берём из справочника, а не из
+  // константы: колонку "TODO" клиент мог переименовать или удалить.
+  const columns = await getTaskColumns();
+  const firstColumn = columns.find((c) => c.isActive) ?? columns[0];
 
   const task = await prisma.task.create({
     data: {
       ...rest,
+      status: status ?? firstColumn?.code ?? "TODO",
       dueDate: dueDate ? new Date(dueDate) : undefined,
       checklistItems: checklistItems.length
         ? { create: checklistItems.map((c, i) => ({ text: c.text, sortOrder: i })) }
