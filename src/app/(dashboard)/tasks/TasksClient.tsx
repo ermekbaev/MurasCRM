@@ -194,18 +194,23 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
 
       {/* Kanban Board */}
       {viewMode === "board" && (
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="flex items-stretch gap-4 overflow-x-auto pb-2">
           {boardColumns.map((col) => {
             const colTasks = filtered.filter((t) => t.status === col.code);
             return (
               <div
                 key={col.code}
-                className="flex w-72 shrink-0 flex-col gap-3"
+                className="flex w-72 shrink-0 flex-col gap-2"
                 onDragOver={(e) => {
                   e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
                   setDropTarget(col.code);
                 }}
-                onDragLeave={() => setDropTarget((prev) => (prev === col.code ? null : prev))}
+                onDragLeave={(e) => {
+                  // Переход курсора на вложенную карточку — это не уход из колонки.
+                  if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+                  setDropTarget((prev) => (prev === col.code ? null : prev));
+                }}
                 onDrop={() => handleDrop(col.code)}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -221,8 +226,14 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                   </span>
                 </div>
                 <div
-                  className={`min-h-20 space-y-2 rounded-lg transition-colors ${
-                    dropTarget === col.code ? "bg-accent-soft/60 ring-1 ring-inset ring-accent/25" : ""
+                  className={`flex-1 space-y-2 rounded-xl border-2 border-dashed p-2 transition-colors ${
+                    dragTaskId ? "min-h-[24rem]" : "min-h-[12rem]"
+                  } ${
+                    dropTarget === col.code
+                      ? "border-accent/50 bg-accent-soft/70"
+                      : dragTaskId
+                        ? "border-line bg-surface-sunken/60"
+                        : "border-transparent bg-surface-sunken/40"
                   }`}
                 >
                   {colTasks.map((task) => {
@@ -305,7 +316,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                     );
                   })}
                   {colTasks.length === 0 && (
-                    <div className="flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-line">
+                    <div className="flex h-24 items-center justify-center">
                       <span className="text-xs text-fg-subtle">
                         {dragTaskId ? "Перенести сюда" : "Пусто"}
                       </span>
