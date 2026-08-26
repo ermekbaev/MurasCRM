@@ -37,6 +37,18 @@ export default async function OrderDetailPage({
           include: { assignee: { select: { id: true, name: true } } },
           orderBy: { createdAt: "desc" },
         },
+        invoices: {
+          select: { id: true, number: true, date: true, total: true, isPaid: true },
+          orderBy: { date: "desc" },
+        },
+        acts: {
+          select: { id: true, number: true, date: true, total: true },
+          orderBy: { date: "desc" },
+        },
+        waybills: {
+          select: { id: true, number: true, date: true, total: true },
+          orderBy: { date: "desc" },
+        },
       },
     }),
     prisma.user.findMany({
@@ -90,6 +102,21 @@ export default async function OrderDetailPage({
         changeLogs: order.changeLogs.map((l) => ({
           ...l,
           createdAt: l.createdAt.toISOString(),
+        })),
+        invoices: order.invoices.map((i) => ({
+          ...i,
+          date: i.date.toISOString(),
+          total: Number(i.total),
+        })),
+        acts: order.acts.map((a) => ({
+          ...a,
+          date: a.date.toISOString(),
+          total: Number(a.total),
+        })),
+        waybills: order.waybills.map((w) => ({
+          ...w,
+          date: w.date.toISOString(),
+          total: Number(w.total),
         })),
       }}
       users={users}

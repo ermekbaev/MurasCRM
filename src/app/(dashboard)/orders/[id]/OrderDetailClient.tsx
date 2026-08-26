@@ -21,6 +21,7 @@ import {
   ArrowLeft, Send, CheckSquare, Clock, User, CreditCard, AlertCircle,
   Paperclip, Download, FileText, Image as ImageIcon, Upload,
   Pencil, Plus, Trash2, Check, X, UserPlus,
+  ClipboardList, FileSpreadsheet, ArrowUpRight,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 
@@ -98,11 +99,76 @@ interface OrderDetailClientProps {
       dueDate: Date | null;
       assignee: { id: string; name: string } | null;
     }[];
+    invoices: { id: string; number: string; date: string; total: number; isPaid: boolean }[];
+    acts: { id: string; number: string; date: string; total: number }[];
+    waybills: { id: string; number: string; date: string; total: number }[];
   };
   users: { id: string; name: string; role: string }[];
   orderTypes: { code: string; label: string; isActive: boolean }[];
   currentUserId: string;
   currentRole: string;
+}
+
+interface DocumentRow {
+  id: string;
+  number: string;
+  date: string;
+  total: number;
+  badge?: string | null;
+}
+
+/** Список связанных с заявкой документов одного типа. */
+function DocumentList({
+  title,
+  icon,
+  href,
+  items,
+  empty,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  href: string;
+  items: DocumentRow[];
+  empty: string;
+}) {
+  return (
+    <Card padding="none">
+      <div className="flex items-center gap-2 border-b border-line-soft px-4 py-3">
+        <span className="text-fg-subtle">{icon}</span>
+        <h3 className="text-[13px] font-semibold text-fg">{title}</h3>
+        <span className="ml-auto text-xs text-fg-subtle">{items.length}</span>
+      </div>
+      {items.length === 0 ? (
+        <p className="px-4 py-6 text-center text-sm text-fg-subtle">{empty}</p>
+      ) : (
+        <div className="divide-y divide-line-soft">
+          {items.map((d) => (
+            <Link
+              key={d.id}
+              href={`${href}/${d.id}`}
+              className="group flex items-center gap-3 px-4 py-2.5 hover:bg-surface-hover"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-1.5 text-sm font-medium text-fg">
+                  {d.number}
+                  <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-fg-subtle opacity-0 transition-opacity group-hover:opacity-100" />
+                </p>
+                <p className="text-xs text-fg-subtle">{formatDate(d.date)}</p>
+              </div>
+              {d.badge && (
+                <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/25">
+                  {d.badge}
+                </span>
+              )}
+              <span className="text-sm font-medium text-fg tabular-nums">
+                {formatCurrency(d.total)}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
 }
 
 function formatFileSize(bytes: number) {
@@ -123,7 +189,10 @@ export default function OrderDetailClient({
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"items" | "files" | "tasks" | "comments" | "history">("items");
+  const [activeTab, setActiveTab] = useState<"items" | "files" | "tasks" | "docs" | "comments" | "history">("items");
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
+  const docsCount = order.invoices.length + order.acts.length + order.waybills.length;
   const [uploadingFile, setUploadingFile] = useState(false);
   const [isDraggingTab, setIsDraggingTab] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -188,6 +257,48 @@ export default function OrderDetailClient({
   async function saveTitle() {
     await updateField("title", titleDraft.trim());
     setEditingTitle(false);
+  }
+
+  /**
+   * Счёт из позиций заявки: клиент и позиции берутся отсюда, счёт остаётся
+   * привязанным к заявке. Скидка позиции уже учтена в её сумме, поэтому в счёт
+   * уходит фактическая цена (total / qty) — иначе итог счёта разошёлся бы с заявкой.
+   */
+  async function createInvoiceFromOrder() {
+    if (order.items.length === 0) {
+      setDocsError("В заявке нет позиций — сначала добавьте их на вкладке «Позиции»");
+      return;
+    }
+    setCreatingInvoice(true);
+    setDocsError(null);
+    try {
+      const res = await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: order.client.id,
+          orderId: order.id,
+          basis: `Заявка № ${order.number}`,
+          items: order.items.map((i) => ({
+            name: i.name,
+            qty: Number(i.qty),
+            unit: i.unit,
+            price: Number(i.qty) > 0 ? Number(i.total) / Number(i.qty) : Number(i.price),
+          })),
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setDocsError(typeof body?.error === "string" ? body.error : "Не удалось создать счёт");
+        return;
+      }
+      const invoice = await res.json();
+      window.location.href = `/invoices/${invoice.id}`;
+    } catch {
+      setDocsError("Нет связи с сервером");
+    } finally {
+      setCreatingInvoice(false);
+    }
   }
 
   async function sendComment(e: React.FormEvent) {
@@ -582,7 +693,7 @@ export default function OrderDetailClient({
         <div className="lg:col-span-2 space-y-4">
           {/* Tabs */}
           <div className="flex border-b border-line">
-            {(["items", "files", "tasks", "comments", "history"] as const).map((tab) => (
+            {(["items", "files", "tasks", "docs", "comments", "history"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -592,12 +703,15 @@ export default function OrderDetailClient({
                     : "border-transparent text-fg-muted hover:text-fg-muted dark:hover:text-slate-200"
                 }`}
               >
-                {{ items: "Позиции", files: "Файлы", tasks: "Задачи", comments: "Комментарии", history: "История" }[tab]}
+                {{ items: "Позиции", files: "Файлы", tasks: "Задачи", docs: "Документы", comments: "Комментарии", history: "История" }[tab]}
                 {tab === "files" && order.files.length > 0 && (
                   <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.files.length}</span>
                 )}
                 {tab === "tasks" && order.tasks.length > 0 && (
                   <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.tasks.length}</span>
+                )}
+                {tab === "docs" && docsCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{docsCount}</span>
                 )}
                 {tab === "comments" && order.comments.length > 0 && (
                   <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.comments.length}</span>
@@ -910,6 +1024,63 @@ export default function OrderDetailClient({
           )}
 
           {/* Comments tab */}
+          {/* Documents tab */}
+          {activeTab === "docs" && (
+            <div className="space-y-4">
+              {docsError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300">
+                  {docsError}
+                </div>
+              )}
+
+              {canEdit && (
+                <Card padding="md">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-fg">Счёт по этой заявке</p>
+                      <p className="mt-0.5 text-xs text-fg-muted">
+                        Позиции и клиент подставятся из заявки, счёт останется привязан к ней
+                      </p>
+                    </div>
+                    <Button onClick={createInvoiceFromOrder} loading={creatingInvoice}>
+                      <Plus size={16} /> Сформировать счёт
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              <DocumentList
+                title="Счета"
+                icon={<FileText size={15} />}
+                href="/invoices"
+                items={order.invoices.map((i) => ({
+                  id: i.id,
+                  number: i.number,
+                  date: i.date,
+                  total: i.total,
+                  badge: i.isPaid ? "Оплачен" : null,
+                }))}
+                empty="Счетов по заявке пока нет"
+              />
+
+              <DocumentList
+                title="Акты"
+                icon={<ClipboardList size={15} />}
+                href="/acts"
+                items={order.acts}
+                empty="Актов пока нет"
+              />
+
+              <DocumentList
+                title="Накладные"
+                icon={<FileSpreadsheet size={15} />}
+                href="/waybills"
+                items={order.waybills}
+                empty="Накладных пока нет"
+              />
+            </div>
+          )}
+
           {activeTab === "comments" && (
             <div className="space-y-3">
               <Card padding="none">

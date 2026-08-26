@@ -167,6 +167,10 @@ model Client {
   invoices Invoice[]
   payments Payment[]
   contacts ClientContact[]
+
+  waybills           Waybill[] @relation("WaybillClient")
+  waybillsAsPayer    Waybill[] @relation("WaybillPayer")
+  waybillsAsConsignee Waybill[] @relation("WaybillConsignee")
 }
 
 // ─── ClientContact (сотрудники клиента, с кем ведутся дела) ───────────────────
@@ -237,6 +241,7 @@ model Order {
   tasks       Task[]
   invoices    Invoice[]
   acts        Act[]
+  waybills    Waybill[]
   defects     DefectRecord[]
   payments    Payment[]
 
@@ -387,8 +392,9 @@ model Invoice {
   client  Client        @relation(fields: [clientId], references: [id])
   order   Order?        @relation(fields: [orderId], references: [id])
   company Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  items   InvoiceItem[]
-  acts    Act[]
+  items    InvoiceItem[]
+  acts     Act[]
+  waybills Waybill[]
 }
 
 model InvoiceItem {
@@ -418,6 +424,55 @@ model Act {
   order   Order?    @relation(fields: [orderId], references: [id])
   company Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   items   ActItem[]
+}
+
+// ─── Waybill (товарная накладная, ТОРГ-12) ────────────────────────────────────
+
+model Waybill {
+  id        String   @id @default(cuid())
+  number    String   @unique
+  /// Счёт-основание: из него подтягиваются позиции и реквизиты.
+  invoiceId String?
+  orderId   String?
+  companyId String?
+  /// Контрагент накладной. Плательщик и грузополучатель по умолчанию — он же.
+  clientId  String
+  /// Плательщик, если платит не тот, кто получает груз (филиалы, головной офис).
+  payerId   String?
+  /// Грузополучатель, если груз принимает не плательщик.
+  consigneeId String?
+  date      DateTime @default(now())
+  /// Основание отгрузки. По умолчанию — связанный счёт, можно заменить вручную.
+  basis     String?
+  total     Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id])
+  order     Order?   @relation(fields: [orderId], references: [id])
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  client    Client   @relation("WaybillClient", fields: [clientId], references: [id])
+  payer     Client?  @relation("WaybillPayer", fields: [payerId], references: [id])
+  consignee Client?  @relation("WaybillConsignee", fields: [consigneeId], references: [id])
+  items     WaybillItem[]
+
+  @@index([clientId])
+  @@index([invoiceId])
+  @@index([orderId])
+}
+
+model WaybillItem {
+  id        String  @id @default(cuid())
+  waybillId String
+  name      String
+  qty       Decimal @db.Decimal(10, 3)
+  unit      String
+  price     Decimal @db.Decimal(12, 2)
+  total     Decimal @db.Decimal(12, 2)
+
+  waybill Waybill @relation(fields: [waybillId], references: [id], onDelete: Cascade)
+
+  @@index([waybillId])
 }
 
 model ActItem {
@@ -700,6 +755,7 @@ model Company {
 
   invoices Invoice[]
   acts     Act[]
+  waybills Waybill[]
 }
 
 // ─── DemoVisit (аналитика заходов в демо по метке ?ref=) ──────────────────────

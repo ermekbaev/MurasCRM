@@ -47,6 +47,7 @@ function generateEntityNumber(prefix: string, count: number): string {
 export const generateOrderNumber = (count: number) => generateEntityNumber("ЗАК", count);
 export const generateInvoiceNumber = (count: number) => generateEntityNumber("СЧ", count);
 export const generateActNumber = (count: number) => generateEntityNumber("АКТ", count);
+export const generateWaybillNumber = (count: number) => generateEntityNumber("НАКЛ", count);
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} Б`;
