@@ -7,7 +7,7 @@ import { formatCurrency, formatDate, legalName } from "@/lib/utils";
 import { numberToWords } from "@/lib/invoice-pdf";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
-import { ArrowLeft, Download, Printer, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, Download, Printer, Pencil, Check, X, FileText } from "lucide-react";
 
 interface WaybillItem {
   id: string;
@@ -82,6 +82,30 @@ function PartyBlock({ title, party }: { title: string; party: Party | null }) {
 
 export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
   const [downloading, setDownloading] = useState(false);
+  // Основание можно поменять и после создания: заказчик нередко просит
+  // сослаться на договор уже после того, как накладная выписана.
+  const [basis, setBasis] = useState(waybill.basis ?? "");
+  const [editingBasis, setEditingBasis] = useState(false);
+  const [basisDraft, setBasisDraft] = useState("");
+  const [savingBasis, setSavingBasis] = useState(false);
+
+  async function saveBasis() {
+    const next = basisDraft.trim();
+    setSavingBasis(true);
+    try {
+      const res = await fetch(`/api/waybills/${waybill.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ basis: next || null }),
+      });
+      if (res.ok) {
+        setBasis(next);
+        setEditingBasis(false);
+      }
+    } finally {
+      setSavingBasis(false);
+    }
+  }
   const {
     editing,
     editItems,
@@ -110,7 +134,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
     setDownloading(true);
     try {
       const { generateWaybillPDF } = await import("@/lib/waybill-pdf");
-      await generateWaybillPDF(waybill, company);
+      await generateWaybillPDF({ ...waybill, basis }, company);
     } finally {
       setDownloading(false);
     }
@@ -119,9 +143,19 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between print:hidden">
-        <Link href="/waybills" className="flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
-          <ArrowLeft size={14} /> Все накладные
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/waybills" className="flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
+            <ArrowLeft size={14} /> Все накладные
+          </Link>
+          {waybill.invoice && (
+            <Link
+              href={`/invoices/${waybill.invoice.id}`}
+              className="flex items-center gap-1.5 text-sm text-accent hover:underline"
+            >
+              <FileText size={14} /> Счёт {waybill.invoice.number}
+            </Link>
+          )}
+        </div>
         <div className="flex gap-2">
           {editing ? (
             <>
@@ -161,11 +195,58 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
               <p className="mt-0.5 text-sm text-gray-500">от {formatDate(waybill.date)}</p>
             </div>
           </div>
-          {waybill.basis && (
-            <div className="max-w-xs text-right text-sm text-gray-500">
-              Основание: <span className="font-medium text-gray-700">{waybill.basis}</span>
-            </div>
-          )}
+          <div className="max-w-xs text-right text-sm text-gray-500">
+            {editingBasis ? (
+              <div className="flex items-center gap-1 print:hidden">
+                <input
+                  value={basisDraft}
+                  onChange={(e) => setBasisDraft(e.target.value)}
+                  autoFocus
+                  placeholder="Договор № … от …"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveBasis();
+                    if (e.key === "Escape") setEditingBasis(false);
+                  }}
+                  className="w-56 rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+                <button
+                  onClick={saveBasis}
+                  disabled={savingBasis}
+                  title="Сохранить"
+                  className="rounded p-1 text-green-600 hover:bg-green-50 disabled:opacity-50"
+                >
+                  <Check size={16} />
+                </button>
+                <button
+                  onClick={() => setEditingBasis(false)}
+                  title="Отмена"
+                  className="rounded p-1 text-gray-500 hover:bg-gray-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="group flex items-center justify-end gap-1">
+                {basis ? (
+                  <span>
+                    Основание: <span className="font-medium text-gray-700">{basis}</span>
+                  </span>
+                ) : (
+                  <span className="text-gray-400 print:hidden">Основание не указано</span>
+                )}
+                <button
+                  onClick={() => {
+                    setBasisDraft(basis);
+                    setEditingBasis(true);
+                  }}
+                  title="Изменить основание"
+                  className="rounded p-1 text-gray-400 opacity-0 transition-opacity hover:text-accent group-hover:opacity-100 print:hidden"
+                >
+                  <Pencil size={13} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Стороны */}
