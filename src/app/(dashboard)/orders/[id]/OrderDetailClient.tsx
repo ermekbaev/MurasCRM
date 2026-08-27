@@ -470,6 +470,40 @@ export default function OrderDetailClient({
   const priorityOptions = Object.entries(PRIORITY_LABELS).map(([v, l]) => ({ value: v, label: l }));
   const paymentOptions = Object.entries(PAYMENT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }));
 
+  // Одна панель вкладок на два места: на широком экране она стоит в шапке
+  // вровень с номером заявки, на узком — над содержимым вкладки.
+  const tabBar = (
+    <div className="flex overflow-x-auto border-b border-line">
+      {(["items", "files", "tasks", "docs", "comments", "history"] as const).map((tab) => {
+        const counts: Partial<Record<typeof tab, number>> = {
+          files: order.files.length,
+          tasks: order.tasks.length,
+          docs: docsCount,
+          comments: order.comments.length,
+        };
+        const count = counts[tab] ?? 0;
+        return (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+              activeTab === tab
+                ? "border-accent text-accent"
+                : "border-transparent text-fg-muted hover:text-fg"
+            }`}
+          >
+            {{ items: "Позиции", files: "Файлы", tasks: "Задачи", docs: "Документы", comments: "Комментарии", history: "История" }[tab]}
+            {count > 0 && (
+              <span className="ml-1.5 rounded bg-surface-hover px-1.5 py-0.5 text-xs text-fg-muted">
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Back + Header */}
@@ -480,7 +514,7 @@ export default function OrderDetailClient({
         >
           <ArrowLeft size={14} /> Все заявки
         </Link>
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
           <div className="min-w-0">
             {editingTitle ? (
               <div className="flex items-center gap-2">
@@ -522,24 +556,27 @@ export default function OrderDetailClient({
               <span className="text-xs text-fg-subtle">· {formatDate(order.createdAt)}</span>
             </div>
           </div>
-          {canEdit && (
-            <div className="flex items-center gap-2">
-              <Select
-                value={order.status}
-                onChange={(e) => updateField("status", e.target.value)}
-                options={statusOptions}
-              />
-              <Select
-                value={order.paymentStatus}
-                onChange={(e) => updateField("paymentStatus", e.target.value)}
-                options={paymentOptions}
-              />
-            </div>
-          )}
+          <div className="flex flex-col gap-3 lg:col-span-2">
+            {canEdit && (
+              <div className="flex items-center gap-2 lg:justify-end">
+                <Select
+                  value={order.status}
+                  onChange={(e) => updateField("status", e.target.value)}
+                  options={statusOptions}
+                />
+                <Select
+                  value={order.paymentStatus}
+                  onChange={(e) => updateField("paymentStatus", e.target.value)}
+                  options={paymentOptions}
+                />
+              </div>
+            )}
+            <div className="hidden lg:block">{tabBar}</div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:-mt-2 lg:grid-cols-3">
         {/* Left column - details */}
         <div className="space-y-4">
           {/* Client */}
@@ -691,34 +728,7 @@ export default function OrderDetailClient({
 
         {/* Right column - tabs */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Tabs */}
-          <div className="flex border-b border-line">
-            {(["items", "files", "tasks", "docs", "comments", "history"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab
-                    ? "border-violet-600 text-accent"
-                    : "border-transparent text-fg-muted hover:text-fg-muted dark:hover:text-slate-200"
-                }`}
-              >
-                {{ items: "Позиции", files: "Файлы", tasks: "Задачи", docs: "Документы", comments: "Комментарии", history: "История" }[tab]}
-                {tab === "files" && order.files.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.files.length}</span>
-                )}
-                {tab === "tasks" && order.tasks.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.tasks.length}</span>
-                )}
-                {tab === "docs" && docsCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{docsCount}</span>
-                )}
-                {tab === "comments" && order.comments.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 bg-surface-hover text-fg-muted rounded text-xs">{order.comments.length}</span>
-                )}
-              </button>
-            ))}
-          </div>
+          <div className="lg:hidden">{tabBar}</div>
 
           {/* Items tab */}
           {activeTab === "items" && (
