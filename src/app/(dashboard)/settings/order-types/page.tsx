@@ -124,7 +124,7 @@ export default function OrderTypesPage() {
                   </div>
                   <span className="text-xs text-fg-subtle font-mono">{t.code}</span>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEdit(t)}
                     className="p-1.5 rounded hover:bg-surface-hover text-fg-muted"

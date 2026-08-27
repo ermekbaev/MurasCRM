@@ -126,7 +126,7 @@ export default function ClientSourcesPage() {
                   </div>
                   <span className="font-mono text-xs text-fg-subtle">{s.code}</span>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEdit(s)}
                     title="Переименовать"

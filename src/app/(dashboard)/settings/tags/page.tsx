@@ -124,13 +124,13 @@ export default function TagsPage() {
                 <div className="flex items-center gap-0.5 ml-1">
                   <button
                     onClick={() => openEdit(tag)}
-                    className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-all"
+                    className="p-0.5 rounded hover:bg-black/10 transition-all"
                   >
                     <Edit3 size={11} />
                   </button>
                   <button
                     onClick={() => handleDelete(tag.id)}
-                    className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-all"
+                    className="p-0.5 rounded hover:bg-black/10 transition-all"
                   >
                     <Trash2 size={11} />
                   </button>
