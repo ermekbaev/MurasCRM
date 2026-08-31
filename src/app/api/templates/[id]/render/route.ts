@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
+import type { DocumentVarKey } from "@/lib/documentVars";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   NEW: "Новая", IN_PROGRESS: "В работе", REVIEW: "На проверке",
@@ -18,8 +19,13 @@ function fmtDate(d: string | Date | null | undefined) {
   return new Date(d).toLocaleDateString("ru-RU");
 }
 
-function substitute(body: string, vars: Record<string, string>): string {
-  return body.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] ?? `{{${key.trim()}}}`);
+function substitute(body: string, vars: Partial<Record<DocumentVarKey, string>>): string {
+  return body.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
+    const name = key.trim() as DocumentVarKey;
+    // Неизвестную переменную оставляем как есть — так в документе видно
+    // опечатку, а не пустое место.
+    return vars[name] ?? `{{${name}}}`;
+  });
 }
 
 export async function POST(
@@ -35,7 +41,10 @@ export async function POST(
 
   const { orderId, invoiceId, clientId } = await req.json();
 
-  const vars: Record<string, string> = {
+  // Ключи ограничены справочником @/lib/documentVars — если добавить сюда
+  // переменную, которой там нет, сборка упадёт, и подсказка в интерфейсе
+  // не разойдётся с реальным набором.
+  const vars: Partial<Record<DocumentVarKey, string>> = {
     date: fmtDate(new Date()),
   };
 

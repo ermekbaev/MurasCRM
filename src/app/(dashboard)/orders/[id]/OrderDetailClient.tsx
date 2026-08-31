@@ -14,6 +14,7 @@ import {
 } from "@/lib/constants";
 import { useTaskColumns } from "@/hooks/useTaskColumns";
 import Card from "@/components/ui/Card";
+import OrderDocumentBuilder from "./OrderDocumentBuilder";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
@@ -1057,6 +1058,19 @@ export default function OrderDetailClient({
                     </Button>
                   </div>
                 </Card>
+              )}
+
+              {canEdit && (
+                <OrderDocumentBuilder
+                  orderId={order.id}
+                  orderNumber={order.number}
+                  onSaved={(orderFile) =>
+                    setOrder((prev) => ({
+                      ...prev,
+                      files: [orderFile as (typeof prev.files)[number], ...prev.files],
+                    }))
+                  }
+                />
               )}
 
               <DocumentList

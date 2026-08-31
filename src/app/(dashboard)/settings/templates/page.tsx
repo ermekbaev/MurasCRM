@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import { DOCUMENT_VAR_UI_GROUPS, DOCUMENT_VARS } from "@/lib/documentVars";
 import PageHeader from "@/components/layout/PageHeader";
 import { Plus, FileCode, Edit3, Trash2, Eye, Copy, Check } from "lucide-react";
 
@@ -23,16 +24,10 @@ const TEMPLATE_TYPE_LABELS: Record<string, string> = {
   INVOICE: "Счёт на оплату",
   ACT: "Акт выполненных работ",
   CONTRACT: "Договор",
+  COMMERCIAL_OFFER: "Коммерческое предложение",
   OTHER: "Другое",
 };
 
-const TEMPLATE_VARS = [
-  "{{client_name}}",
-  "{{client_full_name}}",
-  "{{order_number}}",
-  "{{total}}",
-  "{{date}}",
-];
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -41,6 +36,25 @@ export default function TemplatesPage() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [form, setForm] = useState({ name: "", type: "INVOICE", body: "" });
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  /** Вставляет переменную в позицию курсора, а не в конец текста. */
+  function insertVar(key: string) {
+    const token = `{{${key}}}`;
+    const el = bodyRef.current;
+    if (!el) {
+      setForm((f) => ({ ...f, body: f.body + token }));
+      return;
+    }
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? start;
+    const next = el.value.slice(0, start) + token + el.value.slice(end);
+    setForm((f) => ({ ...f, body: next }));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + token.length, start + token.length);
+    });
+  }
 
   // Preview
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
@@ -136,14 +150,10 @@ export default function TemplatesPage() {
           </Button>
         }
         meta={
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface-sunken px-3 py-2.5 text-xs text-fg-muted">
-            <span>Переменные шаблона:</span>
-            {TEMPLATE_VARS.map((v) => (
-              <code key={v} className="rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-fg">
-                {v}
-              </code>
-            ))}
-          </div>
+          <p className="text-xs text-fg-muted">
+            Доступно {DOCUMENT_VARS.length} переменных — полный список внутри
+            редактора шаблона, вставляются кликом.
+          </p>
         }
       />
 
@@ -272,6 +282,7 @@ export default function TemplatesPage() {
           <div>
             <label className="text-sm font-medium text-fg-muted block mb-1">Содержимое шаблона *</label>
             <textarea
+              ref={bodyRef}
               required
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
@@ -280,6 +291,39 @@ export default function TemplatesPage() {
               placeholder={"Счёт на оплату №{{order_number}}\n\nКлиент: {{client_name}}\nДата: {{date}}\nСумма: {{total}} руб."}
             />
           </div>
+          <details className="rounded-lg border border-line bg-surface-sunken" open>
+            <summary className="cursor-pointer px-3 py-2.5 text-sm font-medium text-fg-muted">
+              Переменные ({DOCUMENT_VARS.length}) — нажмите, чтобы вставить
+            </summary>
+            <div className="max-h-64 space-y-4 overflow-y-auto border-t border-line px-3 py-3">
+              {DOCUMENT_VAR_UI_GROUPS.map((group) => (
+                <div key={group.title}>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">
+                    {group.title}
+                    {group.hint && (
+                      <span className="ml-2 font-normal normal-case tracking-normal">
+                        · {group.hint}
+                      </span>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.vars.map((v) => (
+                      <button
+                        key={v.key}
+                        type="button"
+                        onClick={() => insertVar(v.key)}
+                        title={`${v.label} — например: ${v.sample}`}
+                        className="rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-fg transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent-fg"
+                      >
+                        {`{{${v.key}}}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>Отмена</Button>
             <Button type="submit" loading={createLoading}>
