@@ -96,6 +96,12 @@ enum MovementDirection {
   ADJUSTMENT
 }
 
+/// Чем является шаблон: текстом с подстановкой или загруженным DOCX-бланком.
+enum DocumentTemplateKind {
+  TEXT
+  DOCX
+}
+
 enum DocumentTemplateType {
   INVOICE
   ACT
@@ -496,7 +502,12 @@ model DocumentTemplate {
   id        String               @id @default(cuid())
   name      String
   type      DocumentTemplateType @default(OTHER)
-  body      String               @db.Text
+  kind      DocumentTemplateKind @default(TEXT)
+  /// Тело текстового шаблона. У DOCX-шаблонов пустое.
+  body      String               @default("") @db.Text
+  /// Ключ загруженного DOCX-бланка в хранилище.
+  fileKey   String?
+  fileName  String?
   variables String[]
   isDefault Boolean              @default(false)
   createdAt DateTime             @default(now())

@@ -45,3 +45,11 @@ export function getPublicUrl(key: string) {
   if (publicUrl) return `${publicUrl}/${key}`;
   return `${process.env.S3_ENDPOINT}/${BUCKET}/${key}`;
 }
+
+/** Читает объект целиком в память — нужно для заполнения DOCX-шаблонов. */
+export async function getObjectBuffer(key: string): Promise<Buffer> {
+  const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of res.Body as AsyncIterable<Uint8Array>) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}

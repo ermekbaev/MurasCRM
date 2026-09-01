@@ -14,7 +14,9 @@ interface Template {
   id: string;
   name: string;
   type: string;
+  kind: string;
   body: string;
+  fileName: string | null;
   variables: string[];
   isDefault: boolean;
   createdAt: string;
@@ -35,7 +37,10 @@ export default function TemplatesPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", type: "INVOICE", body: "" });
+  const [form, setForm] = useState({ name: "", type: "INVOICE", kind: "TEXT", body: "" });
+  const [docxFile, setDocxFile] = useState<File | null>(null);
+  const [docxName, setDocxName] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   /** Вставляет переменную в позицию курсора, а не в конец текста. */
@@ -104,11 +109,46 @@ export default function TemplatesPage() {
     const method = editingTemplate ? "PATCH" : "POST";
     const url = editingTemplate ? `/api/templates/${editingTemplate.id}` : "/api/templates";
 
+    // DOCX-бланк сначала уезжает в хранилище, в шаблон пишется только ключ.
+    let fileKey: string | undefined;
+    let fileName: string | undefined;
+    if (form.kind === "DOCX" && docxFile) {
+      const up = await fetch("/api/templates/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: docxFile.name }),
+      });
+      if (!up.ok) {
+        const b = await up.json().catch(() => null);
+        setSaveError(typeof b?.error === "string" ? b.error : "Не удалось загрузить файл");
+        setCreateLoading(false);
+        return;
+      }
+      const { key, uploadUrl, contentType } = await up.json();
+      const put = await fetch(uploadUrl, {
+        method: "PUT",
+        body: docxFile,
+        headers: { "Content-Type": contentType },
+      }).catch(() => null);
+      if (!put || !put.ok) {
+        setSaveError("Файл не загрузился в хранилище");
+        setCreateLoading(false);
+        return;
+      }
+      fileKey = key;
+      fileName = docxFile.name;
+    }
+
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, variables }),
+      body: JSON.stringify({ ...form, variables, ...(fileKey ? { fileKey, fileName } : {}) }),
     });
+
+    if (!res.ok) {
+      const b = await res.json().catch(() => null);
+      setSaveError(typeof b?.error === "string" ? b.error : "Не удалось сохранить шаблон");
+    }
 
     if (res.ok) {
       const data = await res.json();
@@ -119,14 +159,19 @@ export default function TemplatesPage() {
       }
       setModalOpen(false);
       setEditingTemplate(null);
-      setForm({ name: "", type: "INVOICE", body: "" });
+      setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "" });
+      setDocxFile(null);
+      setDocxName(null);
     }
     setCreateLoading(false);
   }
 
   function openEdit(t: Template) {
     setEditingTemplate(t);
-    setForm({ name: t.name, type: t.type, body: t.body });
+    setForm({ name: t.name, type: t.type, kind: t.kind || "TEXT", body: t.body });
+    setDocxFile(null);
+    setDocxName(t.fileName);
+    setSaveError(null);
     setModalOpen(true);
   }
 
@@ -143,9 +188,9 @@ export default function TemplatesPage() {
       <PageHeader
         icon={<FileCode size={18} />}
         title="Шаблоны договоров и КП"
-        subtitle="Текстовые документы: данные подставляются из заявки, счёта и настроек компании"
+        subtitle="Свой DOCX-бланк или текст — данные подставляются из заявки, счёта и настроек компании"
         actions={
-          <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", body: "" }); setModalOpen(true); }}>
+          <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "" }); setDocxFile(null); setDocxName(null); setSaveError(null); setModalOpen(true); }}>
             <Plus size={16} /> Новый шаблон
           </Button>
         }
@@ -283,6 +328,63 @@ export default function TemplatesPage() {
               options={Object.entries(TEMPLATE_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
             />
           </div>
+          {saveError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300">
+              {saveError}
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-fg-muted">Вид шаблона</label>
+            <div className="flex rounded-lg border border-line bg-surface p-0.5">
+              {([["TEXT", "Текст с переменными"], ["DOCX", "Свой бланк DOCX"]] as const).map(([k, label]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setForm({ ...form, kind: k })}
+                  className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    form.kind === k ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {form.kind === "DOCX" && (
+            <div className="space-y-2 rounded-lg border border-line bg-surface-sunken p-3">
+              <p className="text-xs text-fg-muted">
+                Возьмите свой бланк в Word, впишите в него переменные и загрузите сюда —
+                вёрстка документа сохранится полностью.
+              </p>
+              <p className="text-xs text-fg-subtle">
+                В DOCX переменные пишутся <strong>одинарными</strong> скобками:{" "}
+                <code className="rounded bg-surface px-1 font-mono">{"{client_name}"}</code>.
+                Позиции — циклом на строке таблицы:{" "}
+                <code className="rounded bg-surface px-1 font-mono">
+                  {"{#items}{n} {name} {qty} {unit} {price} {total}{/items}"}
+                </code>
+              </p>
+              <p className="text-xs text-fg-subtle">
+                Печать и подпись вставьте картинкой прямо в бланк — они останутся на месте.
+              </p>
+              <input
+                type="file"
+                accept=".docx"
+                onChange={(e) => setDocxFile(e.target.files?.[0] ?? null)}
+                className="block w-full text-xs text-fg-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent-soft file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-accent-fg"
+              />
+              {(docxFile || docxName) && (
+                <p className="text-xs text-fg">
+                  Файл: <span className="font-medium">{docxFile?.name ?? docxName}</span>
+                  {!docxFile && docxName ? " (загружен ранее)" : ""}
+                </p>
+              )}
+            </div>
+          )}
+
+          {form.kind === "TEXT" && (
           <div>
             <label className="text-sm font-medium text-fg-muted block mb-1">Содержимое шаблона *</label>
             <textarea
@@ -295,6 +397,8 @@ export default function TemplatesPage() {
               placeholder={"Счёт на оплату №{{order_number}}\n\nКлиент: {{client_name}}\nДата: {{date}}\nСумма: {{total}} руб."}
             />
           </div>
+          )}
+
           <details className="rounded-lg border border-line bg-surface-sunken" open>
             <summary className="cursor-pointer px-3 py-2.5 text-sm font-medium text-fg-muted">
               Переменные ({DOCUMENT_VARS.length}) — нажмите, чтобы вставить

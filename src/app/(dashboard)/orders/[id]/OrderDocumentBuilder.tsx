@@ -10,6 +10,7 @@ interface Template {
   id: string;
   name: string;
   type: string;
+  kind: string;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -54,8 +55,45 @@ export default function OrderDocumentBuilder({
       .catch(() => {});
   }, []);
 
+  const selected = templates.find((t) => t.id === templateId);
+
+  /**
+   * DOCX-бланк заполняется на сервере и сразу отдаётся файлом: показывать
+   * его текстом бессмысленно, вся ценность в сохранённой вёрстке.
+   */
+  async function handleRenderDocx() {
+    setRendering(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/templates/${templateId}/render-docx`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        setError(typeof b?.error === "string" ? b.error : "Не удалось заполнить бланк");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${selected?.name ?? "Документ"} — ${orderNumber}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Нет связи с сервером");
+    } finally {
+      setRendering(false);
+    }
+  }
+
   async function handleRender() {
     if (!templateId) return;
+    if (selected?.kind === "DOCX") return handleRenderDocx();
     setRendering(true);
     setError(null);
     try {
@@ -177,9 +215,9 @@ export default function OrderDocumentBuilder({
         )}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-fg">Договор или КП по шаблону</p>
+            <p className="text-sm font-medium text-fg">Документ по шаблону</p>
             <p className="mt-0.5 text-xs text-fg-muted">
-              Реквизиты и позиции подставятся из заявки. Счета и акты выставляются отдельно
+              Текст или свой DOCX-бланк — реквизиты и позиции подставятся из этой заявки
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -190,7 +228,7 @@ export default function OrderDocumentBuilder({
             >
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name} · {TYPE_LABELS[t.type] || t.type}
+                  {t.name} · {TYPE_LABELS[t.type] || t.type}{t.kind === "DOCX" ? " · DOCX" : ""}
                 </option>
               ))}
             </select>
