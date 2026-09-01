@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Torg12View from "./Torg12View";
+import UpdView from "./UpdView";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency, formatDate, legalName } from "@/lib/utils";
@@ -91,7 +92,7 @@ function PartyBlock({ title, party }: { title: string; party: Party | null }) {
 
 export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
   // Простая форма — по умолчанию; ТОРГ-12 включают, когда её требует контрагент.
-  const [form, setForm] = useState<"simple" | "torg12">("simple");
+  const [form, setForm] = useState<"simple" | "torg12" | "upd">("simple");
   const [downloading, setDownloading] = useState(false);
   // Основание можно поменять и после создания: заказчик нередко просит
   // сослаться на договор уже после того, как накладная выписана.
@@ -180,7 +181,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
           ) : (
             <>
               <div className="flex rounded-lg border border-line bg-surface p-0.5">
-                {(["simple", "torg12"] as const).map((f) => (
+                {(["simple", "torg12", "upd"] as const).map((f) => (
                   <button
                     key={f}
                     onClick={() => setForm(f)}
@@ -188,7 +189,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
                       form === f ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"
                     }`}
                   >
-                    {f === "simple" ? "Простая форма" : "ТОРГ-12"}
+                    {f === "simple" ? "Простая" : f === "torg12" ? "ТОРГ-12" : "УПД"}
                   </button>
                 ))}
               </div>
@@ -206,7 +207,19 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         </div>
       </div>
 
-      {form === "torg12" ? (
+      {form === "upd" ? (
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
+          <UpdView
+            waybill={waybill}
+            company={company}
+            basis={basis}
+            items={items}
+            total={total}
+            worksWithVat={Boolean(company?.worksWithVat)}
+            vatRate={Number(company?.defaultVatRate ?? 0)}
+          />
+        </div>
+      ) : form === "torg12" ? (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
           <Torg12View
             waybill={waybill}
