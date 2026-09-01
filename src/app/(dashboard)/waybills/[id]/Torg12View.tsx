@@ -120,6 +120,8 @@ export default function Torg12View({
 
   return (
     <div className="mx-auto w-full max-w-[1120px] bg-white p-6 text-gray-900 print:max-w-full print:p-0">
+      {/* Товарный раздел ТОРГ-12 широкий — на портретной A4 обрезается. */}
+      <style>{"@media print { @page { size: A4 landscape; margin: 8mm; } }"}</style>
       {/* Шапка */}
       <div className="mb-2 space-y-1">
         <HeadRow label="" value={companyLine} code={company?.okpo} codeLabel="Код по ОКПО" />
