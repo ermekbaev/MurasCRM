@@ -20,7 +20,9 @@ const settingsSchema = z.object({
   director: z.string().optional(),
   accountant: z.string().optional(),
   worksWithVat: z.boolean().optional(),
-  defaultVatRate: z.number().min(0).max(100).optional(),
+  // coerce, а не number: Prisma отдаёт Decimal строкой, и форма возвращает
+  // её обратно как строку — строгий z.number() ронял сохранение целиком.
+  defaultVatRate: z.coerce.number().min(0).max(100).optional(),
 });
 
 export async function GET() {
@@ -36,7 +38,13 @@ export async function GET() {
     settings.stampKey      ? generateDownloadUrl(settings.stampKey).catch(() => null)      : null,
     settings.signatureKey  ? generateDownloadUrl(settings.signatureKey).catch(() => null)  : null,
   ]);
-  return NextResponse.json({ ...settings, logoUrl, stampUrl, signatureUrl });
+  return NextResponse.json({
+    ...settings,
+    defaultVatRate: Number(settings.defaultVatRate),
+    logoUrl,
+    stampUrl,
+    signatureUrl,
+  });
 }
 
 export async function PATCH(req: Request) {
@@ -63,5 +71,5 @@ export async function PATCH(req: Request) {
     });
   }
 
-  return NextResponse.json(settings);
+  return NextResponse.json({ ...settings, defaultVatRate: Number(settings.defaultVatRate) });
 }
