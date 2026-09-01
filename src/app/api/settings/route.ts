@@ -9,6 +9,7 @@ const settingsSchema = z.object({
   inn: z.string().optional(),
   kpp: z.string().optional(),
   ogrn: z.string().optional(),
+  okpo: z.string().optional(),
   legalAddress: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),

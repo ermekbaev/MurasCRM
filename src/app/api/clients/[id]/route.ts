@@ -10,6 +10,7 @@ const updateSchema = z.object({
   type: z.enum(["INDIVIDUAL", "LEGAL", "IP"]).optional(),
   name: z.string().min(1).optional(),
   fullName: z.string().optional(),
+  okpo: z.string().optional(),
   inn: z.string().optional(),
   kpp: z.string().optional(),
   ogrn: z.string().optional(),

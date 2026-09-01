@@ -13,8 +13,8 @@ interface Template {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  INVOICE: "Счёт",
-  ACT: "Акт",
+  INVOICE: "Письмо по счёту",
+  ACT: "Письмо по акту",
   CONTRACT: "Договор",
   COMMERCIAL_OFFER: "КП",
   OTHER: "Другое",
@@ -177,9 +177,9 @@ export default function OrderDocumentBuilder({
         )}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-fg">Документ по шаблону</p>
+            <p className="text-sm font-medium text-fg">Договор или КП по шаблону</p>
             <p className="mt-0.5 text-xs text-fg-muted">
-              Договор, КП или письмо — реквизиты и позиции подставятся из заявки
+              Реквизиты и позиции подставятся из заявки. Счета и акты выставляются отдельно
             </p>
           </div>
           <div className="flex items-center gap-2">

@@ -30,7 +30,17 @@ export default async function WaybillDetailPage({
   const chosenCompany = waybill.companyId
     ? await prisma.company.findUnique({ where: { id: waybill.companyId } })
     : null;
-  const company = chosenCompany ?? settings;
+  // Доп. компании не хранят настройку НДС и ОКПО — берём их из основной,
+  // а Decimal приводим к числу: в клиентский компонент он уехал бы строкой.
+  const source = chosenCompany ?? settings;
+  const company = source
+    ? {
+        ...source,
+        okpo: settings?.okpo ?? "",
+        worksWithVat: Boolean(settings?.worksWithVat),
+        defaultVatRate: Number(settings?.defaultVatRate ?? 0),
+      }
+    : null;
 
   return (
     <WaybillPrintView

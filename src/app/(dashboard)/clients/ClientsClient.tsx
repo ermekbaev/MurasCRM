@@ -19,6 +19,7 @@ interface ClientRow {
   name: string;
   inn: string | null;
   fullName: string | null;
+  okpo: string | null;
   kpp: string | null;
   ogrn: string | null;
   phone: string | null;
@@ -41,6 +42,7 @@ const EMPTY_FORM = {
   type: "INDIVIDUAL",
   name: "",
   fullName: "",
+  okpo: "",
   phone: "",
   email: "",
   inn: "",
@@ -117,6 +119,7 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
         inn: d.inn || f.inn,
         kpp: d.kpp || f.kpp,
         ogrn: d.ogrn || f.ogrn,
+        okpo: d.okpo || f.okpo,
         legalAddress: d.address?.unrestricted_value || f.legalAddress,
       }));
     } catch (e) {
@@ -267,6 +270,12 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
               onChange={(e) => setForm((f) => ({ ...f, kpp: e.target.value }))}
             />
             <Input
+              label="ОКПО"
+              value={form.okpo}
+              onChange={(e) => setForm((f) => ({ ...f, okpo: e.target.value }))}
+              hint="Для ТОРГ-12"
+            />
+            <Input
               label="ОГРН"
               value={form.ogrn}
               onChange={(e) => setForm((f) => ({ ...f, ogrn: e.target.value }))}
@@ -367,6 +376,7 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
       whatsapp: client.whatsapp || "",
       legalAddress: client.legalAddress || "",
       fullName: client.fullName || "",
+      okpo: client.okpo || "",
       bankName: client.bankName || "",
       bankAccount: client.bankAccount || "",
       bankBik: client.bankBik || "",

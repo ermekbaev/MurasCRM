@@ -145,6 +145,8 @@ model Client {
   name          String
   /// Полное наименование с ОПФ — для печатных форм. Пусто у физлиц.
   fullName      String?
+  /// Код по ОКПО — графа шапки ТОРГ-12.
+  okpo          String?
   inn           String?
   kpp           String?
   ogrn          String?
@@ -716,6 +718,8 @@ model CompanySettings {
   inn              String   @default("")
   kpp              String   @default("")
   ogrn             String   @default("")
+  /// Код по ОКПО — графа шапки ТОРГ-12.
+  okpo             String   @default("")
   legalAddress     String   @default("")
   phone            String   @default("")
   email            String   @default("")

@@ -7,6 +7,7 @@ const clientSchema = z.object({
   type: z.enum(["INDIVIDUAL", "LEGAL", "IP"]).default("INDIVIDUAL"),
   name: z.string().min(1),
   fullName: z.string().optional(),
+  okpo: z.string().optional(),
   inn: z.string().optional(),
   kpp: z.string().optional(),
   ogrn: z.string().optional(),

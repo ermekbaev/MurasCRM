@@ -87,8 +87,8 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     group: "Справочники",
   },
   {
-    label: "Шаблоны",
-    description: "Печатные формы счетов, актов и договоров",
+    label: "Шаблоны договоров и КП",
+    description: "Текстовые документы с подстановкой данных",
     href: "/settings/templates",
     icon: FileCode,
     roles: ["ADMIN", "ACCOUNTANT"],

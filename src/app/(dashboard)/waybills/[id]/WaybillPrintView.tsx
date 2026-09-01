@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Torg12View from "./Torg12View";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency, formatDate, legalName } from "@/lib/utils";
@@ -21,6 +22,7 @@ interface WaybillItem {
 export interface Party {
   name: string;
   fullName: string | null;
+  okpo: string | null;
   inn: string | null;
   kpp: string | null;
   legalAddress: string | null;
@@ -46,6 +48,9 @@ interface Props {
     name: string;
     inn: string;
     kpp: string;
+    okpo?: string;
+    worksWithVat?: boolean;
+    defaultVatRate?: number;
     legalAddress: string;
     phone: string;
     bankName: string;
@@ -81,6 +86,8 @@ function PartyBlock({ title, party }: { title: string; party: Party | null }) {
 }
 
 export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
+  // Простая форма — по умолчанию; ТОРГ-12 включают, когда её требует контрагент.
+  const [form, setForm] = useState<"simple" | "torg12">("simple");
   const [downloading, setDownloading] = useState(false);
   // Основание можно поменять и после создания: заказчик нередко просит
   // сослаться на договор уже после того, как накладная выписана.
@@ -168,6 +175,19 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
             </>
           ) : (
             <>
+              <div className="flex rounded-lg border border-line bg-surface p-0.5">
+                {(["simple", "torg12"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setForm(f)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      form === f ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"
+                    }`}
+                  >
+                    {f === "simple" ? "Простая форма" : "ТОРГ-12"}
+                  </button>
+                ))}
+              </div>
               <Button variant="outline" onClick={startEditing}>
                 <Pencil size={16} /> Редактировать позиции
               </Button>
@@ -182,6 +202,19 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         </div>
       </div>
 
+      {form === "torg12" ? (
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
+          <Torg12View
+            waybill={waybill}
+            company={company}
+            basis={basis}
+            items={items}
+            total={total}
+            worksWithVat={Boolean(company?.worksWithVat)}
+            vatRate={Number(company?.defaultVatRate ?? 0)}
+          />
+        </div>
+      ) : (
       <div className="mx-auto max-w-4xl rounded-xl border border-gray-200 bg-white p-10 print:max-w-full print:border-0 print:p-0">
         {/* Заголовок */}
         <div className="mb-8 flex items-start justify-between">
@@ -405,6 +438,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

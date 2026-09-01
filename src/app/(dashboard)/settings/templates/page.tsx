@@ -21,8 +21,8 @@ interface Template {
 }
 
 const TEMPLATE_TYPE_LABELS: Record<string, string> = {
-  INVOICE: "Счёт на оплату",
-  ACT: "Акт выполненных работ",
+  INVOICE: "Письмо по счёту",
+  ACT: "Письмо по акту",
   CONTRACT: "Договор",
   COMMERCIAL_OFFER: "Коммерческое предложение",
   OTHER: "Другое",
@@ -142,18 +142,22 @@ export default function TemplatesPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<FileCode size={18} />}
-        title="Шаблоны документов"
-        subtitle="Печатные формы счетов, актов и договоров"
+        title="Шаблоны договоров и КП"
+        subtitle="Текстовые документы: данные подставляются из заявки, счёта и настроек компании"
         actions={
           <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", body: "" }); setModalOpen(true); }}>
             <Plus size={16} /> Новый шаблон
           </Button>
         }
         meta={
-          <p className="text-xs text-fg-muted">
-            Доступно {DOCUMENT_VARS.length} переменных — полный список внутри
-            редактора шаблона, вставляются кликом.
-          </p>
+          <div className="rounded-lg border border-line bg-surface-sunken px-3 py-2.5 text-xs text-fg-muted">
+            Доступно {DOCUMENT_VARS.length} переменных — полный список внутри редактора
+            шаблона, вставляются кликом.
+            <span className="mt-1 block text-fg-subtle">
+              Печатные формы счёта, акта и накладной здесь не редактируются — у них
+              своя фиксированная вёрстка.
+            </span>
+          </div>
         }
       />
 

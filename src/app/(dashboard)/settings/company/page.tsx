@@ -9,7 +9,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2, Percent, Hash } from "lucide-react";
 
 interface Settings {
-  name: string; inn: string; kpp: string; ogrn: string;
+  name: string; inn: string; kpp: string; ogrn: string; okpo: string;
   legalAddress: string; phone: string; email: string; website: string;
   bankName: string; bankAccount: string; bankBik: string; corrAccount: string;
   director: string; accountant: string;
@@ -38,7 +38,7 @@ const BRANDING: BrandingItem[] = [
 ];
 
 const FIELD_LABELS: Record<string, string> = {
-  name: "Название организации", inn: "ИНН", kpp: "КПП", ogrn: "ОГРН",
+  name: "Название организации", inn: "ИНН", kpp: "КПП", ogrn: "ОГРН", okpo: "ОКПО",
   legalAddress: "Юридический адрес", phone: "Телефон", email: "Email",
   website: "Сайт", bankName: "Банк", bankAccount: "Расчётный счёт",
   bankBik: "БИК", corrAccount: "Корр. счёт",
@@ -61,7 +61,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 
 export default function CompanySettingsPage() {
   const [form, setForm] = useState<Settings>({
-    name: "", inn: "", kpp: "", ogrn: "", legalAddress: "",
+    name: "", inn: "", kpp: "", ogrn: "", okpo: "", legalAddress: "",
     phone: "", email: "", website: "", bankName: "", bankAccount: "",
     bankBik: "", corrAccount: "", director: "", accountant: "",
     orderPrefix: "ЗАК", invoicePrefix: "СЧ", actPrefix: "АКТ", waybillPrefix: "НАКЛ",
@@ -195,6 +195,7 @@ export default function CompanySettingsPage() {
             <Input label="ИНН" value={form.inn} onChange={(e) => update("inn", e.target.value)} />
             <Input label="КПП" value={form.kpp} onChange={(e) => update("kpp", e.target.value)} />
             <Input label="ОГРН" value={form.ogrn} onChange={(e) => update("ogrn", e.target.value)} />
+            <Input label="ОКПО" value={form.okpo} onChange={(e) => update("okpo", e.target.value)} hint="Нужен для ТОРГ-12" />
           </div>
           <Input label="Юридический адрес" value={form.legalAddress} onChange={(e) => update("legalAddress", e.target.value)} />
         </Section>
