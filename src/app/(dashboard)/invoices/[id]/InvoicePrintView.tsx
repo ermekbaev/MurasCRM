@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { legalName } from "@/lib/utils";
 import { numberToWords } from "@/lib/invoice-pdf";
 import Button from "@/components/ui/Button";
+import InvoiceStandardView from "./InvoiceStandardView";
 import { useLineItems } from "@/hooks/useLineItems";
 import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X, XCircle, CheckCircle } from "lucide-react";
 
@@ -21,6 +22,8 @@ interface InvoiceItem {
 
 interface Props {
   logoUrl?: string | null;
+  stampUrl?: string | null;
+  signatureUrl?: string | null;
   invoice: {
     id: string;
     number: string;
@@ -56,7 +59,9 @@ interface Props {
     bankBik: string;
     corrAccount: string;
     director: string;
+    directorTitle?: string;
     accountant: string;
+    invoiceNotice?: string;
   } | null;
 }
 
@@ -68,7 +73,10 @@ function fmtDateLong(d: string): string {
   return new Date(d).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
+export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, signatureUrl }: Props) {
+  // Классическая форма — та, к которой привыкли бухгалтерии; форма Muras
+  // оставлена как альтернатива и переключается здесь же.
+  const [form, setForm] = useState<"standard" | "muras">("standard");
   const [downloading, setDownloading] = useState(false);
   const [isPaid, setIsPaid] = useState(invoice.isPaid);
   const [togglingPaid, setTogglingPaid] = useState(false);
@@ -133,6 +141,19 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
             </>
           ) : (
             <>
+              <div className="flex rounded-lg border border-line bg-surface p-0.5">
+                {([["standard", "Стандартная"], ["muras", "Muras"]] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setForm(key)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      form === key ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <Button variant="outline" onClick={startEditing}><Pencil size={16} /> Редактировать позиции</Button>
               <Button
                 variant="outline"
@@ -150,6 +171,20 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
       </div>
 
       {/* Invoice document */}
+      {form === "standard" ? (
+        <InvoiceStandardView
+          invoice={invoice}
+          company={company}
+          logoUrl={logoUrl}
+          stampUrl={stampUrl}
+          signatureUrl={signatureUrl}
+          items={editing ? editItems : invoice.items}
+          editing={editing}
+          onUpdateItem={updateItem}
+          onAddItem={addItem}
+          onRemoveItem={removeItem}
+        />
+      ) : (
       <div className="bg-white max-w-3xl mx-auto border border-gray-200 rounded-xl print:border-0 print:max-w-full print:rounded-none"
            style={{ fontFamily: "Arial, sans-serif", fontSize: "11px", color: "#000" }}>
         <div className="p-10 print:p-8">
@@ -384,6 +419,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl }: Props) {
 
         </div>
       </div>
+      )}
 
     </div>
   );

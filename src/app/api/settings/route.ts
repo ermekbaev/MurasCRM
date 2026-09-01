@@ -19,6 +19,8 @@ const settingsSchema = z.object({
   bankBik: z.string().optional(),
   corrAccount: z.string().optional(),
   director: z.string().optional(),
+  directorTitle: z.string().optional(),
+  invoiceNotice: z.string().optional(),
   accountant: z.string().optional(),
   orderPrefix: z.string().max(12).optional(),
   invoicePrefix: z.string().max(12).optional(),

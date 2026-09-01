@@ -6,13 +6,13 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import AdditionalCompanies from "./AdditionalCompanies";
 import PageHeader from "@/components/layout/PageHeader";
-import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2, Percent, Hash } from "lucide-react";
+import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2, Percent, Hash, FileText } from "lucide-react";
 
 interface Settings {
   name: string; inn: string; kpp: string; ogrn: string; okpo: string;
   legalAddress: string; phone: string; email: string; website: string;
   bankName: string; bankAccount: string; bankBik: string; corrAccount: string;
-  director: string; accountant: string;
+  director: string; directorTitle: string; accountant: string; invoiceNotice: string;
   orderPrefix: string; invoicePrefix: string; actPrefix: string; waybillPrefix: string;
   worksWithVat: boolean; defaultVatRate: number;
   logoUrl?: string | null;
@@ -42,7 +42,8 @@ const FIELD_LABELS: Record<string, string> = {
   legalAddress: "Юридический адрес", phone: "Телефон", email: "Email",
   website: "Сайт", bankName: "Банк", bankAccount: "Расчётный счёт",
   bankBik: "БИК", corrAccount: "Корр. счёт",
-  director: "Директор", accountant: "Бухгалтер",
+  director: "Директор", directorTitle: "Должность руководителя",
+  accountant: "Бухгалтер", invoiceNotice: "Текст в шапке счёта",
   orderPrefix: "Префикс заявок", invoicePrefix: "Префикс счетов",
   actPrefix: "Префикс актов", waybillPrefix: "Префикс накладных",
   worksWithVat: "Работа с НДС", defaultVatRate: "Ставка НДС",
@@ -63,7 +64,7 @@ export default function CompanySettingsPage() {
   const [form, setForm] = useState<Settings>({
     name: "", inn: "", kpp: "", ogrn: "", okpo: "", legalAddress: "",
     phone: "", email: "", website: "", bankName: "", bankAccount: "",
-    bankBik: "", corrAccount: "", director: "", accountant: "",
+    bankBik: "", corrAccount: "", director: "", directorTitle: "", accountant: "", invoiceNotice: "",
     orderPrefix: "ЗАК", invoicePrefix: "СЧ", actPrefix: "АКТ", waybillPrefix: "НАКЛ",
     worksWithVat: false, defaultVatRate: 20,
   });
@@ -268,7 +269,21 @@ export default function CompanySettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Руководитель (ФИО)" value={form.director} onChange={(e) => update("director", e.target.value)} placeholder="Иванов Иван Иванович" />
             <Input label="Главный бухгалтер (ФИО)" value={form.accountant} onChange={(e) => update("accountant", e.target.value)} placeholder="Петрова Мария Ивановна" />
+            <Input label="Должность руководителя" value={form.directorTitle} onChange={(e) => update("directorTitle", e.target.value)} placeholder="Генеральный директор" hint="Печатается в подписи счёта" />
           </div>
+        </Section>
+
+        <Section title="Текст в шапке счёта" icon={<FileText size={16} />}>
+          <textarea
+            value={form.invoiceNotice}
+            onChange={(e) => update("invoiceNotice", e.target.value)}
+            rows={4}
+            placeholder="Внимание! Оплата данного счёта означает согласие с условиями поставки…"
+            className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
+          />
+          <p className="-mt-2 text-xs text-fg-subtle">
+            Печатается мелким шрифтом рядом с логотипом в стандартной форме счёта.
+          </p>
         </Section>
 
         <Section title="Брендинг для документов (PDF)" icon={<ImagePlus size={16} />}>

@@ -728,6 +728,10 @@ model CompanySettings {
   bankAccount      String   @default("")
   bankBik          String   @default("")
   corrAccount      String   @default("")
+  /// Должность руководителя — печатается в подписи счёта.
+  directorTitle    String   @default("Генеральный директор")
+  /// Текст-предупреждение в шапке счёта. Редактируется под каждого клиента.
+  invoiceNotice    String   @default("") @db.Text
   director         String   @default("")
   accountant       String   @default("")
   /// Работает ли компания с НДС. Выключено — поля и строки НДС скрыты,
