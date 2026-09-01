@@ -23,6 +23,10 @@ export interface Party {
   name: string;
   fullName: string | null;
   okpo: string | null;
+  bankName: string | null;
+  bankAccount: string | null;
+  corrAccount: string | null;
+  bankBik: string | null;
   inn: string | null;
   kpp: string | null;
   legalAddress: string | null;
