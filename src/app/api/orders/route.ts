@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth, retryOnDuplicate } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { generateOrderNumber } from "@/lib/utils";
+import { nextDocumentNumber } from "@/lib/numbering.server";
 import { notifyNewOrder } from "@/lib/telegram";
 
 const orderSchema = z.object({
@@ -117,11 +117,9 @@ export async function POST(req: Request) {
     return { ...item, total };
   });
   const amount = calculatedItems.reduce((sum, i) => sum + i.total, 0);
-  const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
   const order = await retryOnDuplicate(async (attempt) => {
-    const count = await prisma.order.count({ where: { createdAt: { gte: yearStart } } });
-    const number = generateOrderNumber(count + attempt);
+    const number = await nextDocumentNumber("order", attempt);
     return prisma.order.create({
       data: {
         ...rest,

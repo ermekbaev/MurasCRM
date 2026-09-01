@@ -38,16 +38,6 @@ export function formatDateTime(date: Date | string | null | undefined): string {
   }).format(d);
 }
 
-function generateEntityNumber(prefix: string, count: number): string {
-  const year = new Date().getFullYear();
-  const seq = String(count + 1).padStart(3, "0");
-  return `${prefix}-${year}-${seq}`;
-}
-
-export const generateOrderNumber = (count: number) => generateEntityNumber("ЗАК", count);
-export const generateInvoiceNumber = (count: number) => generateEntityNumber("СЧ", count);
-export const generateActNumber = (count: number) => generateEntityNumber("АКТ", count);
-export const generateWaybillNumber = (count: number) => generateEntityNumber("НАКЛ", count);
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} Б`;

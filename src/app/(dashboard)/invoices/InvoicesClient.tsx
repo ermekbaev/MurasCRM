@@ -65,6 +65,7 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
     orderId: "",
     number: "",
     vatRate: 0,
+    date: "",
     basis: "",
     dueDate: "",
   });
@@ -164,6 +165,7 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
         orderId: form.orderId || undefined,
         number: form.number || undefined,
         vatRate: form.vatRate,
+        date: form.date || undefined,
         basis: form.basis,
         dueDate: form.dueDate || undefined,
         items: items.filter((i) => i.name),
@@ -171,7 +173,7 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
     });
     if (res.ok) {
       setModalOpen(false);
-      setForm({ clientId: "", clientName: "", companyId: "", orderId: "", number: "", vatRate: vatSettings.worksWithVat ? vatSettings.defaultVatRate : 0, basis: "", dueDate: "" });
+      setForm({ clientId: "", clientName: "", companyId: "", orderId: "", number: "", vatRate: vatSettings.worksWithVat ? vatSettings.defaultVatRate : 0, date: "", basis: "", dueDate: "" });
       setItems([{ name: "", qty: 1, unit: "шт", price: 0 }]);
       loadInvoices(1, search, paidFilter);
       setPage(1);
@@ -378,8 +380,9 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
               />
             )}
           </div>
-          <div className={`grid gap-4 grid-cols-2 ${vatSettings.worksWithVat ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
+          <div className={`grid gap-4 grid-cols-2 ${vatSettings.worksWithVat ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
             <Input label="Номер счёта" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} placeholder="авто" />
+            <Input label="Дата счёта" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             <Input label="Срок оплаты" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
             {vatSettings.worksWithVat && (
               <Input label="НДС (%)" type="number" min={0} max={100} value={form.vatRate} onChange={(e) => setForm({ ...form, vatRate: Number(e.target.value) })} />

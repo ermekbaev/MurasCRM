@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth, apiError, retryOnDuplicate } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
-import { generateWaybillNumber } from "@/lib/utils";
+import { nextDocumentNumber } from "@/lib/numbering.server";
 import { z } from "zod";
 
 const itemSchema = z.object({
@@ -109,14 +109,11 @@ export async function POST(req: Request) {
 
   const calculatedItems = resolvedItems.map((i) => ({ ...i, total: i.qty * i.price }));
   const total = calculatedItems.reduce((sum, i) => sum + i.total, 0);
-  const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
   const waybill = await retryOnDuplicate(async (attempt) => {
     const number = numberOverride?.trim()
       ? numberOverride.trim()
-      : generateWaybillNumber(
-          (await prisma.waybill.count({ where: { createdAt: { gte: yearStart } } })) + attempt,
-        );
+      : await nextDocumentNumber("waybill", attempt);
 
     return prisma.waybill.create({
       data: {

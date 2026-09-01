@@ -47,6 +47,7 @@ const emptyForm = {
   payerId: "",
   consigneeId: "",
   companyId: "",
+  number: "",
   basis: "",
   date: new Date().toISOString().split("T")[0],
   items: [{ ...EMPTY_DOCUMENT_ITEM }] as DocumentItem[],
@@ -148,6 +149,7 @@ export default function WaybillsPage() {
           payerId: splitParties ? form.payerId || undefined : undefined,
           consigneeId: splitParties ? form.consigneeId || undefined : undefined,
           companyId: form.companyId || undefined,
+          number: form.number || undefined,
           basis: form.basis || undefined,
           date: form.date,
           items: form.items.map((i) => ({
@@ -311,6 +313,13 @@ export default function WaybillsPage() {
                 ))}
               </select>
             </div>
+
+            <Input
+              label="Номер накладной"
+              value={form.number}
+              onChange={(e) => setForm((f) => ({ ...f, number: e.target.value }))}
+              placeholder="авто"
+            />
 
             <Input
               label="Дата"

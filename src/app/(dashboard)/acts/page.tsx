@@ -119,6 +119,7 @@ export default function ActsPage() {
     invoiceId: "",
     orderId: "",
     companyId: "",
+    number: "",
     date: new Date().toISOString().split("T")[0],
     items: [{ ...EMPTY_ITEM }] as ActItem[],
   });
@@ -155,6 +156,7 @@ export default function ActsPage() {
       invoiceId: "",
       orderId: "",
       companyId: "",
+      number: "",
       date: new Date().toISOString().split("T")[0],
       items: [{ ...EMPTY_ITEM }],
     });
@@ -208,6 +210,7 @@ export default function ActsPage() {
         invoiceId: form.invoiceId || undefined,
         orderId: form.orderId || undefined,
         companyId: form.companyId || undefined,
+        number: form.number || undefined,
         date: form.date,
         items: form.items.map((i) => ({ ...i, qty: Number(i.qty), price: Number(i.price) })),
       }),
@@ -363,6 +366,12 @@ export default function ActsPage() {
                 ))}
               </select>
             </div>
+            <Input
+              label="Номер акта"
+              value={form.number}
+              onChange={(e) => setForm((f) => ({ ...f, number: e.target.value }))}
+              placeholder="авто"
+            />
             <Input
               label="Дата акта"
               type="date"

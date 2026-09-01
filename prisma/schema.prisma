@@ -728,6 +728,12 @@ model CompanySettings {
   accountant       String   @default("")
   /// Работает ли компания с НДС. Выключено — поля и строки НДС скрыты,
   /// УПД недоступен (он нужен там, где выставляют счета-фактуры).
+  /// Префиксы номеров документов. Номер строится как ПРЕФИКС-ГОД-НОМЕР,
+  /// счёт внутри года начинается заново с 1 января.
+  orderPrefix      String   @default("ЗАК")
+  invoicePrefix    String   @default("СЧ")
+  actPrefix        String   @default("АКТ")
+  waybillPrefix    String   @default("НАКЛ")
   worksWithVat     Boolean  @default(false)
   /// Ставка по умолчанию для новых счетов, если НДС включён.
   defaultVatRate   Decimal  @default(20) @db.Decimal(5, 2)

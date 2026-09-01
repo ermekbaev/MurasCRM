@@ -19,6 +19,10 @@ const settingsSchema = z.object({
   corrAccount: z.string().optional(),
   director: z.string().optional(),
   accountant: z.string().optional(),
+  orderPrefix: z.string().max(12).optional(),
+  invoicePrefix: z.string().max(12).optional(),
+  actPrefix: z.string().max(12).optional(),
+  waybillPrefix: z.string().max(12).optional(),
   worksWithVat: z.boolean().optional(),
   // coerce, а не number: Prisma отдаёт Decimal строкой, и форма возвращает
   // её обратно как строку — строгий z.number() ронял сохранение целиком.

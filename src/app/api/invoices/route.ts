@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth, retryOnDuplicate } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { generateInvoiceNumber } from "@/lib/utils";
+import { nextDocumentNumber } from "@/lib/numbering.server";
 import { notifyInvoiceCreated } from "@/lib/telegram";
 
 const itemSchema = z.object({
@@ -117,15 +117,13 @@ export async function POST(req: Request) {
   const vatAmount = (subtotal * vatRate) / 100;
   const total = subtotal + vatAmount;
   const calculatedItems = items.map((i) => ({ ...i, total: i.qty * i.price }));
-  const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
   const invoice = await retryOnDuplicate(async (attempt) => {
     let number: string;
     if (numberOverride?.trim()) {
       number = numberOverride.trim();
     } else {
-      const count = await prisma.invoice.count({ where: { createdAt: { gte: yearStart } } });
-      number = generateInvoiceNumber(count + attempt);
+      number = await nextDocumentNumber("invoice", attempt);
     }
     return prisma.invoice.create({
       data: {

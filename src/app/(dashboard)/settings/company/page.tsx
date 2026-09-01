@@ -6,13 +6,14 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import AdditionalCompanies from "./AdditionalCompanies";
 import PageHeader from "@/components/layout/PageHeader";
-import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2, Percent } from "lucide-react";
+import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2, Percent, Hash } from "lucide-react";
 
 interface Settings {
   name: string; inn: string; kpp: string; ogrn: string;
   legalAddress: string; phone: string; email: string; website: string;
   bankName: string; bankAccount: string; bankBik: string; corrAccount: string;
   director: string; accountant: string;
+  orderPrefix: string; invoicePrefix: string; actPrefix: string; waybillPrefix: string;
   worksWithVat: boolean; defaultVatRate: number;
   logoUrl?: string | null;
   stampUrl?: string | null;
@@ -42,6 +43,8 @@ const FIELD_LABELS: Record<string, string> = {
   website: "Сайт", bankName: "Банк", bankAccount: "Расчётный счёт",
   bankBik: "БИК", corrAccount: "Корр. счёт",
   director: "Директор", accountant: "Бухгалтер",
+  orderPrefix: "Префикс заявок", invoicePrefix: "Префикс счетов",
+  actPrefix: "Префикс актов", waybillPrefix: "Префикс накладных",
   worksWithVat: "Работа с НДС", defaultVatRate: "Ставка НДС",
 };
 
@@ -61,6 +64,7 @@ export default function CompanySettingsPage() {
     name: "", inn: "", kpp: "", ogrn: "", legalAddress: "",
     phone: "", email: "", website: "", bankName: "", bankAccount: "",
     bankBik: "", corrAccount: "", director: "", accountant: "",
+    orderPrefix: "ЗАК", invoicePrefix: "СЧ", actPrefix: "АКТ", waybillPrefix: "НАКЛ",
     worksWithVat: false, defaultVatRate: 20,
   });
   const [loading, setLoading] = useState(false);
@@ -209,6 +213,21 @@ export default function CompanySettingsPage() {
             <Input label="Расчётный счёт" value={form.bankAccount} onChange={(e) => update("bankAccount", e.target.value)} />
             <Input label="БИК" value={form.bankBik} onChange={(e) => update("bankBik", e.target.value)} />
             <Input label="Корр. счёт" value={form.corrAccount} onChange={(e) => update("corrAccount", e.target.value)} />
+          </div>
+        </Section>
+
+        <Section title="Нумерация документов" icon={<Hash size={16} />}>
+          <p className="-mt-2 text-xs text-fg-muted">
+            Номер собирается как ПРЕФИКС-ГОД-НОМЕР, например {form.invoicePrefix}-{new Date().getFullYear()}-001.
+            Счёт внутри года начинается заново с 1 января. Чтобы продолжить нумерацию
+            с нужной цифры, один раз укажите номер вручную при создании документа —
+            дальше отсчёт пойдёт от него.
+          </p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Input label="Заявки" value={form.orderPrefix} onChange={(e) => update("orderPrefix", e.target.value)} placeholder="ЗАК" />
+            <Input label="Счета" value={form.invoicePrefix} onChange={(e) => update("invoicePrefix", e.target.value)} placeholder="СЧ" />
+            <Input label="Акты" value={form.actPrefix} onChange={(e) => update("actPrefix", e.target.value)} placeholder="АКТ" />
+            <Input label="Накладные" value={form.waybillPrefix} onChange={(e) => update("waybillPrefix", e.target.value)} placeholder="НАКЛ" />
           </div>
         </Section>
 
