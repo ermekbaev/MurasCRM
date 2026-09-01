@@ -6,13 +6,14 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import AdditionalCompanies from "./AdditionalCompanies";
 import PageHeader from "@/components/layout/PageHeader";
-import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2 } from "lucide-react";
+import { Building2, CreditCard, Phone, Check, ImagePlus, Trash2, Percent } from "lucide-react";
 
 interface Settings {
   name: string; inn: string; kpp: string; ogrn: string;
   legalAddress: string; phone: string; email: string; website: string;
   bankName: string; bankAccount: string; bankBik: string; corrAccount: string;
   director: string; accountant: string;
+  worksWithVat: boolean; defaultVatRate: number;
   logoUrl?: string | null;
   stampUrl?: string | null;
   signatureUrl?: string | null;
@@ -41,6 +42,7 @@ const FIELD_LABELS: Record<string, string> = {
   website: "Сайт", bankName: "Банк", bankAccount: "Расчётный счёт",
   bankBik: "БИК", corrAccount: "Корр. счёт",
   director: "Директор", accountant: "Бухгалтер",
+  worksWithVat: "Работа с НДС", defaultVatRate: "Ставка НДС",
 };
 
 // Defined at module scope — if declared inside the page component it would be a new
@@ -59,6 +61,7 @@ export default function CompanySettingsPage() {
     name: "", inn: "", kpp: "", ogrn: "", legalAddress: "",
     phone: "", email: "", website: "", bankName: "", bankAccount: "",
     bankBik: "", corrAccount: "", director: "", accountant: "",
+    worksWithVat: false, defaultVatRate: 20,
   });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -117,6 +120,11 @@ export default function CompanySettingsPage() {
   }
 
   function update(key: keyof Settings, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setSaved(false);
+  }
+
+  function updateVat<K extends "worksWithVat" | "defaultVatRate">(key: K, value: Settings[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   }
@@ -202,6 +210,38 @@ export default function CompanySettingsPage() {
             <Input label="БИК" value={form.bankBik} onChange={(e) => update("bankBik", e.target.value)} />
             <Input label="Корр. счёт" value={form.corrAccount} onChange={(e) => update("corrAccount", e.target.value)} />
           </div>
+        </Section>
+
+        <Section title="Налогообложение" icon={<Percent size={16} />}>
+          <label className="flex items-start gap-2.5 text-sm text-fg-muted">
+            <input
+              type="checkbox"
+              checked={form.worksWithVat}
+              onChange={(e) => updateVat("worksWithVat", e.target.checked)}
+              className="mt-0.5 rounded border-line"
+            />
+            <span>
+              Работаем с НДС
+              <span className="mt-0.5 block text-xs text-fg-subtle">
+                Выключено — поля и строки НДС не показываются в счетах. Включите,
+                если выставляете счета-фактуры.
+              </span>
+            </span>
+          </label>
+
+          {form.worksWithVat && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Ставка НДС по умолчанию, %"
+                type="number"
+                min={0}
+                max={100}
+                value={form.defaultVatRate}
+                onChange={(e) => updateVat("defaultVatRate", Number(e.target.value))}
+                hint="Подставляется в новые счета, в самом счёте её можно изменить"
+              />
+            </div>
+          )}
         </Section>
 
         <Section title="Ответственные лица" icon={<Building2 size={16} />}>

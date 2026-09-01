@@ -19,6 +19,8 @@ const settingsSchema = z.object({
   corrAccount: z.string().optional(),
   director: z.string().optional(),
   accountant: z.string().optional(),
+  worksWithVat: z.boolean().optional(),
+  defaultVatRate: z.number().min(0).max(100).optional(),
 });
 
 export async function GET() {

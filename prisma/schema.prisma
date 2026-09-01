@@ -726,6 +726,11 @@ model CompanySettings {
   corrAccount      String   @default("")
   director         String   @default("")
   accountant       String   @default("")
+  /// Работает ли компания с НДС. Выключено — поля и строки НДС скрыты,
+  /// УПД недоступен (он нужен там, где выставляют счета-фактуры).
+  worksWithVat     Boolean  @default(false)
+  /// Ставка по умолчанию для новых счетов, если НДС включён.
+  defaultVatRate   Decimal  @default(20) @db.Decimal(5, 2)
   logoKey          String?
   stampKey         String?
   signatureKey     String?
