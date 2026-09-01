@@ -66,6 +66,40 @@ function Field({
   );
 }
 
+/** Блок стороны: подпись слева, реквизиты на линии, справа рамка «по ОКПО». */
+function PartyBlock({
+  label,
+  line,
+  okpo,
+  extra,
+}: {
+  label: string;
+  line: string;
+  okpo?: string | null;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className="w-[92px] shrink-0 pt-0.5 text-[8px]">{label}</span>
+      <div className="flex-1">
+        <div className="min-h-[22px] border-b border-black px-1 text-[8px] leading-[1.35]">
+          {line || " "}
+        </div>
+        <div className={cap}>организация, адрес, телефон, факс, банковские реквизиты</div>
+      </div>
+      <div className="w-[160px] shrink-0 pt-0.5 text-right">
+        {extra}
+        <div className="flex items-center justify-end gap-1">
+          <span className="text-[8px]">по ОКПО</span>
+          <span className={`${b} h-[13px] w-[86px] px-1 text-[8px] leading-[13px]`}>
+            {okpo || " "}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Унифицированная форма № ТОРГ-12 (Госкомстат России, пост. от 25.12.98 № 132,
  * ОКУД 0330212). Свёрстана по образцу, предоставленному заказчиком.
@@ -148,38 +182,6 @@ export default function Torg12View({
     month: "long",
     year: "numeric",
   });
-
-  /** Блок стороны: подпись слева, реквизиты на линии, справа рамка «по ОКПО». */
-  const PartyBlock = ({
-    label,
-    line,
-    okpo,
-    extra,
-  }: {
-    label: string;
-    line: string;
-    okpo?: string | null;
-    extra?: React.ReactNode;
-  }) => (
-    <div className="flex items-start gap-2">
-      <span className="w-[92px] shrink-0 pt-0.5 text-[8px]">{label}</span>
-      <div className="flex-1">
-        <div className="min-h-[22px] border-b border-black px-1 text-[8px] leading-[1.35]">
-          {line || " "}
-        </div>
-        <div className={cap}>организация, адрес, телефон, факс, банковские реквизиты</div>
-      </div>
-      <div className="w-[160px] shrink-0 pt-0.5 text-right">
-        {extra}
-        <div className="flex items-center justify-end gap-1">
-          <span className="text-[8px]">по ОКПО</span>
-          <span className={`${b} h-[13px] w-[86px] px-1 text-[8px] leading-[13px]`}>
-            {okpo || " "}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="mx-auto w-full max-w-[1400px] bg-white p-5 text-black print:max-w-full print:p-0">
