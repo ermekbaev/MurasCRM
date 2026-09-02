@@ -125,7 +125,7 @@ function parseBasis(basis: string, fallbackDate: Date): {
   // Название — то, что осталось после номера и даты.
   const name = text
     .replace(numberMatch?.[0] ?? "", " ")
-    .replace(/от\s*\d{2}\.\d{2}\.\d{4}/i, " ")
+    .replace(/от\s*\d{2}\.\d{2}\.\d{4}/i, " ")
     .replace(dateMatch?.[0] ?? "", " ")
     .replace(/\s+/g, " ")
     .trim();
