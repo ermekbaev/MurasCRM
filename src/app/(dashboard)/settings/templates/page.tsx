@@ -41,6 +41,7 @@ export default function TemplatesPage() {
   const [docxFile, setDocxFile] = useState<File | null>(null);
   const [docxName, setDocxName] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [unknownVars, setUnknownVars] = useState<string[]>([]);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
@@ -131,39 +132,31 @@ export default function TemplatesPage() {
     const method = editingTemplate ? "PATCH" : "POST";
     const url = editingTemplate ? `/api/templates/${editingTemplate.id}` : "/api/templates";
 
-    // DOCX-бланк сначала уезжает в хранилище, в шаблон пишется только ключ.
+    // Бланк уходит через наш сервер: он проверяет файл и кладёт его
+    // в хранилище сам. Прямой PUT из браузера R2 отклоняет без CORS.
     let fileKey: string | undefined;
     let fileName: string | undefined;
     if (form.kind === "DOCX" && docxFile) {
-      const up = await fetch("/api/templates/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: docxFile.name }),
-      });
-      if (!up.ok) {
-        const b = await up.json().catch(() => null);
-        setSaveError(typeof b?.error === "string" ? b.error : "Не удалось загрузить файл");
-        setCreateLoading(false);
-        return;
-      }
-      const { key, uploadUrl, contentType } = await up.json();
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        body: docxFile,
-        headers: { "Content-Type": contentType },
-      }).catch(() => null);
-      if (!put || !put.ok) {
+      const fd = new FormData();
+      fd.append("file", docxFile);
+      const up = await fetch("/api/templates/upload", { method: "POST", body: fd }).catch(
+        () => null,
+      );
+      if (!up || !up.ok) {
+        const b = await up?.json().catch(() => null);
         setSaveError(
-          `Хранилище отклонило загрузку (код ${put?.status ?? "нет ответа"}). ` +
-            "Проверьте настройки S3 — сам шаблон тут ни при чём.",
+          typeof b?.error === "string" ? b.error : "Не удалось загрузить бланк",
         );
         setCreateLoading(false);
         return;
       }
-      fileKey = key;
-      fileName = docxFile.name;
+      const uploaded = await up.json();
+      fileKey = uploaded.key;
+      fileName = uploaded.fileName;
+      if (uploaded.unknownVars?.length) {
+        setUnknownVars(uploaded.unknownVars);
+      }
     }
-
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
@@ -187,6 +180,7 @@ export default function TemplatesPage() {
       setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "" });
       setDocxFile(null);
       setDocxName(null);
+      setUnknownVars([]);
     }
     setCreateLoading(false);
   }
@@ -353,6 +347,15 @@ export default function TemplatesPage() {
               options={Object.entries(TEMPLATE_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
             />
           </div>
+          {unknownVars.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+              В бланке есть подстановки, которых нет в справочнике:{" "}
+              <span className="font-mono">{unknownVars.join(", ")}</span>. Если это
+              опечатка — поправьте в Word и загрузите снова; если ваши пометки —
+              оставьте как есть, они останутся в документе.
+            </div>
+          )}
+
           {saveError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300">
               {saveError}
