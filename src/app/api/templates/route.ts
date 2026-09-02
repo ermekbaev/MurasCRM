@@ -11,6 +11,7 @@ const createSchema = z.object({
   fileKey: z.string().optional(),
   fileName: z.string().optional(),
   variables: z.array(z.string()).default([]),
+  isDefault: z.boolean().default(false),
 });
 
 export async function GET() {
