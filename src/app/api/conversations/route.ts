@@ -11,8 +11,9 @@ export async function GET(req: Request) {
 
   const q = new URL(req.url).searchParams.get("q")?.trim();
 
-  // Ищем и по собеседнику, и по тексту переписки: менеджер обычно помнит
-  // фразу из разговора, а не имя в телеграме.
+  // Ищем по собеседнику, тексту переписки и именам файлов: менеджер обычно
+  // помнит фразу из разговора или название присланного макета, а не имя в
+  // телеграме.
   const where: Prisma.ConversationWhereInput = q
     ? {
         OR: [
@@ -20,6 +21,11 @@ export async function GET(req: Request) {
           { username: { contains: q, mode: "insensitive" } },
           { client: { name: { contains: q, mode: "insensitive" } } },
           { messages: { some: { text: { contains: q, mode: "insensitive" } } } },
+          {
+            messages: {
+              some: { attachments: { some: { name: { contains: q, mode: "insensitive" } } } },
+            },
+          },
         ],
       }
     : {};
