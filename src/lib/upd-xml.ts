@@ -105,6 +105,38 @@ function fio(full: string): { last: string; first: string; middle: string } {
   };
 }
 
+/**
+ * Основание отгрузки схема хранит по частям: название, номер и дата. У нас это
+ * одна строка, которую человек пишет как хочет — «Договор № 17 от 03.09.2026».
+ * Разбираем что можем; номер обязателен, поэтому при его отсутствии ставим
+ * «б/н», как принято в бумажных документах.
+ */
+function parseBasis(basis: string, fallbackDate: Date): {
+  name: string;
+  number: string;
+  date: string;
+} {
+  const text = String(basis ?? "").trim();
+  if (!text) return { name: "Договор", number: "б/н", date: dateRu(fallbackDate) };
+
+  const numberMatch = text.match(/(?:№|N|#)\s*([^\s,;]+)/i);
+  const dateMatch = text.match(/(\d{2}\.\d{2}\.\d{4})/);
+
+  // Название — то, что осталось после номера и даты.
+  const name = text
+    .replace(numberMatch?.[0] ?? "", " ")
+    .replace(/от\s*\d{2}\.\d{2}\.\d{4}/i, " ")
+    .replace(dateMatch?.[0] ?? "", " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return {
+    name: name || "Договор",
+    number: numberMatch?.[1] ?? "б/н",
+    date: dateMatch?.[1] ?? dateRu(fallbackDate),
+  };
+}
+
 /** Участник: реквизиты и адрес. */
 function party(tag: string, p: UpdParty, extraAttrs = ""): string {
   const short = esc(p.name);
@@ -213,9 +245,13 @@ export function buildUpdXml(input: UpdInput): UpdXml {
     `</СвСчФакт>` +
     `<ТаблСчФакт>${rows.join("")}${totals}</ТаблСчФакт>` +
     `<СвПродПер><СвПер СодОпер="Товары переданы" ДатаПер="${dateRu(input.date)}">` +
-    (input.basis
-      ? `<ОснПер РеквНаимДок="${esc(input.basis)}" РеквДатаДок="${dateRu(input.date)}"/>`
-      : "") +
+    (() => {
+      const basis = parseBasis(input.basis, input.date);
+      return (
+        `<ОснПер РеквНаимДок="${esc(basis.name)}"` +
+        ` РеквНомерДок="${esc(basis.number)}" РеквДатаДок="${basis.date}"/>`
+      );
+    })() +
     `<СвЛицПер><РабОргПрод Должность="${esc(input.signerTitle || "Руководитель")}">` +
     signerFio +
     `</РабОргПрод></СвЛицПер></СвПер></СвПродПер>` +
