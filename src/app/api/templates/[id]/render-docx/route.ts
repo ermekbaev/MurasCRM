@@ -5,6 +5,7 @@ import { getObjectBuffer } from "@/lib/s3";
 import { buildTemplateVars, buildTemplateRows } from "@/lib/templateVars.server";
 import { swapTemplateImages, type SlotImage } from "@/lib/docxImages";
 import { DOCUMENT_VAR_KEYS } from "@/lib/documentVars";
+import { docxToPdf, PdfUnavailableError } from "@/lib/docxToPdf.server";
 
 const DOCUMENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
 
@@ -35,7 +36,7 @@ export async function POST(
     return apiError.badRequest("У шаблона нет загруженного файла .docx");
   }
 
-  const { orderId, invoiceId, clientId, withStamp } = await req
+  const { orderId, invoiceId, clientId, withStamp, format } = await req
     .json()
     .catch(() => ({}));
 
@@ -109,6 +110,36 @@ export async function POST(
     const swap = swapTemplateImages(doc.getZip(), slots);
 
     const out = doc.getZip().generate({ type: "nodebuffer", compression: "DEFLATE" });
+
+    // PDF собирается из того же заполненного DOCX — вёрстка гарантированно
+    // та же, что и в Word.
+    if (format === "pdf") {
+      try {
+        const pdf = await docxToPdf(out, template.name);
+        return new NextResponse(new Uint8Array(pdf), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(`${template.name}.pdf`)}`,
+            ...(swap.skipped.length
+              ? {
+                  "X-Image-Warning": encodeURIComponent(
+                    swap.skipped.map((x) => `${x.slot}: ${x.reason}`).join("; "),
+                  ),
+                }
+              : {}),
+          },
+        });
+      } catch (e) {
+        // Не молчим и не подсовываем DOCX вместо PDF: человек просил PDF.
+        const msg =
+          e instanceof PdfUnavailableError
+            ? e.message
+            : "Не удалось собрать PDF — скачайте документ в Word";
+        return NextResponse.json({ error: msg }, { status: 503 });
+      }
+    }
+
     const name = `${template.name}.docx`;
 
     return new NextResponse(new Uint8Array(out), {

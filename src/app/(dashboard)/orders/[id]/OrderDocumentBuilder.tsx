@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
-import { FileSignature, Copy, Check, Download, Paperclip } from "lucide-react";
+import { FileSignature, Copy, Check, Download, Paperclip, Printer } from "lucide-react";
 
 interface Template {
   id: string;
@@ -66,14 +66,18 @@ export default function OrderDocumentBuilder({
    * DOCX-бланк заполняется на сервере и сразу отдаётся файлом: показывать
    * его текстом бессмысленно, вся ценность в сохранённой вёрстке.
    */
-  async function handleRenderDocx() {
+  /**
+   * Заполненный бланк: DOCX скачиваем, PDF либо скачиваем, либо сразу
+   * открываем окно печати — печатать .docx браузер не умеет.
+   */
+  async function handleRenderDocx(mode: "docx" | "pdf" | "print" = "docx") {
     setRendering(true);
     setError(null);
     try {
       const res = await fetch(`/api/templates/${templateId}/render-docx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, withStamp }),
+        body: JSON.stringify({ orderId, withStamp, format: mode === "docx" ? "docx" : "pdf" }),
       });
       if (!res.ok) {
         const b = await res.json().catch(() => null);
@@ -84,9 +88,25 @@ export default function OrderDocumentBuilder({
       if (warning) setError(decodeURIComponent(warning));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
+
+      if (mode === "print") {
+        // Печать идёт из встроенного просмотрщика PDF: открываем во вкладке
+        // и вызываем печать, когда документ отрисован.
+        const w = window.open(url, "_blank");
+        if (!w) {
+          setError("Браузер заблокировал окно — разрешите всплывающие окна");
+          URL.revokeObjectURL(url);
+          return;
+        }
+        w.addEventListener("load", () => w.print(), { once: true });
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        return;
+      }
+
+      const ext = mode === "pdf" ? "pdf" : "docx";
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${selected?.name ?? "Документ"} — ${orderNumber}.docx`;
+      a.download = `${selected?.name ?? "Документ"} — ${orderNumber}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -100,7 +120,7 @@ export default function OrderDocumentBuilder({
 
   async function handleRender() {
     if (!templateId) return;
-    if (selected?.kind === "DOCX") return handleRenderDocx();
+    if (selected?.kind === "DOCX") return handleRenderDocx("docx");
     setRendering(true);
     setError(null);
     try {
@@ -251,6 +271,24 @@ export default function OrderDocumentBuilder({
             <Button onClick={handleRender} loading={rendering}>
               <FileSignature size={16} /> Сформировать
             </Button>
+            {selected?.kind === "DOCX" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => handleRenderDocx("pdf")}
+                  loading={rendering}
+                >
+                  <Download size={16} /> PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleRenderDocx("print")}
+                  loading={rendering}
+                >
+                  <Printer size={16} /> Печать
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </Card>
