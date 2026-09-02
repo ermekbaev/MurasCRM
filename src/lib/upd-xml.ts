@@ -72,12 +72,31 @@ function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 function money(value: number): string {
   return value.toFixed(2);
 }
 
 function qty(value: number): string {
   return value.toFixed(3);
+}
+
+/**
+ * Цена за единицу без налога — графа 4 счёта-фактуры.
+ *
+ * У нас цены хранятся с НДС, поэтому цену без налога получаем делением суммы
+ * строки на количество. Округлять до копеек нельзя: тогда цена, умноженная на
+ * количество, не сойдётся со стоимостью строки. Формат разрешает до 11 знаков
+ * после запятой — берём столько, сколько нужно, лишние нули убираем.
+ */
+function unitPrice(withoutVat: number, quantity: number): string {
+  if (!quantity) return "0.00";
+  const exact = (withoutVat / quantity).toFixed(11);
+  const trimmed = exact.replace(/(\.\d\d)(\d*?)0+$/, "$1$2");
+  return trimmed.endsWith(".") ? `${trimmed}00` : trimmed;
 }
 
 function dateRu(d: Date): string {
@@ -183,11 +202,19 @@ export function buildUpdXml(input: UpdInput): UpdXml {
   const func = withVat ? "СЧФДОП" : "ДОП";
   const rate = withVat ? `${String(input.vatRate).replace(".", ",")}%` : "без НДС";
 
-  const rows = input.items.map((item, index) => {
-    const total = item.total;
-    // Цены в системе хранятся с НДС, поэтому налог выделяем из суммы.
-    const vat = withVat ? (total * input.vatRate) / (100 + input.vatRate) : 0;
-    const withoutVat = total - vat;
+  // Считаем построчно и с округлением на каждой строке, а итог складываем из
+  // уже округлённых значений. Если считать итог заново от общей суммы, он
+  // разойдётся со строками на копейки, и это первое, на чём спотыкается
+  // проверка у оператора и в бухгалтерии.
+  const lines = input.items.map((item) => {
+    const total = round2(item.total);
+    const vat = withVat ? round2((total * input.vatRate) / (100 + input.vatRate)) : 0;
+    // Вычитаем, а не считаем отдельно: так строка всегда сходится сама с собой.
+    const withoutVat = round2(total - vat);
+    return { item, total, vat, withoutVat };
+  });
+
+  const rows = lines.map(({ item, total, vat, withoutVat }, index) => {
     const okei = OKEI[item.unit.toLowerCase().trim()];
 
     const tax = withVat
@@ -197,7 +224,8 @@ export function buildUpdXml(input: UpdInput): UpdXml {
     return (
       `<СведТов НомСтр="${index + 1}" НаимТов="${esc(item.name)}"` +
       (okei ? ` ОКЕИ_Тов="${okei}"` : "") +
-      ` НаимЕдИзм="${esc(item.unit)}" КолТов="${qty(item.qty)}" ЦенаТов="${money(item.price)}"` +
+      ` НаимЕдИзм="${esc(item.unit)}" КолТов="${qty(item.qty)}"` +
+      ` ЦенаТов="${unitPrice(withoutVat, item.qty)}"` +
       ` СтТовБезНДС="${money(withoutVat)}" НалСт="${rate}" СтТовУчНал="${money(total)}">` +
       `<Акциз><БезАкциз>без акциза</БезАкциз></Акциз>` +
       tax +
@@ -205,9 +233,9 @@ export function buildUpdXml(input: UpdInput): UpdXml {
     );
   });
 
-  const grandTotal = input.items.reduce((sum, i) => sum + i.total, 0);
-  const grandVat = withVat ? (grandTotal * input.vatRate) / (100 + input.vatRate) : 0;
-  const grandWithout = grandTotal - grandVat;
+  const grandTotal = round2(lines.reduce((sum, l) => sum + l.total, 0));
+  const grandVat = round2(lines.reduce((sum, l) => sum + l.vat, 0));
+  const grandWithout = round2(lines.reduce((sum, l) => sum + l.withoutVat, 0));
 
   const totals =
     `<ВсегоОпл СтТовБезНДСВсего="${money(grandWithout)}" СтТовУчНалВсего="${money(grandTotal)}">` +
