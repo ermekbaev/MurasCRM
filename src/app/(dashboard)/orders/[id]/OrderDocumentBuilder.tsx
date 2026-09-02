@@ -35,6 +35,7 @@ export default function OrderDocumentBuilder({
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateId, setTemplateId] = useState("");
   const [rendering, setRendering] = useState(false);
+  const [withStamp, setWithStamp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [isOpen, setOpen] = useState(false);
@@ -72,13 +73,15 @@ export default function OrderDocumentBuilder({
       const res = await fetch(`/api/templates/${templateId}/render-docx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({ orderId, withStamp }),
       });
       if (!res.ok) {
         const b = await res.json().catch(() => null);
         setError(typeof b?.error === "string" ? b.error : "Не удалось заполнить бланк");
         return;
       }
+      const warning = res.headers.get("X-Image-Warning");
+      if (warning) setError(decodeURIComponent(warning));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -236,6 +239,15 @@ export default function OrderDocumentBuilder({
                 </option>
               ))}
             </select>
+            <label className="flex items-center gap-1.5 whitespace-nowrap text-xs text-fg-muted">
+              <input
+                type="checkbox"
+                checked={withStamp}
+                onChange={(e) => setWithStamp(e.target.checked)}
+                className="rounded border-line"
+              />
+              С печатью и подписью
+            </label>
             <Button onClick={handleRender} loading={rendering}>
               <FileSignature size={16} /> Сформировать
             </Button>

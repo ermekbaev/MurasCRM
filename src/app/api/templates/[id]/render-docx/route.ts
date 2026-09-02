@@ -3,6 +3,7 @@ import { requireAuth, apiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { getObjectBuffer } from "@/lib/s3";
 import { buildTemplateVars, buildTemplateRows } from "@/lib/templateVars.server";
+import { swapTemplateImages, type SlotImage } from "@/lib/docxImages";
 
 const DOCUMENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
 
@@ -33,7 +34,9 @@ export async function POST(
     return apiError.badRequest("У шаблона нет загруженного файла .docx");
   }
 
-  const { orderId, invoiceId, clientId } = await req.json().catch(() => ({}));
+  const { orderId, invoiceId, clientId, withStamp } = await req
+    .json()
+    .catch(() => ({}));
 
   const [vars, items, file] = await Promise.all([
     buildTemplateVars({ orderId, invoiceId, clientId }),
@@ -75,6 +78,28 @@ export async function POST(
 
     doc.render({ ...vars, ...flags, items });
 
+    // Печать и подпись подставляем после заполнения текста: заглушки в
+    // бланке помечены в «Замещающем тексте» словами stamp и signature.
+    // Без галки они гасятся прозрачным пикселем — закрывающие документы
+    // часто печатают и подписывают от руки.
+    const slots: SlotImage[] = [];
+    for (const [slot, key] of [
+      ["stamp", settings?.stampKey],
+      ["signature", settings?.signatureKey],
+    ] as const) {
+      if (!withStamp || !key) {
+        slots.push({ slot, data: null, ext: null });
+        continue;
+      }
+      const data = await getObjectBuffer(key).catch(() => null);
+      slots.push({
+        slot,
+        data,
+        ext: key.split(".").pop()?.toLowerCase() ?? null,
+      });
+    }
+    const swap = swapTemplateImages(doc.getZip(), slots);
+
     const out = doc.getZip().generate({ type: "nodebuffer", compression: "DEFLATE" });
     const name = `${template.name}.docx`;
 
@@ -82,6 +107,15 @@ export async function POST(
       status: 200,
       headers: {
         "Content-Type": DOCX_MIME,
+        // Клиент показывает это предупреждение: тело — сам файл, места для
+        // структурированного ответа нет.
+        ...(swap.skipped.length
+          ? {
+              "X-Image-Warning": encodeURIComponent(
+                swap.skipped.map((x) => `${x.slot}: ${x.reason}`).join("; "),
+              ),
+            }
+          : {}),
         "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
       },
     });
