@@ -10,7 +10,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Pagination from "@/components/ui/Pagination";
-import { Plus, Search, FileText, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { Plus, Search, FileText, CheckCircle, XCircle, Trash2, Download } from "lucide-react";
 
 const LIMIT = 50;
 
@@ -40,6 +40,11 @@ interface Invoice {
   order: { id: string; number: string } | null;
   items: InvoiceItem[];
 }
+
+/** Поля настроек, которые нужны генератору PDF. */
+type CompanyForPdf = Parameters<
+  typeof import("@/lib/invoice-pdf").generateInvoicePDF
+>[1];
 
 interface Props {
   clients: { id: string; name: string }[];
@@ -91,6 +96,10 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
   // Работа с НДС настраивается на уровне компании: если выключена, поле ставки
   // в счёте не показываем и не заполняем — большинству студий на УСН оно мешает.
   const [vatSettings, setVatSettings] = useState({ worksWithVat: false, defaultVatRate: 0 });
+  // Те же настройки целиком — из них PDF берёт реквизиты, печать и подпись,
+  // чтобы счёт можно было скачать прямо из списка, не открывая документ.
+  const [company, setCompany] = useState<CompanyForPdf | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => (r.ok ? r.json() : null))
@@ -99,10 +108,21 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
         const works = Boolean(d.worksWithVat);
         const rate = Number(d.defaultVatRate ?? 0);
         setVatSettings({ worksWithVat: works, defaultVatRate: rate });
+        setCompany(d as CompanyForPdf);
         setForm((f) => ({ ...f, vatRate: works ? rate : 0 }));
       })
       .catch(() => {});
   }, []);
+
+  async function downloadPdf(invoice: Invoice) {
+    setDownloadingId(invoice.id);
+    try {
+      const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
+      await generateInvoicePDF(invoice, company);
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   function handleSearch(value: string) {
     setSearch(value);
@@ -281,7 +301,12 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
                   <tr key={invoice.id} className="hover:bg-surface-sunken dark:hover:bg-slate-700/50 transition-colors">
                     <td className="px-5 py-3">
                       <div>
-                        <p className="font-medium text-fg">{invoice.number}</p>
+                        <Link
+                          href={`/invoices/${invoice.id}`}
+                          className="font-medium text-fg hover:text-accent"
+                        >
+                          {invoice.number}
+                        </Link>
                         {invoice.order && (
                           <Link href={`/orders/${invoice.order.id}`} className="text-xs text-accent hover:underline">
                             {invoice.order.number}
@@ -313,9 +338,23 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
                       </button>
                     </td>
                     <td className="px-5 py-3">
-                      <Link href={`/invoices/${invoice.id}`} className="text-xs text-accent hover:underline">
-                        PDF
-                      </Link>
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={`/invoices/${invoice.id}`}
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent-soft"
+                          title="Открыть счёт: просмотр, печать, скачивание"
+                        >
+                          <FileText size={14} /> Открыть
+                        </Link>
+                        <button
+                          onClick={() => downloadPdf(invoice)}
+                          disabled={downloadingId === invoice.id}
+                          className="rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg disabled:opacity-50"
+                          title="Скачать PDF для отправки клиенту"
+                        >
+                          <Download size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -317,10 +317,10 @@ export default function ActsPage() {
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/acts/${act.id}`}
-                          className="p-1.5 rounded-lg text-accent hover:bg-accent-soft transition-colors"
-                          title="Печать / PDF"
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent-soft"
+                          title="Открыть акт: просмотр, печать, скачивание"
                         >
-                          <FileText size={14} />
+                          <FileText size={14} /> Открыть
                         </Link>
                         <button
                           onClick={() => openEdit(act)}

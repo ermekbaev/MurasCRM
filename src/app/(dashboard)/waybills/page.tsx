@@ -249,13 +249,22 @@ export default function WaybillsPage() {
                       {formatCurrency(w.total)}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => handleDelete(w.id)}
-                        title="Удалить"
-                        className="rounded p-1.5 text-fg-subtle opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={`/waybills/${w.id}`}
+                          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent-soft"
+                          title="Открыть накладную: просмотр, печать, скачивание"
+                        >
+                          <FileText size={14} /> Открыть
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(w.id)}
+                          title="Удалить"
+                          className="rounded p-1.5 text-fg-subtle opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
