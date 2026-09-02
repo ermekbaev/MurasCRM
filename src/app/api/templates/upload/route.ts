@@ -13,7 +13,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const LOOP_KEYS = new Set([
   "items", "n", "name", "qty", "unit", "okei", "price", "total",
   "sum_no_vat", "vat", "discount",
-  "has_vat", "has_items", "has_stamp",
+  "has_vat", "has_items", "has_stamp", "logo", "stamp", "signature",
 ]);
 
 /**

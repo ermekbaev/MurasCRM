@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getObjectBuffer } from "@/lib/s3";
 import { buildTemplateVars, buildTemplateRows } from "@/lib/templateVars.server";
 import { swapTemplateImages, type SlotImage } from "@/lib/docxImages";
+import { DOCUMENT_VAR_KEYS } from "@/lib/documentVars";
 
 const DOCUMENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
 
@@ -61,10 +62,14 @@ export async function POST(
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
-      // Переменную, которой нет в данных, оставляем видимой в документе —
-      // так опечатка в шаблоне заметна сразу, а не превращается в пустоту.
-      nullGetter: (part: { value?: string }) =>
-        part.value ? `{${part.value}}` : "",
+      // Известная переменная без данных в этом контексте (например, номер
+      // счёта, когда документ делают из заявки) — просто пусто. Видимой
+      // оставляем только незнакомую: это опечатка в шаблоне.
+      nullGetter: (part: { value?: string }) => {
+        const key = part.value;
+        if (!key) return "";
+        return DOCUMENT_VAR_KEYS.includes(key) ? "" : `{${key}}`;
+      },
     });
 
     // Флаги для условных блоков в бланке: {#has_vat}…{/has_vat}.
@@ -86,8 +91,11 @@ export async function POST(
     for (const [slot, key] of [
       ["stamp", settings?.stampKey],
       ["signature", settings?.signatureKey],
+      // Логотип — часть бланка, а не подпись: ставим его всегда,
+      // галка управляет только печатью и подписью.
+      ["logo", settings?.logoKey],
     ] as const) {
-      if (!withStamp || !key) {
+      if ((slot !== "logo" && !withStamp) || !key) {
         slots.push({ slot, data: null, ext: null });
         continue;
       }

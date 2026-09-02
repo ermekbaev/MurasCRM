@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth, apiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
-import type { DocumentVarKey } from "@/lib/documentVars";
+import { DOCUMENT_VAR_KEYS, type DocumentVarKey } from "@/lib/documentVars";
 import { buildTemplateVars } from "@/lib/templateVars.server";
 
 const DOCUMENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
@@ -9,9 +9,10 @@ const DOCUMENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
 function substitute(body: string, vars: Partial<Record<DocumentVarKey, string>>): string {
   return body.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
     const name = key.trim() as DocumentVarKey;
-    // Неизвестную переменную оставляем как есть — так в документе видно
-    // опечатку, а не пустое место.
-    return vars[name] ?? `{{${name}}}`;
+    if (vars[name] !== undefined) return vars[name] as string;
+    // Известная переменная без данных в этом контексте — пусто. Видимой
+    // оставляем только незнакомую: это опечатка в шаблоне.
+    return DOCUMENT_VAR_KEYS.includes(name) ? "" : `{{${name}}}`;
   });
 }
 
