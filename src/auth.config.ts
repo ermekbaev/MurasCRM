@@ -75,12 +75,14 @@ export const authConfig = {
       const pathname = nextUrl.pathname;
 
       // Always allow public paths
-      // Вебхук Telegram приходит без сессии и должен попадать в обработчик,
-      // а не на страницу входа. Он защищён своим секретом в заголовке.
+      // Вебхуки мессенджеров приходят без сессии и должны попадать в обработчик,
+      // а не на страницу входа. Каждый защищён по-своему: Telegram — секретом в
+      // заголовке, WhatsApp — подписью тела запроса.
       if (
         pathname.startsWith("/login") ||
         pathname.startsWith("/api/auth") ||
-        pathname.startsWith("/api/telegram/webhook")
+        pathname.startsWith("/api/telegram/webhook") ||
+        pathname.startsWith("/api/whatsapp/webhook")
       ) {
         return true;
       }

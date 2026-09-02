@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { putObject } from "@/lib/s3";
 import { CHAT_ROLES } from "@/lib/chat-roles";
 import { sendText, sendFile, safeFileName } from "@/lib/telegram-chat";
+import * as whatsapp from "@/lib/whatsapp";
+import { whatsappWindow } from "@/lib/chat-window";
 import { emitChatEvent } from "@/lib/chat-events";
 import { randomUUID } from "crypto";
 import type { AttachmentKind } from "@prisma/client";
@@ -37,9 +39,6 @@ export async function POST(
 
   const conversation = await prisma.conversation.findUnique({ where: { id } });
   if (!conversation) return apiError.notFound();
-  if (conversation.channel !== "TELEGRAM") {
-    return apiError.badRequest("Отправка поддерживается только для Telegram");
-  }
 
   let text = "";
   let upload: File | null = null;
@@ -64,12 +63,42 @@ export async function POST(
     );
   }
 
+  // Окно WhatsApp проверяем до отправки: иначе менеджер набрал бы ответ и
+  // получил отказ Meta, ничего не поняв.
+  if (conversation.channel === "WHATSAPP") {
+    const lastInbound = await prisma.message.findFirst({
+      where: { conversationId: id, direction: "IN" },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+    const window = whatsappWindow(lastInbound?.createdAt ?? null);
+    if (!window.open) {
+      return apiError.badRequest(
+        "Прошло больше 24 часов с последнего сообщения клиента. " +
+          "WhatsApp разрешает писать первым только заранее одобренными шаблонами — " +
+          "напишите клиенту в Telegram или позвоните.",
+      );
+    }
+  }
+
   const buffer = upload ? Buffer.from(await upload.arrayBuffer()) : null;
   const mimeType = upload?.type || "application/octet-stream";
+  const channelName = conversation.channel === "WHATSAPP" ? "WhatsApp" : "Telegram";
 
   // Порядок важен: не записываем в историю то, что не ушло собеседнику.
   try {
-    if (buffer && upload) {
+    if (conversation.channel === "WHATSAPP") {
+      if (buffer && upload) {
+        await whatsapp.sendFile(
+          conversation.externalId,
+          { buffer, name: upload.name, mimeType },
+          text || undefined,
+          conversation.accountId,
+        );
+      } else {
+        await whatsapp.sendText(conversation.externalId, text, conversation.accountId);
+      }
+    } else if (buffer && upload) {
       await sendFile(
         conversation.externalId,
         { buffer, name: upload.name, mimeType },
@@ -84,8 +113,8 @@ export async function POST(
     return NextResponse.json(
       {
         error: reason
-          ? `Telegram не принял сообщение: ${reason}`
-          : "Telegram не принял сообщение — возможно, клиент заблокировал бота",
+          ? `${channelName} не принял сообщение: ${reason}`
+          : `${channelName} не принял сообщение — возможно, клиент заблокировал отправителя`,
       },
       { status: 502 },
     );

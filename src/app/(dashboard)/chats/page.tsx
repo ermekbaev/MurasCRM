@@ -37,8 +37,11 @@ interface Attachment {
   failReason: string | null;
 }
 
+type Channel = "TELEGRAM" | "WHATSAPP";
+
 interface ConversationRow {
   id: string;
+  channel: Channel;
   title: string;
   username: string | null;
   unread: number;
@@ -59,6 +62,8 @@ interface Message {
 
 interface Thread extends ConversationRow {
   messages: Message[];
+  /** Для WhatsApp — можно ли сейчас писать свободным текстом. */
+  window: { open: boolean; expiresAt: string | null };
 }
 
 interface QuickReply {
@@ -68,6 +73,35 @@ interface QuickReply {
 }
 
 const MAX_UPLOAD = 20 * 1024 * 1024;
+
+const CHANNEL_LABEL: Record<Channel, string> = {
+  TELEGRAM: "Telegram",
+  WHATSAPP: "WhatsApp",
+};
+
+/** Метка канала: диалоги из разных мессенджеров лежат в одном списке. */
+function ChannelBadge({ channel }: { channel: Channel }) {
+  return (
+    <span
+      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${
+        channel === "WHATSAPP"
+          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+          : "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300"
+      }`}
+    >
+      {CHANNEL_LABEL[channel]}
+    </span>
+  );
+}
+
+/** Подпись раздела: сколько диалогов и из каких мессенджеров. */
+function channelSummary(list: ConversationRow[]): string {
+  const used = (Object.keys(CHANNEL_LABEL) as Channel[]).filter((c) =>
+    list.some((row) => row.channel === c),
+  );
+  const channels = used.length > 0 ? used.map((c) => CHANNEL_LABEL[c]) : ["Telegram"];
+  return `${list.length} диалогов · ${channels.join(", ")}`;
+}
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return "";
@@ -294,13 +328,17 @@ export default function ChatsPage() {
   if (loading) return <div className="p-6 text-fg-subtle">Загрузка...</div>;
 
   const nothingFound = list.length === 0 && query.trim().length > 0;
+  // Окно есть только у WhatsApp: в Telegram отвечать можно когда угодно.
+  const windowClosed = Boolean(
+    thread && thread.channel === "WHATSAPP" && !thread.window?.open,
+  );
 
   return (
     <div className="space-y-5 p-4 sm:p-6">
       <PageHeader
         icon={<MessagesSquare size={18} />}
         title="Переписка"
-        subtitle={`${list.length} диалогов · Telegram`}
+        subtitle={channelSummary(list)}
         actions={
           <Button
             variant="outline"
@@ -356,6 +394,7 @@ export default function ChatsPage() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-medium text-fg">{c.title}</span>
+                    <ChannelBadge channel={c.channel} />
                     {c.unread > 0 && (
                       <span className="shrink-0 rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">
                         {c.unread}
@@ -396,8 +435,9 @@ export default function ChatsPage() {
               <>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft px-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-fg">
+                    <p className="flex items-center gap-2 truncate text-sm font-semibold text-fg">
                       {thread.title}
+                      <ChannelBadge channel={thread.channel} />
                       {thread.username && (
                         <span className="ml-2 text-xs font-normal text-fg-subtle">
                           {thread.username}
@@ -467,6 +507,21 @@ export default function ChatsPage() {
                   </p>
                 )}
 
+                {windowClosed ? (
+                  <div className="border-t border-line-soft px-4 py-3">
+                    <p className="flex items-start gap-2 text-xs text-fg-muted">
+                      <AlertCircle size={14} className="mt-px shrink-0 text-amber-500" />
+                      <span>
+                        Прошло больше 24 часов с последнего сообщения клиента.
+                        WhatsApp разрешает писать первым только заранее одобренными
+                        шаблонами — они платные и согласуются в Meta. Напишите клиенту
+                        в Telegram или позвоните: как только он ответит здесь, переписка
+                        снова откроется на сутки.
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <>
                 {showQuick && quickReplies.length > 0 && (
                   <div className="max-h-40 overflow-y-auto border-t border-line-soft">
                     {quickReplies.map((r) => (
@@ -549,6 +604,8 @@ export default function ChatsPage() {
                     <Send size={16} />
                   </Button>
                 </div>
+                  </>
+                )}
               </>
             )}
 

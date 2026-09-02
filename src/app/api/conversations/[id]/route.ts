@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth, apiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { CHAT_ROLES, CHAT_LINK_ROLES } from "@/lib/chat-roles";
+import { whatsappWindow } from "@/lib/chat-window";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -48,8 +49,19 @@ export async function GET(_req: Request, { params }: Params) {
     await prisma.conversation.update({ where: { id }, data: { unread: 0 } });
   }
 
+  // Для WhatsApp отдаём состояние окна: страница должна объяснить запрет
+  // заранее, а не показывать отказ Meta после набранного ответа.
+  const lastInbound = [...conversation.messages]
+    .reverse()
+    .find((m) => m.direction === "IN");
+  const window =
+    conversation.channel === "WHATSAPP"
+      ? whatsappWindow(lastInbound?.createdAt ?? null)
+      : { open: true, expiresAt: null };
+
   return NextResponse.json({
     ...conversation,
+    window,
     unread: 0,
     messages: conversation.messages.map((m) => ({
       ...m,
