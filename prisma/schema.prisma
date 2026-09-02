@@ -176,6 +176,7 @@ model Client {
   invoices Invoice[]
   payments Payment[]
   contacts ClientContact[]
+  conversations Conversation[]
 
   waybills           Waybill[] @relation("WaybillClient")
   waybillsAsPayer    Waybill[] @relation("WaybillPayer")
@@ -251,6 +252,7 @@ model Order {
   invoices    Invoice[]
   acts        Act[]
   waybills    Waybill[]
+  conversations Conversation[]
   defects     DefectRecord[]
   payments    Payment[]
 
@@ -721,7 +723,67 @@ model ClientSourceOption {
   updatedAt DateTime @updatedAt
 }
 
-// ─── CompanySettings ──────────────────────────────────────────────────────────
+
+// ─── Переписка с клиентами ────────────────────────────────────────────────────
+
+/// Канал связи. Заложен на вырост: WhatsApp подключается сюда же.
+enum MessageChannel {
+  TELEGRAM
+  WHATSAPP
+}
+
+enum MessageDirection {
+  IN
+  OUT
+}
+
+model Conversation {
+  id        String         @id @default(cuid())
+  channel   MessageChannel @default(TELEGRAM)
+  /// Идентификатор чата на стороне мессенджера.
+  externalId String
+  /// Как собеседник представлен в мессенджере — имя и @username.
+  title     String
+  username  String?
+  phone     String?
+  /// Привязка к клиенту: сначала пусто, ставится вручную или по совпадению.
+  clientId  String?
+  /// Заявка, к которой привязали переписку.
+  orderId   String?
+  lastMessageAt DateTime @default(now())
+  /// Непрочитанные входящие — для счётчика в меню.
+  unread    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client   Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  messages Message[]
+
+  @@unique([channel, externalId])
+  @@index([clientId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String           @id @default(cuid())
+  conversationId String
+  direction      MessageDirection
+  text           String           @db.Text
+  /// Идентификатор сообщения в мессенджере — защищает от повторной записи.
+  externalId     String?
+  /// Кто отправил с нашей стороны.
+  userId         String?
+  userName       String?
+  createdAt      DateTime         @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@unique([conversationId, externalId])
+}
+
+// ─── CompanySettings ─────────────────────────────────────────────────────────
 
 model CompanySettings {
   id               String   @id @default(cuid())

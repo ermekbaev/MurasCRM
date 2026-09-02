@@ -8,6 +8,7 @@ const ROLE_ROUTES: Record<Role, string[]> = {
     "/dashboard",
     "/orders",
     "/tasks",
+    "/chats",
     "/clients",
     "/invoices",
     "/acts",
@@ -21,13 +22,14 @@ const ROLE_ROUTES: Record<Role, string[]> = {
     "/settings/order-types",
     "/settings/task-columns",
   ],
-  DESIGNER: ["/dashboard", "/tasks", "/files"],
+  DESIGNER: ["/dashboard", "/tasks", "/files", "/chats"],
   OPERATOR: ["/dashboard", "/tasks", "/defects"],
   ACCOUNTANT: [
     "/dashboard",
     "/invoices",
     "/acts",
     "/waybills",
+    "/chats",
     "/analytics",
     "/settings/templates",
   ],
@@ -72,7 +74,13 @@ export const authConfig = {
       const pathname = nextUrl.pathname;
 
       // Always allow public paths
-      if (pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
+      // Вебхук Telegram приходит без сессии и должен попадать в обработчик,
+      // а не на страницу входа. Он защищён своим секретом в заголовке.
+      if (
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/api/auth") ||
+        pathname.startsWith("/api/telegram/webhook")
+      ) {
         return true;
       }
 
