@@ -10,7 +10,11 @@ const DOCX_MIME =
 const MAX_BYTES = 10 * 1024 * 1024;
 
 /** Служебные имена docxtemplater — это не переменные шаблона. */
-const LOOP_KEYS = new Set(["items", "n", "name", "qty", "unit", "price", "total"]);
+const LOOP_KEYS = new Set([
+  "items", "n", "name", "qty", "unit", "okei", "price", "total",
+  "sum_no_vat", "vat", "discount",
+  "has_vat", "has_items", "has_stamp",
+]);
 
 /**
  * Загрузка DOCX-бланка через наш сервер.

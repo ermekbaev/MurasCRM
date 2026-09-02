@@ -64,7 +64,16 @@ export async function POST(
         part.value ? `{${part.value}}` : "",
     });
 
-    doc.render({ ...vars, items });
+    // Флаги для условных блоков в бланке: {#has_vat}…{/has_vat}.
+    // docxtemplater покажет содержимое, только если значение истинно.
+    const settings = await prisma.companySettings.findFirst();
+    const flags = {
+      has_vat: Boolean(settings?.worksWithVat),
+      has_items: items.length > 0,
+      has_stamp: Boolean(settings?.stampKey),
+    };
+
+    doc.render({ ...vars, ...flags, items });
 
     const out = doc.getZip().generate({ type: "nodebuffer", compression: "DEFLATE" });
     const name = `${template.name}.docx`;

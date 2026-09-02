@@ -37,7 +37,7 @@ export default function TemplatesPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", type: "INVOICE", kind: "TEXT", body: "" });
+  const [form, setForm] = useState({ name: "", type: "INVOICE", kind: "TEXT", body: "", isDefault: false });
   const [docxFile, setDocxFile] = useState<File | null>(null);
   const [docxName, setDocxName] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -177,7 +177,7 @@ export default function TemplatesPage() {
       }
       setModalOpen(false);
       setEditingTemplate(null);
-      setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "" });
+      setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "", isDefault: false });
       setDocxFile(null);
       setDocxName(null);
       setUnknownVars([]);
@@ -187,7 +187,7 @@ export default function TemplatesPage() {
 
   function openEdit(t: Template) {
     setEditingTemplate(t);
-    setForm({ name: t.name, type: t.type, kind: t.kind || "TEXT", body: t.body });
+    setForm({ name: t.name, type: t.type, kind: t.kind || "TEXT", body: t.body, isDefault: t.isDefault });
     setDocxFile(null);
     setDocxName(t.fileName);
     setSaveError(null);
@@ -209,7 +209,7 @@ export default function TemplatesPage() {
         title="Шаблоны договоров и КП"
         subtitle="Свой DOCX-бланк или текст — данные подставляются из заявки, счёта и настроек компании"
         actions={
-          <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "" }); setDocxFile(null); setDocxName(null); setSaveError(null); setModalOpen(true); }}>
+          <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "", isDefault: false }); setDocxFile(null); setDocxName(null); setSaveError(null); setModalOpen(true); }}>
             <Plus size={16} /> Новый шаблон
           </Button>
         }
@@ -395,6 +395,18 @@ export default function TemplatesPage() {
                 </code>
               </p>
               <p className="text-xs text-fg-subtle">
+                В строке доступны также <code className="rounded bg-surface px-1 font-mono">{"{okei}"}</code>,{" "}
+                <code className="rounded bg-surface px-1 font-mono">{"{sum_no_vat}"}</code>,{" "}
+                <code className="rounded bg-surface px-1 font-mono">{"{vat}"}</code>,{" "}
+                <code className="rounded bg-surface px-1 font-mono">{"{discount}"}</code> — для бланков с графами НДС.
+              </p>
+              <p className="text-xs text-fg-subtle">
+                Условные блоки:{" "}
+                <code className="rounded bg-surface px-1 font-mono">{"{#has_vat}…{/has_vat}"}</code>{" "}
+                покажет содержимое, только если компания работает с НДС.
+                Так же есть <code className="rounded bg-surface px-1 font-mono">{"{#has_items}"}</code>.
+              </p>
+              <p className="text-xs text-fg-subtle">
                 Печать и подпись вставьте картинкой прямо в бланк — они останутся на месте.
               </p>
               <input
@@ -460,6 +472,16 @@ export default function TemplatesPage() {
               ))}
             </div>
           </details>
+
+          <label className="flex items-center gap-2 text-sm text-fg-muted">
+            <input
+              type="checkbox"
+              checked={form.isDefault}
+              onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
+              className="rounded border-line"
+            />
+            Предлагать этот шаблон первым в заявке
+          </label>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>Отмена</Button>

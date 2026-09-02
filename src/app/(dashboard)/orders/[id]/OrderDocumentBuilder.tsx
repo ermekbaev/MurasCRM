@@ -11,6 +11,7 @@ interface Template {
   name: string;
   type: string;
   kind: string;
+  isDefault: boolean;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -50,7 +51,10 @@ export default function OrderDocumentBuilder({
       .then((data: Template[]) => {
         const list = Array.isArray(data) ? data : [];
         setTemplates(list);
-        if (list.length > 0) setTemplateId((prev) => prev || list[0].id);
+        // Отмеченный по умолчанию выбирается сам — иначе каждый раз
+        // приходится искать нужный в списке.
+        const preferred = list.find((t) => t.isDefault) ?? list[0];
+        if (preferred) setTemplateId((prev) => prev || preferred.id);
       })
       .catch(() => {});
   }, []);
@@ -228,7 +232,7 @@ export default function OrderDocumentBuilder({
             >
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name} · {TYPE_LABELS[t.type] || t.type}{t.kind === "DOCX" ? " · DOCX" : ""}
+                  {t.name} · {TYPE_LABELS[t.type] || t.type}{t.kind === "DOCX" ? " · DOCX" : ""}{t.isDefault ? " ★" : ""}
                 </option>
               ))}
             </select>

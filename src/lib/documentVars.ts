@@ -65,6 +65,11 @@ export const DOCUMENT_VAR_GROUPS = [
       { key: "order_status", label: "Статус", sample: "В работе" },
       { key: "order_deadline", label: "Срок сдачи", sample: "02.09.2026" },
       { key: "order_amount", label: "Сумма заявки", sample: "18 000,00" },
+      {
+        key: "order_amount_in_words",
+        label: "Сумма заявки прописью",
+        sample: "Восемнадцать тысяч рублей 00 копеек",
+      },
       { key: "payment_status", label: "Статус оплаты", sample: "Не оплачен" },
       { key: "manager_name", label: "Менеджер", sample: "Сергеев С. С." },
       {
@@ -86,6 +91,11 @@ export const DOCUMENT_VAR_GROUPS = [
       { key: "vat", label: "Сумма НДС", sample: "3 000,00" },
       { key: "vat_rate", label: "Ставка НДС", sample: "20" },
       { key: "total", label: "Итого", sample: "18 000,00" },
+      {
+        key: "total_in_words",
+        label: "Итого прописью",
+        sample: "Восемнадцать тысяч рублей 00 копеек",
+      },
     ],
   },
 ] as const satisfies readonly DocumentVarGroup[];

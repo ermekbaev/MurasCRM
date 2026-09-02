@@ -1,6 +1,7 @@
 // Только для серверных модулей: тянет prisma.
 import { prisma } from "@/lib/prisma";
 import type { DocumentVarKey } from "@/lib/documentVars";
+import { numberToWords } from "@/lib/numberToWords";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   NEW: "Новая", IN_PROGRESS: "В работе", REVIEW: "На проверке",
@@ -30,9 +31,29 @@ export interface TemplateRow {
   name: string;
   qty: string;
   unit: string;
+  /** Код единицы измерения по ОКЕИ — графа унифицированных бланков. */
+  okei: string;
   price: string;
   total: string;
+  /** Сумма строки без НДС и сам налог — для бланков с графами НДС. */
+  sum_no_vat: string;
+  vat: string;
+  discount: string;
 }
+
+/** Коды ОКЕИ для ходовых единиц. Неизвестные оставляем пустыми. */
+const OKEI: Record<string, string> = {
+  "шт": "796", "шт.": "796", "штука": "796",
+  "компл": "839", "компл.": "839", "комплект": "839",
+  "упак": "778", "упак.": "778", "уп": "778", "уп.": "778",
+  "м": "006", "м.": "006", "метр": "006",
+  "м2": "055", "кв.м": "055", "м²": "055",
+  "м3": "113", "куб.м": "113", "м³": "113",
+  "пог.м": "018", "пм": "018",
+  "кг": "166", "л": "112",
+  "час": "356", "ч": "356",
+  "усл.ед": "876", "услуга": "876",
+};
 
 /**
  * Собирает значения переменных шаблона из заявки, счёта и настроек компании.
@@ -79,9 +100,11 @@ export async function buildTemplateVars({ orderId, invoiceId, clientId }: Templa
       vars.order_status   = ORDER_STATUS_LABELS[order.status] ?? order.status;
       vars.order_deadline = fmtDate(order.deadline);
       vars.order_amount   = fmt(Number(order.amount));
+      vars.order_amount_in_words = numberToWords(Number(order.amount));
       vars.payment_status = PAYMENT_LABELS[order.paymentStatus] ?? order.paymentStatus;
       vars.manager_name   = order.manager?.name ?? "";
       vars.total          = fmt(Number(order.amount));
+      vars.total_in_words = numberToWords(Number(order.amount));
       // Client from order
       if (order.client) {
         vars.client_name      = order.client.name;
@@ -117,6 +140,7 @@ export async function buildTemplateVars({ orderId, invoiceId, clientId }: Templa
       vars.vat             = fmt(Number(invoice.vatAmount));
       vars.vat_rate        = String(Number(invoice.vatRate));
       vars.total           = fmt(Number(invoice.total));
+      vars.total_in_words  = numberToWords(Number(invoice.total));
       if (invoice.client) {
         vars.client_name      = vars.client_name || invoice.client.name;
         vars.client_full_name = vars.client_full_name || invoice.client.fullName || invoice.client.name;
@@ -148,20 +172,38 @@ export async function buildTemplateVars({ orderId, invoiceId, clientId }: Templa
 
 /** Те же позиции, но структурой — для цикла по строкам таблицы в DOCX. */
 export async function buildTemplateRows({ orderId, invoiceId }: TemplateContext): Promise<TemplateRow[]> {
+  // Ставку берём из настроек: в позициях её нет, а бланкам с графами НДС
+  // она нужна построчно.
+  const settings = await prisma.companySettings.findFirst();
+  const rate = settings?.worksWithVat ? Number(settings.defaultVatRate) : 0;
+
+  const row = (
+    i: { name: string; qty: unknown; unit: string; price: unknown; total: unknown; discount?: unknown },
+    idx: number,
+  ): TemplateRow => {
+    const total = Number(i.total);
+    // Цены хранятся с НДС внутри, поэтому налог выделяем, а не начисляем.
+    const vat = rate > 0 ? (total * rate) / (100 + rate) : 0;
+    return {
+      n: idx + 1,
+      name: i.name,
+      qty: String(Number(i.qty)),
+      unit: i.unit,
+      okei: OKEI[i.unit.toLowerCase().trim()] ?? "",
+      price: fmt(Number(i.price)),
+      total: fmt(total),
+      sum_no_vat: fmt(total - vat),
+      vat: fmt(vat),
+      discount: i.discount === undefined ? "" : String(Number(i.discount)),
+    };
+  };
   if (invoiceId) {
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: { items: true },
     });
     if (invoice) {
-      return invoice.items.map((i, idx) => ({
-        n: idx + 1,
-        name: i.name,
-        qty: String(Number(i.qty)),
-        unit: i.unit,
-        price: fmt(Number(i.price)),
-        total: fmt(Number(i.total)),
-      }));
+      return invoice.items.map(row);
     }
   }
   if (orderId) {
@@ -170,14 +212,7 @@ export async function buildTemplateRows({ orderId, invoiceId }: TemplateContext)
       include: { items: true },
     });
     if (order) {
-      return order.items.map((i, idx) => ({
-        n: idx + 1,
-        name: i.name,
-        qty: String(Number(i.qty)),
-        unit: i.unit,
-        price: fmt(Number(i.price)),
-        total: fmt(Number(i.total)),
-      }));
+      return order.items.map(row);
     }
   }
   return [];
