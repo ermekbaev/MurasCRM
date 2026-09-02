@@ -91,8 +91,10 @@ function PartyBlock({ title, party }: { title: string; party: Party | null }) {
 }
 
 export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
-  // Простая форма — по умолчанию; ТОРГ-12 включают, когда её требует контрагент.
-  const [form, setForm] = useState<"simple" | "torg12" | "upd">("simple");
+  // Показываем только официальные бланки. Собственная простая форма
+  // сохранена ниже и остаётся в коде: чтобы вернуть её, достаточно
+  // добавить "simple" в переключатель и поставить начальным значением.
+  const [form, setForm] = useState<"simple" | "torg12" | "upd">("torg12");
   const [downloading, setDownloading] = useState(false);
   // Основание можно поменять и после создания: заказчик нередко просит
   // сослаться на договор уже после того, как накладная выписана.
@@ -181,7 +183,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
           ) : (
             <>
               <div className="flex rounded-lg border border-line bg-surface p-0.5">
-                {(["simple", "torg12", "upd"] as const).map((f) => (
+                {(["torg12", "upd"] as const).map((f) => (
                   <button
                     key={f}
                     onClick={() => setForm(f)}
@@ -189,7 +191,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
                       form === f ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"
                     }`}
                   >
-                    {f === "simple" ? "Простая" : f === "torg12" ? "ТОРГ-12" : "УПД"}
+                    {f === "torg12" ? "ТОРГ-12" : "УПД"}
                   </button>
                 ))}
               </div>

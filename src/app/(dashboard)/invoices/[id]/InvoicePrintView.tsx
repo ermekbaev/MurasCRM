@@ -74,9 +74,10 @@ function fmtDateLong(d: string): string {
 }
 
 export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, signatureUrl }: Props) {
-  // Классическая форма — та, к которой привыкли бухгалтерии; форма Muras
-  // оставлена как альтернатива и переключается здесь же.
-  const [form, setForm] = useState<"standard" | "muras">("standard");
+  // Показывается только классическая форма — та, к которой привыкли
+  // бухгалтерии. Вёрстка Muras сохранена ниже и остаётся в коде: чтобы
+  // вернуть её, достаточно поменять значение здесь на "muras".
+  const [form] = useState<"standard" | "muras">("standard");
   const [downloading, setDownloading] = useState(false);
   const [isPaid, setIsPaid] = useState(invoice.isPaid);
   const [togglingPaid, setTogglingPaid] = useState(false);
@@ -141,19 +142,6 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
             </>
           ) : (
             <>
-              <div className="flex rounded-lg border border-line bg-surface p-0.5">
-                {([["standard", "Стандартная"], ["muras", "Muras"]] as const).map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setForm(key)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                      form === key ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
               <Button variant="outline" onClick={startEditing}><Pencil size={16} /> Редактировать позиции</Button>
               <Button
                 variant="outline"

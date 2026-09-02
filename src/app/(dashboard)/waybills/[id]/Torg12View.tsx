@@ -88,13 +88,13 @@ function PartyBlock({
         <div className={cap}>организация, адрес, телефон, факс, банковские реквизиты</div>
       </div>
       <div className="w-[160px] shrink-0 pt-0.5 text-right">
-        {extra}
         <div className="flex items-center justify-end gap-1">
           <span className="text-[8px]">по ОКПО</span>
           <span className={`${b} h-[13px] w-[86px] px-1 text-[8px] leading-[13px]`}>
             {okpo || " "}
           </span>
         </div>
+        {extra}
       </div>
     </div>
   );
@@ -217,7 +217,7 @@ export default function Torg12View({
           line={companyLine}
           okpo={company?.okpo}
           extra={
-            <div className="mb-0.5 flex items-center justify-end gap-1">
+            <div className="mt-0.5 flex items-center justify-end gap-1">
               <span className="text-[8px]">Вид деятельности по ОКДП</span>
               <span className={`${b} h-[13px] w-[86px]`}>&nbsp;</span>
             </div>
