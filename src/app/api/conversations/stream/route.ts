@@ -24,16 +24,41 @@ export async function GET(req: Request) {
 
   const encoder = new TextEncoder();
 
+  let off: (() => void) | null = null;
+  let recheck: ReturnType<typeof setInterval> | null = null;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+  let teardown: (() => void) | null = null;
+
   const stream = new ReadableStream({
     async start(controller) {
       let closed = false;
 
+      // Разбор соединения держим снаружи start: до него должен дотянуться и
+      // cancel, когда получатель отказывается от потока без сигнала отмены.
+      const cleanup = () => {
+        if (closed) return;
+        closed = true;
+        off?.();
+        if (recheck) clearInterval(recheck);
+        if (heartbeat) clearInterval(heartbeat);
+        req.signal.removeEventListener("abort", cleanup);
+        try {
+          controller.close();
+        } catch {
+          // Уже закрыт клиентом.
+        }
+      };
+      teardown = cleanup;
+
+      // Запись в оборванное соединение — это конец потока, а не просто пропуск
+      // одного сообщения: без разбора таймеры продолжали бы ходить в базу
+      // каждые несколько секунд до перезапуска приложения.
       const write = (chunk: string) => {
         if (closed) return;
         try {
           controller.enqueue(encoder.encode(chunk));
         } catch {
-          closed = true;
+          cleanup();
         }
       };
 
@@ -46,14 +71,20 @@ export async function GET(req: Request) {
         await prisma.conversation.aggregate({ _max: { lastMessageAt: true } })
       )._max.lastMessageAt?.getTime() ?? 0;
 
+      // Соединение могло оборваться, пока мы ходили в базу.
+      if (req.signal.aborted) {
+        cleanup();
+        return;
+      }
+
       send("ready", { ok: true });
 
-      const off = onChatEvent((event) => {
+      off = onChatEvent((event) => {
         seen = Date.now();
         send("chat", event);
       });
 
-      const recheck = setInterval(async () => {
+      recheck = setInterval(async () => {
         try {
           const max = (
             await prisma.conversation.aggregate({ _max: { lastMessageAt: true } })
@@ -67,22 +98,13 @@ export async function GET(req: Request) {
         }
       }, RECHECK_MS);
 
-      const heartbeat = setInterval(() => write(": ping\n\n"), HEARTBEAT_MS);
-
-      const cleanup = () => {
-        if (closed) return;
-        closed = true;
-        off();
-        clearInterval(recheck);
-        clearInterval(heartbeat);
-        try {
-          controller.close();
-        } catch {
-          // Уже закрыт клиентом.
-        }
-      };
+      heartbeat = setInterval(() => write(": ping\n\n"), HEARTBEAT_MS);
 
       req.signal.addEventListener("abort", cleanup);
+    },
+
+    cancel() {
+      teardown?.();
     },
   });
 

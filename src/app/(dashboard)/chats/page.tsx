@@ -131,6 +131,7 @@ export default function ChatsPage() {
   // диалог — держим его в ссылке, иначе подписка тянула бы старое значение.
   const threadIdRef = useRef<string | null>(null);
   const notifyRef = useRef(false);
+  const queryRef = useRef("");
 
   const loadList = useCallback(async (q: string) => {
     const url = q ? `/api/conversations?q=${encodeURIComponent(q)}` : "/api/conversations";
@@ -173,6 +174,12 @@ export default function ChatsPage() {
     return () => clearTimeout(t);
   }, [query, loadList]);
 
+  // Строку поиска держим в ссылке: подписка на поток не должна пересоздаваться
+  // при наборе, иначе каждая буква рвёт соединение и события теряются.
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
+
   // Живое обновление. Сервер шлёт только сигнал «изменилось» — содержимое
   // забираем обычными запросами, чтобы права и формат жили в одном месте.
   useEffect(() => {
@@ -182,11 +189,15 @@ export default function ChatsPage() {
     let stopped = false;
 
     const refresh = (incoming: boolean) => {
-      loadList(query.trim());
+      loadList(queryRef.current.trim());
       const open = threadIdRef.current;
       if (open) openThread(open);
       if (incoming && notifyRef.current && document.hidden) {
-        new Notification("Новое сообщение", { body: "Клиент написал в переписке" });
+        try {
+          new Notification("Новое сообщение", { body: "Клиент написал в переписке" });
+        } catch {
+          // На части браузеров уведомления доступны только через service worker.
+        }
       }
     };
 
@@ -223,7 +234,7 @@ export default function ChatsPage() {
       if (fallback) clearInterval(fallback);
       if (retry) clearTimeout(retry);
     };
-  }, [loadList, openThread, query]);
+  }, [loadList, openThread]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -233,6 +244,11 @@ export default function ChatsPage() {
   useEffect(() => {
     const total = list.reduce((sum, c) => sum + c.unread, 0);
     document.title = total > 0 ? `(${total}) Переписка` : "Переписка";
+    // Уходя со страницы, счётчик убираем: иначе он висит в заголовке вкладки
+    // на всех остальных разделах.
+    return () => {
+      document.title = "Muras-Brand CRM";
+    };
   }, [list]);
 
   async function requestNotifications() {
