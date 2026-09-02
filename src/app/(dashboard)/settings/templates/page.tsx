@@ -43,6 +43,28 @@ export default function TemplatesPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
+  const [copiedVar, setCopiedVar] = useState<string | null>(null);
+
+  /** Как переменная выглядит в шаблоне: в DOCX скобки одинарные. */
+  function varToken(key: string) {
+    return form.kind === "DOCX" ? `{${key}}` : `{{${key}}}`;
+  }
+
+  /**
+   * В текстовом шаблоне вставляем в позицию курсора. В DOCX вставлять некуда —
+   * бланк редактируется в Word, поэтому копируем в буфер обмена.
+   */
+  async function pickVar(key: string) {
+    const token = varToken(key);
+    if (form.kind === "DOCX") {
+      await navigator.clipboard.writeText(token).catch(() => {});
+      setCopiedVar(key);
+      setTimeout(() => setCopiedVar(null), 1500);
+      return;
+    }
+    insertVar(key);
+  }
+
   /** Вставляет переменную в позицию курсора, а не в конец текста. */
   function insertVar(key: string) {
     const token = `{{${key}}}`;
@@ -131,7 +153,10 @@ export default function TemplatesPage() {
         headers: { "Content-Type": contentType },
       }).catch(() => null);
       if (!put || !put.ok) {
-        setSaveError("Файл не загрузился в хранилище");
+        setSaveError(
+          `Хранилище отклонило загрузку (код ${put?.status ?? "нет ответа"}). ` +
+            "Проверьте настройки S3 — сам шаблон тут ни при чём.",
+        );
         setCreateLoading(false);
         return;
       }
@@ -401,7 +426,8 @@ export default function TemplatesPage() {
 
           <details className="rounded-lg border border-line bg-surface-sunken" open>
             <summary className="cursor-pointer px-3 py-2.5 text-sm font-medium text-fg-muted">
-              Переменные ({DOCUMENT_VARS.length}) — нажмите, чтобы вставить
+              Переменные ({DOCUMENT_VARS.length}) —{" "}
+              {form.kind === "DOCX" ? "нажмите, чтобы скопировать" : "нажмите, чтобы вставить"}
             </summary>
             <div className="max-h-64 space-y-4 overflow-y-auto border-t border-line px-3 py-3">
               {DOCUMENT_VAR_UI_GROUPS.map((group) => (
@@ -419,11 +445,11 @@ export default function TemplatesPage() {
                       <button
                         key={v.key}
                         type="button"
-                        onClick={() => insertVar(v.key)}
+                        onClick={() => pickVar(v.key)}
                         title={`${v.label} — например: ${v.sample}`}
                         className="rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-fg transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent-fg"
                       >
-                        {`{{${v.key}}}`}
+                        {copiedVar === v.key ? "скопировано" : varToken(v.key)}
                       </button>
                     ))}
                   </div>
