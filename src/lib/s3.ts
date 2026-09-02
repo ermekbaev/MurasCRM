@@ -46,10 +46,21 @@ export function getPublicUrl(key: string) {
   return `${process.env.S3_ENDPOINT}/${BUCKET}/${key}`;
 }
 
-/** Читает объект целиком в память — нужно для заполнения DOCX-шаблонов. */
-export async function getObjectBuffer(key: string): Promise<Buffer> {
+/**
+ * Читает объект целиком в память — нужно для заполнения DOCX-шаблонов.
+ * Ограничение по размеру обязательно: сервер небольшой, и без него один
+ * большой файл выел бы всю память процесса.
+ */
+export async function getObjectBuffer(key: string, maxBytes = 20 * 1024 * 1024): Promise<Buffer> {
   const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
   const chunks: Uint8Array[] = [];
-  for await (const chunk of res.Body as AsyncIterable<Uint8Array>) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of res.Body as AsyncIterable<Uint8Array>) {
+    size += chunk.length;
+    if (size > maxBytes) {
+      throw new Error(`Файл больше допустимых ${Math.round(maxBytes / 1024 / 1024)} МБ`);
+    }
+    chunks.push(chunk);
+  }
   return Buffer.concat(chunks);
 }

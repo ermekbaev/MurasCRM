@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/api";
+import { requireAuth, apiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import type { DocumentVarKey } from "@/lib/documentVars";
 import { buildTemplateVars } from "@/lib/templateVars.server";
+
+const DOCUMENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
 
 function substitute(body: string, vars: Partial<Record<DocumentVarKey, string>>): string {
   return body.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
@@ -18,7 +20,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await requireAuth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return apiError.unauthorized();
+  // Документ собирается из реквизитов компании, данных клиента и сумм счёта —
+  // то есть из того, что видят только роли, работающие с документами.
+  if (!DOCUMENT_ROLES.includes(session.user.role)) return apiError.forbidden();
   const { id } = await params;
 
   const template = await prisma.documentTemplate.findUnique({ where: { id } });

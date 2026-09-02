@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getObjectBuffer } from "@/lib/s3";
 import { buildTemplateVars, buildTemplateRows } from "@/lib/templateVars.server";
 
+const DOCUMENT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT"];
+
 const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -21,6 +23,8 @@ export async function POST(
 ) {
   const session = await requireAuth();
   if (!session) return apiError.unauthorized();
+  // Заполненный бланк содержит реквизиты компании и клиента и суммы счёта.
+  if (!DOCUMENT_ROLES.includes(session.user.role)) return apiError.forbidden();
   const { id } = await params;
 
   const template = await prisma.documentTemplate.findUnique({ where: { id } });
