@@ -39,7 +39,7 @@ export interface ImageSwapResult {
 function relationTargets(zip: PizZipType): Record<string, string> {
   const rels = zip.file("word/_rels/document.xml.rels")?.asText() ?? "";
   const map: Record<string, string> = {};
-  for (const m of rels.matchAll(/Id="([^"]+)"[^>]*Target="([^"]+)"/g)) {
+  for (const m of rels.matchAll(/Id=["']([^"']+)["'][^>]*Target=["']([^"']+)["']/g)) {
     map[m[1]] = m[2].replace(/^\.\//, "");
   }
   return map;
@@ -55,12 +55,12 @@ function relationTargets(zip: PizZipType): Record<string, string> {
 function findEmbedForSlot(documentXml: string, slot: ImageSlot): string | null {
   const drawings = documentXml.match(/<w:drawing>[\s\S]*?<\/w:drawing>/g) ?? [];
   for (const drawing of drawings) {
-    const descr = drawing.match(/<wp:docPr[^>]*descr="([^"]*)"/i)?.[1] ?? "";
-    const name = drawing.match(/<wp:docPr[^>]*name="([^"]*)"/i)?.[1] ?? "";
+    const descr = drawing.match(/<wp:docPr[^>]*descr=["']([^"']*)["']/i)?.[1] ?? "";
+    const name = drawing.match(/<wp:docPr[^>]*name=["']([^"']*)["']/i)?.[1] ?? "";
     const marker = `${descr} ${name}`.toLowerCase();
     if (!marker.includes(slot)) continue;
 
-    const embed = drawing.match(/r:embed="([^"]+)"/)?.[1];
+    const embed = drawing.match(/r:embed=["']([^"']+)["']/)?.[1];
     if (embed) return embed;
   }
   return null;
@@ -80,7 +80,17 @@ export function swapTemplateImages(zip: PizZipType, images: SlotImage[]): ImageS
 
   for (const { slot, data, ext } of images) {
     const embed = findEmbedForSlot(documentXml, slot);
-    if (!embed) continue; // пометки в бланке нет — и не надо
+    if (!embed) {
+      // Печать просили, а метки в бланке нет — молчать нельзя, иначе человек
+      // решит, что подстановка сломана.
+      if (data) {
+        result.skipped.push({
+          slot,
+          reason: `в бланке нет картинки с пометкой «${slot}» в замещающем тексте`,
+        });
+      }
+      continue;
+    }
 
     const target = targets[embed];
     if (!target) {
