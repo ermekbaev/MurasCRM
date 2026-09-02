@@ -130,14 +130,14 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  managedOrders   Order[]        @relation("OrderManager")
-  assignedOrders  Order[]        @relation("OrderAssignees")
-  tasks           Task[]
-  orderComments   OrderComment[]
-  changeLogs      ChangeLog[]
-  uploadedFiles   File[]
-  taskComments    TaskComment[]
-  fileComments    FileComment[]
+  managedOrders     Order[]        @relation("OrderManager")
+  assignedOrders    Order[]        @relation("OrderAssignees")
+  tasks             Task[]
+  orderComments     OrderComment[]
+  changeLogs        ChangeLog[]
+  uploadedFiles     File[]
+  taskComments      TaskComment[]
+  fileComments      FileComment[]
   defectsAsOperator DefectRecord[] @relation("DefectOperator")
   defectsApproved   DefectRecord[] @relation("DefectApprover")
 }
@@ -145,8 +145,8 @@ model User {
 // ─── Client ───────────────────────────────────────────────────────────────────
 
 model Client {
-  id            String       @id @default(cuid())
-  type          ClientType   @default(INDIVIDUAL)
+  id            String     @id @default(cuid())
+  type          ClientType @default(INDIVIDUAL)
   /// Короткое/отображаемое имя: списки, интерфейс.
   name          String
   /// Полное наименование с ОПФ — для печатных форм. Пусто у физлиц.
@@ -167,19 +167,19 @@ model Client {
   bankBik       String?
   corrAccount   String?
   /// Код из справочника ClientSourceOption.
-  source        String       @default("OTHER")
+  source        String     @default("OTHER")
   notes         String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  orders   Order[]
-  invoices Invoice[]
-  payments Payment[]
-  contacts ClientContact[]
+  orders        Order[]
+  invoices      Invoice[]
+  payments      Payment[]
+  contacts      ClientContact[]
   conversations Conversation[]
 
-  waybills           Waybill[] @relation("WaybillClient")
-  waybillsAsPayer    Waybill[] @relation("WaybillPayer")
+  waybills            Waybill[] @relation("WaybillClient")
+  waybillsAsPayer     Waybill[] @relation("WaybillPayer")
   waybillsAsConsignee Waybill[] @relation("WaybillConsignee")
 }
 
@@ -241,20 +241,20 @@ model Order {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  client      Client         @relation(fields: [clientId], references: [id])
-  manager     User?          @relation("OrderManager", fields: [managerId], references: [id])
-  assignees   User[]         @relation("OrderAssignees")
-  items       OrderItem[]
-  files       OrderFile[]
-  comments    OrderComment[]
-  changeLogs  ChangeLog[]
-  tasks       Task[]
-  invoices    Invoice[]
-  acts        Act[]
-  waybills    Waybill[]
+  client        Client         @relation(fields: [clientId], references: [id])
+  manager       User?          @relation("OrderManager", fields: [managerId], references: [id])
+  assignees     User[]         @relation("OrderAssignees")
+  items         OrderItem[]
+  files         OrderFile[]
+  comments      OrderComment[]
+  changeLogs    ChangeLog[]
+  tasks         Task[]
+  invoices      Invoice[]
+  acts          Act[]
+  waybills      Waybill[]
   conversations Conversation[]
-  defects     DefectRecord[]
-  payments    Payment[]
+  defects       DefectRecord[]
+  payments      Payment[]
 
   @@index([clientId])
   @@index([managerId])
@@ -274,8 +274,8 @@ model OrderItem {
   total       Decimal  @db.Decimal(12, 2)
   createdAt   DateTime @default(now())
 
-  order               Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  equipment           Equipment?          @relation(fields: [equipmentId], references: [id])
+  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  equipment           Equipment?           @relation(fields: [equipmentId], references: [id])
   consumableMovements ConsumableMovement[]
 
   @@index([orderId])
@@ -322,21 +322,21 @@ model ChangeLog {
 // ─── Task ─────────────────────────────────────────────────────────────────────
 
 model Task {
-  id          String     @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String?
   orderId     String?
   assigneeId  String?
-  type        TaskType   @default(DESIGN)
+  type        TaskType  @default(DESIGN)
   /// Код этапа из справочника TaskColumn.
-  status      String     @default("TODO")
-  priority    Priority   @default(NORMAL)
+  status      String    @default("TODO")
+  priority    Priority  @default(NORMAL)
   dueDate     DateTime?
   startedAt   DateTime?
   finishedAt  DateTime?
   tags        String[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   order          Order?          @relation(fields: [orderId], references: [id])
   assignee       User?           @relation(fields: [assigneeId], references: [id])
@@ -400,9 +400,9 @@ model Invoice {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  client  Client        @relation(fields: [clientId], references: [id])
-  order   Order?        @relation(fields: [orderId], references: [id])
-  company Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  client   Client        @relation(fields: [clientId], references: [id])
+  order    Order?        @relation(fields: [orderId], references: [id])
+  company  Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
   items    InvoiceItem[]
   acts     Act[]
   waybills Waybill[]
@@ -440,31 +440,31 @@ model Act {
 // ─── Waybill (товарная накладная, ТОРГ-12) ────────────────────────────────────
 
 model Waybill {
-  id        String   @id @default(cuid())
-  number    String   @unique
+  id          String   @id @default(cuid())
+  number      String   @unique
   /// Счёт-основание: из него подтягиваются позиции и реквизиты.
-  invoiceId String?
-  orderId   String?
-  companyId String?
+  invoiceId   String?
+  orderId     String?
+  companyId   String?
   /// Контрагент накладной. Плательщик и грузополучатель по умолчанию — он же.
-  clientId  String
+  clientId    String
   /// Плательщик, если платит не тот, кто получает груз (филиалы, головной офис).
-  payerId   String?
+  payerId     String?
   /// Грузополучатель, если груз принимает не плательщик.
   consigneeId String?
-  date      DateTime @default(now())
+  date        DateTime @default(now())
   /// Основание отгрузки. По умолчанию — связанный счёт, можно заменить вручную.
-  basis     String?
-  total     Decimal  @default(0) @db.Decimal(12, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  basis       String?
+  total       Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  invoice   Invoice? @relation(fields: [invoiceId], references: [id])
-  order     Order?   @relation(fields: [orderId], references: [id])
-  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  client    Client   @relation("WaybillClient", fields: [clientId], references: [id])
-  payer     Client?  @relation("WaybillPayer", fields: [payerId], references: [id])
-  consignee Client?  @relation("WaybillConsignee", fields: [consigneeId], references: [id])
+  invoice   Invoice?      @relation(fields: [invoiceId], references: [id])
+  order     Order?        @relation(fields: [orderId], references: [id])
+  company   Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  client    Client        @relation("WaybillClient", fields: [clientId], references: [id])
+  payer     Client?       @relation("WaybillPayer", fields: [payerId], references: [id])
+  consignee Client?       @relation("WaybillConsignee", fields: [consigneeId], references: [id])
   items     WaybillItem[]
 
   @@index([clientId])
@@ -533,9 +533,9 @@ model File {
   comment      String?
   createdAt    DateTime     @default(now())
 
-  uploadedBy User          @relation(fields: [uploadedById], references: [id])
-  orderFiles OrderFile[]
-  taskFiles  TaskFile[]
+  uploadedBy   User          @relation(fields: [uploadedById], references: [id])
+  orderFiles   OrderFile[]
+  taskFiles    TaskFile[]
   fileComments FileComment[]
 
   @@index([uploadedById])
@@ -592,17 +592,17 @@ model EquipmentConsumable {
 }
 
 model ConsumableMovement {
-  id           String            @id @default(cuid())
+  id           String                   @id @default(cuid())
   consumableId String
   direction    MovementDirection
-  qty          Decimal           @db.Decimal(12, 3)
+  qty          Decimal                  @db.Decimal(12, 3)
   orderId      String?
   orderItemId  String?
   trigger      ConsumableDeductTrigger? // для авто-списания: на каком триггере списано (дедуп при правке позиций)
-  date         DateTime          @default(now())
+  date         DateTime                 @default(now())
   note         String?
-  totalCost    Decimal?          @db.Decimal(12, 2)
-  createdAt    DateTime          @default(now())
+  totalCost    Decimal?                 @db.Decimal(12, 2)
+  createdAt    DateTime                 @default(now())
 
   consumable Consumable @relation(fields: [consumableId], references: [id])
   orderItem  OrderItem? @relation(fields: [orderItemId], references: [id])
@@ -665,14 +665,14 @@ model DefectRecord {
 // ─── Supplier ─────────────────────────────────────────────────────────────────
 
 model Supplier {
-  id          String   @id @default(cuid())
-  name        String
-  phone       String?
-  email       String?
-  materials   String[]
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  materials String[]
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   consumables Consumable[]
 }
@@ -723,7 +723,6 @@ model ClientSourceOption {
   updatedAt DateTime @updatedAt
 }
 
-
 // ─── Переписка с клиентами ────────────────────────────────────────────────────
 
 /// Канал связи. Заложен на вырост: WhatsApp подключается сюда же.
@@ -738,23 +737,26 @@ enum MessageDirection {
 }
 
 model Conversation {
-  id        String         @id @default(cuid())
-  channel   MessageChannel @default(TELEGRAM)
+  id                   String         @id @default(cuid())
+  channel              MessageChannel @default(TELEGRAM)
   /// Идентификатор чата на стороне мессенджера.
-  externalId String
+  externalId           String
   /// Как собеседник представлен в мессенджере — имя и @username.
-  title     String
-  username  String?
-  phone     String?
+  title                String
+  username             String?
+  phone                String?
+  /// Идентификатор бизнес-подключения Telegram, если переписка идёт от лица
+  /// личного аккаунта, а не бота. Пусто — обычный бот.
+  businessConnectionId String?
   /// Привязка к клиенту: сначала пусто, ставится вручную или по совпадению.
-  clientId  String?
+  clientId             String?
   /// Заявка, к которой привязали переписку.
-  orderId   String?
-  lastMessageAt DateTime @default(now())
+  orderId              String?
+  lastMessageAt        DateTime       @default(now())
   /// Непрочитанные входящие — для счётчика в меню.
-  unread    Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  unread               Int            @default(0)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 
   client   Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
   order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
@@ -777,10 +779,11 @@ model Message {
   userName       String?
   createdAt      DateTime         @default(now())
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  attachments  MessageAttachment[]
 
-  @@index([conversationId])
   @@unique([conversationId, externalId])
+  @@index([conversationId])
 }
 
 // ─── CompanySettings ─────────────────────────────────────────────────────────
@@ -863,4 +866,49 @@ model DemoVisit {
   createdAt DateTime @default(now())
 
   @@index([ref, createdAt])
+}
+
+// ─── Вложения переписки ───────────────────────────────────────────────────────
+// Файлы из мессенджера кладём в собственное хранилище: у Telegram ссылка на
+// файл живёт около часа, а переписка нужна и через год.
+enum AttachmentKind {
+  PHOTO
+  DOCUMENT
+  VOICE
+  VIDEO
+  AUDIO
+  STICKER
+}
+
+model MessageAttachment {
+  id         String         @id @default(cuid())
+  messageId  String
+  kind       AttachmentKind
+  /// Ключ в хранилище. Пусто, если файл не удалось забрать.
+  key        String?
+  name       String
+  mimeType   String         @default("application/octet-stream")
+  size       Int            @default(0)
+  /// file_id на стороне мессенджера — по нему можно попробовать забрать позже.
+  externalId String?
+  /// Почему файла нет у нас: превышен лимит Bot API, сбой загрузки и т.п.
+  failReason String?
+  createdAt  DateTime       @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+// ─── Быстрые ответы ───────────────────────────────────────────────────────────
+// Заготовки для переписки: «макет принят, срок 3 дня» и подобное.
+model QuickReply {
+  id        String   @id @default(cuid())
+  title     String
+  text      String   @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
 }

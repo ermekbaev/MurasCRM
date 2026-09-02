@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { settingsSectionsFor } from "@/lib/settings-nav";
+import { CHAT_ROLES } from "@/lib/chat-roles";
 import { ROLE_LABELS } from "@/lib/constants";
 import Image from "next/image";
 
@@ -89,6 +91,7 @@ interface SidebarProps {
 export default function Sidebar({ role, userName, userEmail, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const unread = useUnreadChats(role);
 
   const groups = navGroups
     .map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(role)) }))
@@ -153,6 +156,11 @@ export default function Sidebar({ role, userName, userEmail, onClose }: SidebarP
                   <Link key={item.href} href={item.href} onClick={onClose} className={itemClass(active)}>
                     <Icon className={iconClass(active)} />
                     <span className="truncate">{item.label}</span>
+                    {item.href === "/chats" && unread > 0 && (
+                      <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                        {unread > 99 ? "99+" : unread}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -203,4 +211,39 @@ export default function Sidebar({ role, userName, userEmail, onClose }: SidebarP
       </div>
     </aside>
   );
+}
+
+/**
+ * Непрочитанные сообщения для значка в меню.
+ *
+ * Меню живёт на каждой странице, поэтому запрос намеренно лёгкий, а интервал
+ * редкий: точное время прихода видно на самой странице переписки, здесь важно
+ * только заметить, что клиент написал.
+ */
+function useUnreadChats(role: Role): number {
+  const [unread, setUnread] = useState(0);
+  const visible = CHAT_ROLES.includes(role);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    let cancelled = false;
+    const load = () => {
+      fetch("/api/conversations/unread")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!cancelled && typeof d?.unread === "number") setUnread(d.unread);
+        })
+        .catch(() => {});
+    };
+
+    load();
+    const timer = setInterval(load, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [visible]);
+
+  return unread;
 }

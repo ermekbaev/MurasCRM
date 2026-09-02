@@ -48,7 +48,16 @@ const res = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
     url,
     secret_token: secret,
     // Нас интересуют только сообщения: остальные события шумят зря.
-    allowed_updates: ["message", "edited_message"],
+    // business_* — переписка личного аккаунта через Telegram Business. Пока
+    // никто не подключён, но включаем сразу: иначе при подключении пришлось бы
+    // переустанавливать вебхук и вспоминать, почему сообщений нет.
+    allowed_updates: [
+      "message",
+      "edited_message",
+      "business_connection",
+      "business_message",
+      "edited_business_message",
+    ],
     drop_pending_updates: true,
   }),
 });

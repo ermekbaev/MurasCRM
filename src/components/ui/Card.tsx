@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-interface CardProps {
+interface CardProps extends React.ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode;
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
@@ -20,9 +20,11 @@ export default function Card({
   className,
   padding = "md",
   interactive,
+  ...rest
 }: CardProps) {
   return (
     <div
+      {...rest}
       className={cn(
         "rounded-xl border border-line bg-surface shadow-card",
         interactive &&

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAuth, apiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
+import { CHAT_ROLES, CHAT_LINK_ROLES } from "@/lib/chat-roles";
 import { z } from "zod";
-
-const CHAT_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT", "DESIGNER"];
 
 const patchSchema = z.object({
   clientId: z.string().nullable().optional(),
@@ -24,7 +23,23 @@ export async function GET(_req: Request, { params }: Params) {
     include: {
       client: { select: { id: true, name: true, phone: true } },
       order: { select: { id: true, number: true } },
-      messages: { orderBy: { createdAt: "asc" }, take: 300 },
+      messages: {
+        orderBy: { createdAt: "asc" },
+        take: 300,
+        include: {
+          attachments: {
+            select: {
+              id: true,
+              kind: true,
+              name: true,
+              mimeType: true,
+              size: true,
+              key: true,
+              failReason: true,
+            },
+          },
+        },
+      },
     },
   });
   if (!conversation) return apiError.notFound();
@@ -33,14 +48,26 @@ export async function GET(_req: Request, { params }: Params) {
     await prisma.conversation.update({ where: { id }, data: { unread: 0 } });
   }
 
-  return NextResponse.json({ ...conversation, unread: 0 });
+  return NextResponse.json({
+    ...conversation,
+    unread: 0,
+    messages: conversation.messages.map((m) => ({
+      ...m,
+      attachments: m.attachments.map((a) => ({
+        ...a,
+        // Ключ хранилища наружу не отдаём: файл забирают по нашей ссылке.
+        key: undefined,
+        available: Boolean(a.key),
+      })),
+    })),
+  });
 }
 
 /** Привязка диалога к клиенту или заявке. */
 export async function PATCH(req: Request, { params }: Params) {
   const session = await requireAuth();
   if (!session) return apiError.unauthorized();
-  if (!["ADMIN", "MANAGER"].includes(session.user.role)) return apiError.forbidden();
+  if (!CHAT_LINK_ROLES.includes(session.user.role)) return apiError.forbidden();
 
   const { id } = await params;
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));

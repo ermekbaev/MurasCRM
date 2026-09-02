@@ -9,6 +9,7 @@ import {
   Megaphone,
   Columns3,
   FileCode,
+  Zap,
 } from "lucide-react";
 
 export interface SettingsSection {
@@ -83,6 +84,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     description: "Метки для заявок, клиентов и файлов",
     href: "/settings/tags",
     icon: Tag,
+    roles: ["ADMIN", "MANAGER"],
+    group: "Справочники",
+  },
+  {
+    label: "Быстрые ответы",
+    description: "Заготовки фраз для переписки с клиентами",
+    href: "/settings/quick-replies",
+    icon: Zap,
     roles: ["ADMIN", "MANAGER"],
     group: "Справочники",
   },

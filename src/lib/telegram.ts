@@ -42,31 +42,6 @@ export async function sendMessage(chatId: string, text: string): Promise<void> {
   }
 }
 
-/**
- * Отправка с проверкой результата — для переписки с клиентом.
- *
- * Обычный sendMessage намеренно глотает ошибки: уведомление не должно ронять
- * основную операцию. В чате наоборот — нельзя записать в историю то, что не
- * ушло собеседнику, поэтому здесь бросаем.
- *
- * Отправляем без parse_mode: текст пишет человек, и одинокий символ < сломал
- * бы разбор HTML на стороне Telegram.
- */
-export async function sendMessageOrThrow(chatId: string, text: string): Promise<void> {
-  if (!BOT_TOKEN) throw new Error("Не задан TELEGRAM_BOT_TOKEN");
-
-  const res = await fetch(`${API_BASE}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  });
-
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { description?: string } | null;
-    throw new Error(body?.description || `Telegram ответил ${res.status}`);
-  }
-}
-
 async function sendToUsers(userIds: string[], text: string): Promise<void> {
   const users = await prisma.user.findMany({
     where: { id: { in: userIds }, telegramChatId: { not: null }, isBlocked: false },
