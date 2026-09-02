@@ -9,7 +9,7 @@ import { formatCurrency, formatDate, legalName } from "@/lib/utils";
 import { numberToWords } from "@/lib/invoice-pdf";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
-import { ArrowLeft, Download, Printer, Pencil, Check, X, FileText } from "lucide-react";
+import { ArrowLeft, Download, Printer, Pencil, Check, X, FileText, FileCode } from "lucide-react";
 
 interface WaybillItem {
   id: string;
@@ -95,6 +95,31 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
   // сохранена ниже и остаётся в коде: чтобы вернуть её, достаточно
   // добавить "simple" в переключатель и поставить начальным значением.
   const [form, setForm] = useState<"simple" | "torg12" | "upd">("torg12");
+
+  /**
+   * Выгрузка УПД в XML формата ФНС для ручной загрузки в ЭДО.
+   *
+   * Файл отдаёт сервер, поэтому обычная ссылка не подошла бы: при незаполненных
+   * реквизитах вместо файла приходит объяснение, и его нужно показать.
+   */
+  async function downloadUpdXml() {
+    const res = await fetch(`/api/waybills/${waybill.id}/upd-xml`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      alert(typeof body?.error === "string" ? body.error : "Не удалось сформировать XML");
+      return;
+    }
+    const blob = await res.blob();
+    const name =
+      res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] ??
+      `upd-${waybill.number}.xml`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   const [downloading, setDownloading] = useState(false);
   // Основание можно поменять и после создания: заказчик нередко просит
   // сослаться на договор уже после того, как накладная выписана.
@@ -201,6 +226,11 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
               <Button variant="outline" onClick={() => window.print()}>
                 <Printer size={16} /> Печать
               </Button>
+              {form === "upd" && (
+                <Button variant="outline" onClick={downloadUpdXml}>
+                  <FileCode size={16} /> XML для ЭДО
+                </Button>
+              )}
               <Button onClick={handleDownloadPDF} loading={downloading}>
                 <Download size={16} /> Скачать PDF
               </Button>
