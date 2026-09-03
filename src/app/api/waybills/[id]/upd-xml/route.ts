@@ -35,18 +35,45 @@ export async function GET(
   if (!waybill) return apiError.notFound();
 
   const settings = await prisma.companySettings.findFirst();
-  if (!settings?.inn) {
+  const buyerSource = waybill.payer ?? waybill.client;
+
+  // Проверяем всё разом и перечисляем, чего не хватает. По одному полю за раз
+  // человек чинит вслепую: заполнил ИНН, снова нажал, узнал про КПП, и так по
+  // кругу. Пустые места молча прочерками не заполняем: документ получился бы
+  // формально правильным и при этом бессмысленным — подписант без фамилии.
+  const missing: string[] = [];
+
+  if (!settings?.name) missing.push("название компании");
+  if (!settings?.inn) missing.push("ИНН компании");
+  // КПП есть только у организаций: у предпринимателя его не бывает.
+  if (settings?.inn && settings.inn.replace(/\D/g, "").length === 10 && !settings.kpp) {
+    missing.push("КПП компании");
+  }
+  if (!settings?.legalAddress) missing.push("юридический адрес компании");
+  if (!settings?.director) missing.push("ФИО руководителя — им подписывается документ");
+
+  if (!settings || missing.length > 0) {
     return apiError.badRequest(
-      "Не заполнены реквизиты компании. ЭДО не примет документ без ИНН — " +
-        "заполните их в разделе Настройки → Компания.",
+      `Не заполнено в разделе Настройки → Компания: ${missing.join(", ")}. ` +
+        "ЭДО отклонит документ без этих сведений.",
     );
   }
 
-  const buyerSource = waybill.payer ?? waybill.client;
-  if (!buyerSource.inn) {
+  const buyerMissing: string[] = [];
+  if (!buyerSource.inn) buyerMissing.push("ИНН");
+  if (
+    buyerSource.inn &&
+    buyerSource.inn.replace(/\D/g, "").length === 10 &&
+    !buyerSource.kpp
+  ) {
+    buyerMissing.push("КПП");
+  }
+  if (!buyerSource.legalAddress) buyerMissing.push("юридический адрес");
+
+  if (buyerMissing.length > 0) {
     return apiError.badRequest(
-      `У контрагента «${buyerSource.name}» не указан ИНН. ` +
-        "Без него ЭДО отклонит документ.",
+      `У контрагента «${buyerSource.name}» не заполнено: ${buyerMissing.join(", ")}. ` +
+        "Без этих сведений ЭДО отклонит документ.",
     );
   }
 
