@@ -55,11 +55,15 @@ export async function GET(
     fullName?: string | null;
     inn: string | null;
     kpp: string | null;
+    okpo?: string | null;
+    ogrn?: string | null;
     legalAddress: string | null;
   }): UpdParty => ({
     name: legalName(c),
     inn: c.inn ?? "",
     kpp: c.kpp ?? "",
+    okpo: c.okpo ?? undefined,
+    ogrn: c.ogrn ?? undefined,
     address: c.legalAddress ?? "",
   });
 
@@ -73,7 +77,13 @@ export async function GET(
       name: settings.name,
       inn: settings.inn,
       kpp: settings.kpp,
+      okpo: settings.okpo || undefined,
+      ogrn: settings.ogrn || undefined,
       address: settings.legalAddress,
+      bankName: settings.bankName || undefined,
+      bankAccount: settings.bankAccount || undefined,
+      bankBik: settings.bankBik || undefined,
+      corrAccount: settings.corrAccount || undefined,
     },
     buyer: toParty(buyerSource),
     consignee: waybill.consignee ? toParty(waybill.consignee) : null,

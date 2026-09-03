@@ -29,6 +29,13 @@ export interface UpdParty {
   inn: string;
   kpp: string;
   address: string;
+  okpo?: string;
+  /** ОГРН организации или ОГРНИП предпринимателя. */
+  ogrn?: string;
+  bankName?: string;
+  bankAccount?: string;
+  bankBik?: string;
+  corrAccount?: string;
 }
 
 export interface UpdItem {
@@ -111,16 +118,42 @@ function timeRu(d: Date): string {
 }
 
 /**
+ * Приставки организационной формы перед именем предпринимателя. В карточке
+ * контрагента пишут «ИП Фёдорова Марина Ахмедовна», и без их отсечения
+ * фамилией становится «ИП».
+ */
+const ENTREPRENEUR_PREFIXES = [
+  "индивидуальный предприниматель",
+  "инд. предприниматель",
+  "ип",
+];
+
+/**
  * ФИО одной строкой разбираем на части: схема требует их по отдельности.
- * Пустое место заполняем прочерком — так делают и типовые выгрузки, иначе
+ *
+ * Берём три последних слова, а не три первых: перед именем часто стоит форма
+ * («ИП»), после имени — ничего. Пустое место заполняем прочерком, иначе
  * документ без подписанта не проходит проверку.
  */
 function fio(full: string): { last: string; first: string; middle: string } {
-  const parts = String(full ?? "").trim().split(/\s+/).filter(Boolean);
+  let text = String(full ?? "").trim();
+
+  const lower = text.toLowerCase();
+  for (const prefix of ENTREPRENEUR_PREFIXES) {
+    if (lower.startsWith(prefix + " ")) {
+      text = text.slice(prefix.length).trim();
+      break;
+    }
+  }
+
+  const parts = text.split(/\s+/).filter(Boolean);
+  // Больше трёх слов — значит впереди осталось что-то лишнее: берём хвост.
+  const tail = parts.length > 3 ? parts.slice(-3) : parts;
+
   return {
-    last: parts[0] || "-",
-    first: parts[1] || "-",
-    middle: parts.slice(2).join(" "),
+    last: tail[0] || "-",
+    first: tail[1] || "-",
+    middle: tail.slice(2).join(" "),
   };
 }
 
@@ -156,8 +189,13 @@ function parseBasis(basis: string, fallbackDate: Date): {
   };
 }
 
-/** Участник: реквизиты и адрес. */
-function party(tag: string, p: UpdParty, extraAttrs = ""): string {
+/**
+ * Участник: реквизиты, адрес и, для продавца, банк.
+ *
+ * Банковские реквизиты добавляем только продавцу: у покупателя они в этом
+ * документе не нужны, а лишние данные контрагента в файл лучше не класть.
+ */
+function party(tag: string, p: UpdParty, withBank = false): string {
   const short = esc(p.name);
   const inn = esc(p.inn);
   const kpp = esc(p.kpp);
@@ -168,7 +206,8 @@ function party(tag: string, p: UpdParty, extraAttrs = ""): string {
   const person = fio(p.name);
 
   const identity = isEntrepreneur
-    ? `<СвИП ИННФЛ="${inn}"><ФИО Фамилия="${esc(person.last)}" Имя="${esc(person.first)}"${
+    ? `<СвИП ИННФЛ="${inn}"${p.ogrn ? ` ОГРНИП="${esc(p.ogrn)}"` : ""}>` +
+      `<ФИО Фамилия="${esc(person.last)}" Имя="${esc(person.first)}"${
         person.middle ? ` Отчество="${esc(person.middle)}"` : ""
       }/></СвИП>`
     : `<СвЮЛУч НаимОрг="${short}" ИННЮЛ="${inn}"${kpp ? ` КПП="${kpp}"` : ""}/>`;
@@ -179,7 +218,44 @@ function party(tag: string, p: UpdParty, extraAttrs = ""): string {
     p.address || "не указан",
   )}"/></Адрес>`;
 
-  return `<${tag} СокрНаим="${short}"${extraAttrs}><ИдСв>${identity}</ИдСв>${address}</${tag}>`;
+  const bank =
+    withBank && p.bankAccount && p.bankBik
+      ? `<БанкРекв НомерСчета="${esc(p.bankAccount)}">` +
+        `<СвБанк${p.bankName ? ` НаимБанк="${esc(p.bankName)}"` : ""} БИК="${esc(p.bankBik)}"${
+          p.corrAccount ? ` КорСчет="${esc(p.corrAccount)}"` : ""
+        }/></БанкРекв>`
+      : "";
+
+  return (
+    `<${tag}${p.okpo ? ` ОКПО="${esc(p.okpo)}"` : ""} СокрНаим="${short}">` +
+    `<ИдСв>${identity}</ИдСв>${address}${bank}</${tag}>`
+  );
+}
+
+/**
+ * Составитель документа. В типовых выгрузках рядом с названием указывают ИНН —
+ * так документ читается однозначно, если у контрагента несколько организаций
+ * с похожими названиями.
+ */
+function composerName(seller: UpdParty): string {
+  return seller.inn ? `${seller.name}, ИНН ${seller.inn}` : seller.name;
+}
+
+/**
+ * Основание отгрузки.
+ *
+ * Если основания нет, схема предлагает не выдумывать документ, а явно сказать,
+ * что его не было. Раньше мы подставляли договор с номером «б/н» — формально
+ * проходило, но означало не то.
+ */
+function basisNode(basis: string, fallbackDate: Date): string {
+  if (!String(basis ?? "").trim()) return `<БезДокОснПер>1</БезДокОснПер>`;
+
+  const parsed = parseBasis(basis, fallbackDate);
+  return (
+    `<ОснПер РеквНаимДок="${esc(parsed.name)}"` +
+    ` РеквНомерДок="${esc(parsed.number)}" РеквДатаДок="${parsed.date}"/>`
+  );
 }
 
 /**
@@ -261,11 +337,11 @@ export function buildUpdXml(input: UpdInput): UpdXml {
     `<?xml version="1.0" encoding="${ENCODING}"?>` +
     `<Файл ИдФайл="${fileId}" ВерсФорм="${VERSION}" ВерсПрог="Muras CRM">` +
     `<Документ КНД="${KND}" Функция="${func}"` +
-    ` ПоФактХЖ="${OPERATION_NAME}" НаимДокОпр="${OPERATION_NAME}"` +
+    ` ПоФактХЖ="${OPERATION_NAME}" НаимДокОпр="Универсальный передаточный документ"` +
     ` ДатаИнфПр="${dateRu(now)}" ВремИнфПр="${timeRu(now)}"` +
-    ` НаимЭконСубСост="${esc(input.seller.name)}">` +
+    ` НаимЭконСубСост="${esc(composerName(input.seller))}">` +
     `<СвСчФакт НомерДок="${esc(input.number)}" ДатаДок="${dateRu(input.date)}">` +
-    party("СвПрод", input.seller) +
+    party("СвПрод", input.seller, true) +
     `<ГрузОт>${party("ГрузОтпр", input.seller)}</ГрузОт>` +
     party("ГрузПолуч", consignee) +
     party("СвПокуп", input.buyer) +
@@ -273,18 +349,14 @@ export function buildUpdXml(input: UpdInput): UpdXml {
     `</СвСчФакт>` +
     `<ТаблСчФакт>${rows.join("")}${totals}</ТаблСчФакт>` +
     `<СвПродПер><СвПер СодОпер="Товары переданы" ДатаПер="${dateRu(input.date)}">` +
-    (() => {
-      const basis = parseBasis(input.basis, input.date);
-      return (
-        `<ОснПер РеквНаимДок="${esc(basis.name)}"` +
-        ` РеквНомерДок="${esc(basis.number)}" РеквДатаДок="${basis.date}"/>`
-      );
-    })() +
+    basisNode(input.basis, input.date) +
     `<СвЛицПер><РабОргПрод Должность="${esc(input.signerTitle || "Руководитель")}">` +
     signerFio +
     `</РабОргПрод></СвЛицПер></СвПер></СвПродПер>` +
     // Способ подтверждения полномочий 1 — подписант работает у составителя.
-    `<Подписант СпосПодтПолном="1">${signerFio}</Подписант>` +
+    `<Подписант Должн="${esc(input.signerTitle || "Руководитель")}" СпосПодтПолном="1">` +
+    signerFio +
+    `</Подписант>` +
     `</Документ></Файл>`;
 
   return {
