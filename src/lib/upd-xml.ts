@@ -335,7 +335,13 @@ export function buildUpdXml(input: UpdInput): UpdXml {
 
   const xml =
     `<?xml version="1.0" encoding="${ENCODING}"?>` +
-    `<Файл ИдФайл="${fileId}" ВерсФорм="${VERSION}" ВерсПрог="Muras CRM">` +
+    // Объявления пространств имён формат не требует: у схемы нет
+    // targetNamespace, элементы называются напрямую. Но их пишут все типовые
+    // выгрузки, включая 1С, и стоят они ничего — а мы не можем проверить файл
+    // на живом операторе, поэтому лишний повод для придирки убираем заранее.
+    `<Файл xmlns:xs="http://www.w3.org/2001/XMLSchema"` +
+    ` xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"` +
+    ` ИдФайл="${fileId}" ВерсФорм="${VERSION}" ВерсПрог="Muras CRM">` +
     `<Документ КНД="${KND}" Функция="${func}"` +
     ` ПоФактХЖ="${OPERATION_NAME}" НаимДокОпр="Универсальный передаточный документ"` +
     ` ДатаИнфПр="${dateRu(now)}" ВремИнфПр="${timeRu(now)}"` +
