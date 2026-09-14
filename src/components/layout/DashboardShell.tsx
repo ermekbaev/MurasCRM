@@ -18,7 +18,7 @@ export default function DashboardShell({ role, userName, userEmail, children }: 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible">
+    <div className="flex h-screen overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible print:bg-white">
       {mobileOpen && (
         <div
           className="animate-overlay-in fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-[2px] lg:hidden"
