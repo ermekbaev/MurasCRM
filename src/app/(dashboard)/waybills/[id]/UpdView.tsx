@@ -119,7 +119,11 @@ export default function UpdView({
   total,
   worksWithVat,
   vatRate,
+  rootRef,
 }: {
+  /** Сам бланк — с него снимается PDF. Контейнер для этого не годится:
+   *  он шире бланка, и в снимок попадают пустые поля по бокам. */
+  rootRef?: React.Ref<HTMLDivElement>;
   waybill: {
     number: string;
     date: string;
@@ -160,7 +164,10 @@ export default function UpdView({
   const buyerInnKpp = `${buyer?.inn ?? ""}/${buyer?.kpp ?? ""}`;
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] bg-white p-5 text-black print:max-w-full print:p-0">
+    <div
+      ref={rootRef}
+      className="mx-auto w-full max-w-[1400px] bg-white p-5 text-black print:max-w-full print:p-0"
+    >
       {/* Форма широкая — печатаем альбомно */}
       <style>{"@media print { @page { size: A4 landscape; margin: 6mm; } }"}</style>
 

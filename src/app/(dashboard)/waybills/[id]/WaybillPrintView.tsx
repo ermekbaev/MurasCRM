@@ -186,6 +186,9 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         fileName: `${FORM_LABELS[form]} ${waybill.number}`,
         // Унифицированные бланки шире страницы — печатаются лёжа.
         landscape: form !== "simple",
+        // Ширина, под которую свёрстаны бланки: в них есть колонки с жёсткой
+        // шириной, и на узком экране пропорции поехали бы.
+        fixedWidth: form === "simple" ? 900 : 1400,
       });
     } finally {
       setDownloading(false);
@@ -253,8 +256,9 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
       </div>
 
       {form === "upd" ? (
-        <div ref={documentRef} className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
           <UpdView
+            rootRef={documentRef}
             waybill={waybill}
             company={company}
             basis={basis}
@@ -265,8 +269,9 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
           />
         </div>
       ) : form === "torg12" ? (
-        <div ref={documentRef} className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
           <Torg12View
+            rootRef={documentRef}
             waybill={waybill}
             company={company}
             basis={basis}

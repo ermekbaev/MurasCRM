@@ -60,7 +60,11 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
     setDownloading(true);
     try {
       const { captureToPdf } = await import("@/lib/pdf-capture");
-      await captureToPdf(documentRef.current, { fileName: `Акт ${act.number}` });
+      await captureToPdf(documentRef.current, {
+        fileName: `Акт ${act.number}`,
+        // Ширина бланка на экране — max-w-3xl.
+        fixedWidth: 768,
+      });
     } finally {
       setDownloading(false);
     }

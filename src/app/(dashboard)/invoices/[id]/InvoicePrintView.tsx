@@ -97,7 +97,11 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
     setDownloading(true);
     try {
       const { captureToPdf } = await import("@/lib/pdf-capture");
-      await captureToPdf(documentRef.current, { fileName: `Счёт ${invoice.number}` });
+      await captureToPdf(documentRef.current, {
+        fileName: `Счёт ${invoice.number}`,
+        // Ширина бланка на экране — max-w-3xl.
+        fixedWidth: 768,
+      });
     } finally { setDownloading(false); }
   }
 
