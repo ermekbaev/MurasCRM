@@ -37,7 +37,9 @@ const OKEI: Record<string, string> = {
 };
 
 const b = "border border-black";
-const cell = `${b} px-1 py-0.5 align-middle`;
+// pb больше pt намеренно: html2canvas рисует текст ниже, чем браузер, и
+// без запаса снизу буквы ложатся на границу ячейки.
+const cell = `${b} px-1 pt-0.5 pb-[3px] align-middle`;
 const cap = "text-[6px] leading-tight text-gray-700";
 
 /** Строка «подпись — значение на линии — номер графы справа». */
@@ -425,7 +427,7 @@ export default function UpdView({
               (в т.ч. комиссионера / агента)
             </p>
             <div className="mt-1 flex items-end gap-2">
-              <span className="flex-1 border-b border-black px-1 text-[7.5px]">
+              <span className="flex-1 border-b border-black px-1 pb-[3px] text-[7.5px]">
                 {company ? `${company.name}, ${sellerInnKpp}` : " "}
               </span>
               <span className="w-7 shrink-0 text-right text-[7px]">[14]</span>

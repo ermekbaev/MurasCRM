@@ -43,7 +43,9 @@ const OKEI: Record<string, string> = {
 };
 
 const b = "border border-black";
-const cell = `${b} px-1 py-0.5 align-middle`;
+// pb больше pt намеренно: html2canvas рисует текст ниже, чем браузер, и
+// без запаса снизу буквы ложатся на границу ячейки.
+const cell = `${b} px-1 pt-0.5 pb-[3px] align-middle`;
 const cap = "text-[6.5px] leading-tight text-gray-700";
 
 /** Подчёркнутое поле с подписью снизу — основной приём этого бланка. */
