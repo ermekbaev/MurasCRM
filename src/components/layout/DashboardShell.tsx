@@ -18,7 +18,7 @@ export default function DashboardShell({ role, userName, userEmail, children }: 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-canvas">
+    <div className="flex h-screen overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible">
       {mobileOpen && (
         <div
           className="animate-overlay-in fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-[2px] lg:hidden"
@@ -27,7 +27,7 @@ export default function DashboardShell({ role, userName, userEmail, children }: 
       )}
 
       <div
-        className={`fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-out print:hidden lg:static lg:z-auto lg:translate-x-0 ${
           mobileOpen ? "translate-x-0 shadow-pop" : "-translate-x-full"
         }`}
       >
@@ -39,9 +39,9 @@ export default function DashboardShell({ role, userName, userEmail, children }: 
         />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden print:block print:overflow-visible">
         {/* Мобильная шапка */}
-        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-3 lg:hidden">
+        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-3 print:hidden lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
             className="rounded-lg p-2 text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
@@ -55,7 +55,7 @@ export default function DashboardShell({ role, userName, userEmail, children }: 
           <span className="text-[13px] font-semibold tracking-tight text-fg">Muras-Brand</span>
         </div>
 
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto print:overflow-visible">{children}</main>
       </div>
     </div>
   );
