@@ -51,6 +51,32 @@ export function getPublicUrl(key: string) {
  * Ограничение по размеру обязательно: сервер небольшой, и без него один
  * большой файл выел бы всю память процесса.
  */
+/**
+ * Читает объект вместе с типом содержимого.
+ *
+ * Нужно там, где файл отдаётся через наш сервер, а не подписанной ссылкой:
+ * браузеру важен Content-Type, а из ключа его надёжно не угадать.
+ */
+export async function getObjectWithType(
+  key: string,
+  maxBytes = 10 * 1024 * 1024,
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of res.Body as AsyncIterable<Uint8Array>) {
+    size += chunk.length;
+    if (size > maxBytes) {
+      throw new Error(`Файл больше допустимых ${Math.round(maxBytes / 1024 / 1024)} МБ`);
+    }
+    chunks.push(chunk);
+  }
+  return {
+    buffer: Buffer.concat(chunks),
+    contentType: res.ContentType || "application/octet-stream",
+  };
+}
+
 export async function getObjectBuffer(key: string, maxBytes = 20 * 1024 * 1024): Promise<Buffer> {
   const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
   const chunks: Uint8Array[] = [];

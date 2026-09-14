@@ -43,6 +43,9 @@ export default async function ActDetailPage({
         })),
       }}
       company={company}
+      // Логотип берём из основных настроек: у доп.компаний своего нет. Отдаёт
+      // его наш сервер, иначе картинка не попадает в PDF.
+      logoUrl={settings?.logoKey ? "/api/settings/branding?kind=logo" : null}
     />
   );
 }

@@ -59,6 +59,7 @@ export default async function WaybillDetailPage({
         })),
       }}
       company={company}
+      logoUrl={settings?.logoKey ? "/api/settings/branding?kind=logo" : null}
     />
   );
 }

@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { generateDownloadUrl } from "@/lib/s3";
 import { notFound } from "next/navigation";
 import InvoicePrintView from "./InvoicePrintView";
 
@@ -30,13 +29,12 @@ export default async function InvoiceDetailPage({
     : null;
   const company = chosenCompany ?? settings;
 
-  // Логотип, печать и подпись лежат в хранилище — в документ нужны ссылки.
-  // Раньше они сюда не передавались вовсе, поэтому счёт печатался без них.
-  const [logoUrl, stampUrl, signatureUrl] = await Promise.all([
-    settings?.logoKey ? generateDownloadUrl(settings.logoKey).catch(() => null) : null,
-    settings?.stampKey ? generateDownloadUrl(settings.stampKey).catch(() => null) : null,
-    settings?.signatureKey ? generateDownloadUrl(settings.signatureKey).catch(() => null) : null,
-  ]);
+  // Логотип, печать и подпись отдаёт наш сервер, а не хранилище напрямую.
+  // С подписанной ссылкой они показывались на экране, но пропадали в PDF:
+  // снимок страницы не может прочитать картинку с чужого домена.
+  const logoUrl = settings?.logoKey ? "/api/settings/branding?kind=logo" : null;
+  const stampUrl = settings?.stampKey ? "/api/settings/branding?kind=stamp" : null;
+  const signatureUrl = settings?.signatureKey ? "/api/settings/branding?kind=signature" : null;
 
   return (
     <InvoicePrintView
