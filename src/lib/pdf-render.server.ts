@@ -87,21 +87,27 @@ export async function renderPdf({
   try {
     // Куки отдаём как есть: разбирать сессию самим незачем, страница сама
     // проверит права обычным способом.
-    await context.addCookies(
-      cookie
-        .split(";")
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .map((part) => {
-          const eq = part.indexOf("=");
-          return {
-            name: part.slice(0, eq),
-            value: part.slice(eq + 1),
-            domain: target.hostname,
-            path: "/",
-          };
-        }),
-    );
+    //
+    // Привязываем их к адресу, а не к домену с путём: сессионная кука NextAuth
+    // называется с приставкой __Secure-, и браузер принимает такую только с
+    // признаком защищённого соединения и без отдельного домена.
+    const cookies = cookie
+      .split(";")
+      .map((part) => part.trim())
+      .filter((part) => part.includes("="))
+      .map((part) => {
+        const eq = part.indexOf("=");
+        return {
+          name: part.slice(0, eq).trim(),
+          value: part.slice(eq + 1),
+          url: target.origin,
+          secure: target.protocol === "https:",
+          sameSite: "Lax" as const,
+        };
+      })
+      .filter((c) => c.name.length > 0);
+
+    if (cookies.length > 0) await context.addCookies(cookies);
 
     const page = await context.newPage();
     await page.goto(url, { waitUntil: "networkidle", timeout: TIMEOUT_MS });
