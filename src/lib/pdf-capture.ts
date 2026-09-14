@@ -42,11 +42,6 @@ export async function captureToPdf(
   node: HTMLElement,
   { fileName, landscape = false, fixedWidth }: CaptureOptions,
 ): Promise<void> {
-  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-    import("html2canvas"),
-    import("jspdf"),
-  ]);
-
   const restore = fixedWidth ? applyFixedWidth(node, fixedWidth) : null;
   try {
     const pdf = await render(node, { landscape });
