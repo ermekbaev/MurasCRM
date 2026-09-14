@@ -27,48 +27,20 @@ export interface CaptureOptions {
   fileName: string;
   /** Альбомная ориентация — для ТОРГ-12 и УПД. */
   landscape?: boolean;
-  /**
-   * Ширина бланка на время снимка, в пикселях.
-   *
-   * Без неё документ снимается той ширины, какой он оказался в окне, и PDF у
-   * человека с узким экраном выходит другим: колонки с жёсткой шириной
-   * занимают в узком бланке большую долю. С фиксированной шириной файл всегда
-   * одинаковый, независимо от размера окна.
-   */
-  fixedWidth?: number;
 }
 
+/**
+ * Ширину бланка на время снимка не трогаем.
+ *
+ * Пробовали задавать её принудительно, чтобы файл не зависел от размера окна.
+ * Вышло хуже: родитель бланка остаётся прежней ширины, и при перерисовке в
+ * клоне дочерние блоки раскладывались по нему — подписи налезали на значения,
+ * а таблица обрывалась. Естественная ширина даёт верную вёрстку.
+ */
 export async function captureToPdf(
   node: HTMLElement,
-  { fileName, landscape = false, fixedWidth }: CaptureOptions,
+  { fileName, landscape = false }: CaptureOptions,
 ): Promise<void> {
-  const restore = fixedWidth ? applyFixedWidth(node, fixedWidth) : null;
-  try {
-    const pdf = await render(node, { landscape });
-    pdf.save(`${fileName}.pdf`);
-  } finally {
-    restore?.();
-  }
-}
-
-/** Задаёт ширину на время снимка и возвращает функцию отката. */
-function applyFixedWidth(node: HTMLElement, width: number): () => void {
-  const prevWidth = node.style.width;
-  const prevMaxWidth = node.style.maxWidth;
-
-  node.style.width = `${width}px`;
-  node.style.maxWidth = "none";
-
-  return () => {
-    node.style.width = prevWidth;
-    node.style.maxWidth = prevMaxWidth;
-  };
-}
-
-async function render(
-  node: HTMLElement,
-  { landscape }: { landscape: boolean },
-) {
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
     import("html2canvas"),
     import("jspdf"),
@@ -145,5 +117,5 @@ async function render(
     }
   }
 
-  return pdf;
+  pdf.save(`${fileName}.pdf`);
 }

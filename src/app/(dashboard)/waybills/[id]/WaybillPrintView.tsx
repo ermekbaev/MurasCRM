@@ -186,9 +186,6 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         fileName: `${FORM_LABELS[form]} ${waybill.number}`,
         // Унифицированные бланки шире страницы — печатаются лёжа.
         landscape: form !== "simple",
-        // Ширина, под которую свёрстаны бланки: в них есть колонки с жёсткой
-        // шириной, и на узком экране пропорции поехали бы.
-        fixedWidth: form === "simple" ? 900 : 1400,
       });
     } finally {
       setDownloading(false);
