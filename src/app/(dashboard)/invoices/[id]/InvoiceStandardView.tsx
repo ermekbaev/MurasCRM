@@ -178,7 +178,7 @@ export default function InvoiceStandardView({
 
         {/* Заголовок */}
         <h1 className="mb-4 text-[17px] font-bold">
-          Счёт на оплату № {invoice.number} от {dateLong} года
+          Счёт на оплату № {invoice.number} от {dateLong}
         </h1>
 
         {/* Стороны */}

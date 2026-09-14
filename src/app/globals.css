@@ -225,6 +225,13 @@ body {
 /* Print styles */
 @media print {
   .print\:hidden { display: none !important; }
+
+  /* Подложка рабочей области серая — на листе она превращается в полосу
+     вокруг документа. Печатаем по белому. */
+  html,
+  body {
+    background: #fff !important;
+  }
 }
 
 /* Список нативного select: без явных цветов браузер рисует белый фон,

@@ -192,7 +192,7 @@ export default function Torg12View({
   return (
     <div
       ref={rootRef}
-      className="mx-auto w-full max-w-[1400px] bg-white p-5 text-black print:max-w-full print:p-0"
+      className="mx-auto w-full max-w-[1400px] bg-white p-5 text-black print:max-w-full print:px-2 print:py-0"
     >
       {/* Широкий товарный раздел не помещается на портретную A4 */}
       <style>{"@media print { @page { size: A4 landscape; margin: 6mm; } }"}</style>
