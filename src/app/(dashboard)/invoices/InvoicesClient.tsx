@@ -72,6 +72,7 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
     dueDate: "",
   });
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const [loadingOrder, setLoadingOrder] = useState(false);
   const [items, setItems] = useState<{ name: string; qty: number; unit: string; price: number }[]>([
     { name: "", qty: 1, unit: "шт", price: 0 },
   ]);
@@ -105,6 +106,44 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
       })
       .catch(() => {});
   }, []);
+
+  /**
+   * Выбор заявки подтягивает из неё клиента и позиции.
+   *
+   * Без этого одно и то же приходилось вбивать дважды — сначала в заявку, потом
+   * в счёт. Скидка позиции уже учтена в её сумме, поэтому в счёт уходит
+   * фактическая цена (сумма / количество): иначе итог счёта разошёлся бы с
+   * заявкой. Так же считает и кнопка «Сформировать счёт» в самой заявке.
+   */
+  async function pickOrder(orderId: string) {
+    setForm((f) => ({ ...f, orderId }));
+    if (!orderId) return;
+
+    setLoadingOrder(true);
+    try {
+      const order = await fetch(`/api/orders/${orderId}`).then((r) => (r.ok ? r.json() : null));
+      if (!order) return;
+
+      if (order.client?.id) {
+        setForm((f) => ({ ...f, clientId: order.client.id, clientName: order.client.name ?? "" }));
+      }
+      setForm((f) => ({ ...f, basis: f.basis || `Заявка № ${order.number}` }));
+
+      const orderItems = Array.isArray(order.items) ? order.items : [];
+      if (orderItems.length > 0) {
+        setItems(
+          orderItems.map((i: { name: string; qty: number; unit: string; price: number; total: number }) => ({
+            name: i.name,
+            qty: Number(i.qty),
+            unit: i.unit,
+            price: Number(i.qty) > 0 ? Number(i.total) / Number(i.qty) : Number(i.price),
+          })),
+        );
+      }
+    } finally {
+      setLoadingOrder(false);
+    }
+  }
 
   /**
    * Скачивание из списка.
@@ -398,9 +437,14 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
             <Select
               label="Привязать к заявке"
               value={form.orderId}
-              onChange={(e) => setForm({ ...form, orderId: e.target.value })}
+              onChange={(e) => pickOrder(e.target.value)}
               placeholder="Выберите заявку (необязательно)"
               options={orders.map((o) => ({ value: o.id, label: `${o.number} · ${o.client.name}` }))}
+              hint={
+                loadingOrder
+                  ? "Подтягиваем позиции заявки…"
+                  : "Клиент и позиции подставятся из заявки"
+              }
             />
             {companies.length > 0 && (
               <Select

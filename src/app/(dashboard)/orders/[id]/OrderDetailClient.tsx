@@ -1055,6 +1055,9 @@ export default function OrderDetailClient({
                       <p className="mt-0.5 text-xs text-fg-muted">
                         Позиции и клиент подставятся из заявки, счёт останется привязан к ней
                       </p>
+                      <p className="mt-1 text-xs text-fg-subtle">
+                        Появится в разделе «Счета» — оттуда его печатают и отправляют клиенту
+                      </p>
                     </div>
                     <Button onClick={createInvoiceFromOrder} loading={creatingInvoice}>
                       <Plus size={16} /> Сформировать счёт

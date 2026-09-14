@@ -126,9 +126,25 @@ export async function buildTemplateVars({ orderId, invoiceId, clientId }: Templa
   }
 
   // Invoice context
-  if (invoiceId) {
+  //
+  // Если документ формируют из заявки, счёт явно не передают — но он по заявке
+  // обычно уже выставлен. Без этого в бланке оставался пустой номер: «СЧЁТ НА
+  // ОПЛАТУ №  от 14.09.2026». Берём последний счёт заявки.
+  const resolvedInvoiceId =
+    invoiceId ??
+    (orderId
+      ? (
+          await prisma.invoice.findFirst({
+            where: { orderId },
+            orderBy: { date: "desc" },
+            select: { id: true },
+          })
+        )?.id
+      : undefined);
+
+  if (resolvedInvoiceId) {
     const invoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
+      where: { id: resolvedInvoiceId },
       include: { client: true, items: true },
     });
     if (invoice) {
