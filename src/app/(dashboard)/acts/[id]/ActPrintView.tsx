@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency, formatDate, legalName } from "@/lib/utils";
@@ -50,14 +50,17 @@ interface Props {
 
 export default function ActPrintView({ act, company, logoUrl }: Props) {
   const [downloading, setDownloading] = useState(false);
+  const documentRef = useRef<HTMLDivElement>(null);
   const { editing, editItems, saving, subtotal: editSubtotal, startEditing, cancelEditing, updateItem, addItem, removeItem, saveItems } =
     useLineItems(act.items);
 
+  /** PDF снимаем с того же узла, что виден на экране, — см. lib/pdf-capture. */
   async function handleDownloadPDF() {
+    if (!documentRef.current) return;
     setDownloading(true);
     try {
-      const { generateActPDF } = await import("@/lib/act-pdf");
-      await generateActPDF(act, company);
+      const { captureToPdf } = await import("@/lib/pdf-capture");
+      await captureToPdf(documentRef.current, { fileName: `Акт ${act.number}` });
     } finally {
       setDownloading(false);
     }
@@ -97,7 +100,8 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
       </div>
 
       <div
-className="bg-white max-w-3xl mx-auto p-10 border border-gray-200 rounded-xl print:border-0 print:p-0 print:max-w-full"
+        ref={documentRef}
+        className="bg-white max-w-3xl mx-auto p-10 border border-gray-200 rounded-xl print:border-0 print:p-0 print:max-w-full"
       >
         {/* Заголовок */}
         <div className="flex items-start justify-between mb-8">

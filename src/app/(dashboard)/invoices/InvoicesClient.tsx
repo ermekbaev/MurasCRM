@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/layout/PageHeader";
@@ -41,11 +42,6 @@ interface Invoice {
   items: InvoiceItem[];
 }
 
-/** Поля настроек, которые нужны генератору PDF. */
-type CompanyForPdf = Parameters<
-  typeof import("@/lib/invoice-pdf").generateInvoicePDF
->[1];
-
 interface Props {
   clients: { id: string; name: string }[];
   orders: { id: string; number: string; client: { name: string } }[];
@@ -53,6 +49,7 @@ interface Props {
 }
 
 export default function InvoicesClient({ clients, orders, companies }: Props) {
+  const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -96,10 +93,6 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
   // Работа с НДС настраивается на уровне компании: если выключена, поле ставки
   // в счёте не показываем и не заполняем — большинству студий на УСН оно мешает.
   const [vatSettings, setVatSettings] = useState({ worksWithVat: false, defaultVatRate: 0 });
-  // Те же настройки целиком — из них PDF берёт реквизиты, печать и подпись,
-  // чтобы счёт можно было скачать прямо из списка, не открывая документ.
-  const [company, setCompany] = useState<CompanyForPdf | null>(null);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => (r.ok ? r.json() : null))
@@ -108,20 +101,20 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
         const works = Boolean(d.worksWithVat);
         const rate = Number(d.defaultVatRate ?? 0);
         setVatSettings({ worksWithVat: works, defaultVatRate: rate });
-        setCompany(d as CompanyForPdf);
         setForm((f) => ({ ...f, vatRate: works ? rate : 0 }));
       })
       .catch(() => {});
   }, []);
 
-  async function downloadPdf(invoice: Invoice) {
-    setDownloadingId(invoice.id);
-    try {
-      const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
-      await generateInvoicePDF(invoice, company);
-    } finally {
-      setDownloadingId(null);
-    }
+  /**
+   * Скачивание из списка.
+   *
+   * Файл снимается с отрисованного документа, а на этой странице его нет —
+   * поэтому открываем счёт и просим скачать сразу. Для человека это по-прежнему
+   * одно нажатие, зато форма в файле ровно та же, что на экране.
+   */
+  function downloadPdf(invoice: Invoice) {
+    router.push(`/invoices/${invoice.id}?download=1`);
   }
 
   function handleSearch(value: string) {
@@ -348,8 +341,7 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
                         </Link>
                         <button
                           onClick={() => downloadPdf(invoice)}
-                          disabled={downloadingId === invoice.id}
-                          className="rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg disabled:opacity-50"
+                          className="rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg"
                           title="Скачать PDF для отправки клиенту"
                         >
                           <Download size={14} />

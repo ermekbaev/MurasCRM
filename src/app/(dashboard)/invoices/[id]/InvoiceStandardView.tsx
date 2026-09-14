@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Plus, Trash2 } from "lucide-react";
 import { legalName } from "@/lib/utils";
-import { numberToWords } from "@/lib/invoice-pdf";
+import { numberToWords } from "@/lib/numberToWords";
 import type { LineItem } from "@/hooks/useLineItems";
 
 interface InvoiceItem {

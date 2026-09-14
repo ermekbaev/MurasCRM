@@ -1,7 +1,7 @@
 "use client";
 
 import { legalName } from "@/lib/utils";
-import { numberToWords } from "@/lib/invoice-pdf";
+import { numberToWords } from "@/lib/numberToWords";
 import type { Party } from "./WaybillPrintView";
 
 interface WaybillItem {

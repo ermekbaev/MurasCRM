@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatDate } from "@/lib/utils";
 import { legalName } from "@/lib/utils";
-import { numberToWords } from "@/lib/invoice-pdf";
+import { numberToWords } from "@/lib/numberToWords";
 import Button from "@/components/ui/Button";
 import InvoiceStandardView from "./InvoiceStandardView";
 import { useLineItems } from "@/hooks/useLineItems";
@@ -79,18 +79,40 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
   // вернуть её, достаточно поменять значение здесь на "muras".
   const [form] = useState<"standard" | "muras">("standard");
   const [downloading, setDownloading] = useState(false);
+  const documentRef = useRef<HTMLDivElement>(null);
   const [isPaid, setIsPaid] = useState(invoice.isPaid);
   const [togglingPaid, setTogglingPaid] = useState(false);
   const { editing, editItems, saving, subtotal: editSubtotal, startEditing, cancelEditing, updateItem, addItem, removeItem, saveItems } =
     useLineItems(invoice.items);
 
+  /**
+   * PDF снимаем с того же узла, который виден на экране.
+   *
+   * Прежде файл собирала отдельная вёрстка в lib/invoice-pdf.ts, и она
+   * разъехалась с формой на экране: в счёте по образцу заказчика нет ни склада,
+   * ни статуса оплаты, а в скачанном файле они были.
+   */
   async function handleDownloadPDF() {
+    if (!documentRef.current) return;
     setDownloading(true);
     try {
-      const { generateInvoicePDF } = await import("@/lib/invoice-pdf");
-      await generateInvoicePDF({ ...invoice, isPaid }, company ? { ...company, phone: company.phone } : null);
+      const { captureToPdf } = await import("@/lib/pdf-capture");
+      await captureToPdf(documentRef.current, { fileName: `Счёт ${invoice.number}` });
     } finally { setDownloading(false); }
   }
+
+  // Приход из списка со ссылкой ?download=1 — скачиваем сразу, чтобы нажатие
+  // в списке осталось одним действием. Метку из адреса убираем, иначе
+  // обновление страницы скачивало бы файл снова.
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("download")) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    // Ждём отрисовки логотипа и печати: снимок с полупустого документа хуже,
+    // чем полсекунды ожидания.
+    const t = setTimeout(handleDownloadPDF, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleTogglePaid() {
     setTogglingPaid(true);
@@ -159,6 +181,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
       </div>
 
       {/* Invoice document */}
+      <div ref={documentRef}>
       {form === "standard" ? (
         <InvoiceStandardView
           invoice={invoice}
@@ -408,6 +431,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
         </div>
       </div>
       )}
+      </div>
 
     </div>
   );

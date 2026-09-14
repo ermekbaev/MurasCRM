@@ -1,15 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Torg12View from "./Torg12View";
 import UpdView from "./UpdView";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency, formatDate, legalName } from "@/lib/utils";
-import { numberToWords } from "@/lib/invoice-pdf";
+import { numberToWords } from "@/lib/numberToWords";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
 import { ArrowLeft, Download, Printer, Pencil, Check, X, FileText, FileCode } from "lucide-react";
+
+/** Как называется скачанный файл — по выбранной форме. */
+const FORM_LABELS: Record<"simple" | "torg12" | "upd", string> = {
+  simple: "Накладная",
+  torg12: "ТОРГ-12",
+  upd: "УПД",
+};
 
 interface WaybillItem {
   id: string;
@@ -121,6 +128,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
     URL.revokeObjectURL(url);
   }
   const [downloading, setDownloading] = useState(false);
+  const documentRef = useRef<HTMLDivElement>(null);
   // Основание можно поменять и после создания: заказчик нередко просит
   // сослаться на договор уже после того, как накладная выписана.
   const [basis, setBasis] = useState(waybill.basis ?? "");
@@ -172,8 +180,13 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
   async function handleDownloadPDF() {
     setDownloading(true);
     try {
-      const { generateWaybillPDF } = await import("@/lib/waybill-pdf");
-      await generateWaybillPDF({ ...waybill, basis }, company);
+      if (!documentRef.current) return;
+      const { captureToPdf } = await import("@/lib/pdf-capture");
+      await captureToPdf(documentRef.current, {
+        fileName: `${FORM_LABELS[form]} ${waybill.number}`,
+        // Унифицированные бланки шире страницы — печатаются лёжа.
+        landscape: form !== "simple",
+      });
     } finally {
       setDownloading(false);
     }
@@ -239,6 +252,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         </div>
       </div>
 
+      <div ref={documentRef}>
       {form === "upd" ? (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
           <UpdView
@@ -488,6 +502,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         </div>
       </div>
       )}
+      </div>
     </div>
   );
 }
