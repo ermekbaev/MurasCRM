@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { downloadServerPdf } from "@/lib/download-pdf";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Card from "@/components/ui/Card";
 import PageHeader from "@/components/layout/PageHeader";
@@ -49,7 +49,7 @@ interface Props {
 }
 
 export default function InvoicesClient({ clients, orders, companies }: Props) {
-  const router = useRouter();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -145,15 +145,14 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
     }
   }
 
-  /**
-   * Скачивание из списка.
-   *
-   * Файл снимается с отрисованного документа, а на этой странице его нет —
-   * поэтому открываем счёт и просим скачать сразу. Для человека это по-прежнему
-   * одно нажатие, зато форма в файле ровно та же, что на экране.
-   */
-  function downloadPdf(invoice: Invoice) {
-    router.push(`/invoices/${invoice.id}?download=1`);
+  /** Скачивание из списка: файл готовит сервер, открывать счёт не нужно. */
+  async function downloadPdf(invoice: Invoice) {
+    setDownloadingId(invoice.id);
+    try {
+      await downloadServerPdf(`/api/invoices/${invoice.id}/pdf`, `Счёт ${invoice.number}`);
+    } finally {
+      setDownloadingId(null);
+    }
   }
 
   function handleSearch(value: string) {
@@ -380,7 +379,8 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
                         </Link>
                         <button
                           onClick={() => downloadPdf(invoice)}
-                          className="rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg"
+                          disabled={downloadingId === invoice.id}
+                          className="rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-fg disabled:opacity-50"
                           title="Скачать PDF для отправки клиенту"
                         >
                           <Download size={14} />

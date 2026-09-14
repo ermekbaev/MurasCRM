@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatDate } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { numberToWords } from "@/lib/numberToWords";
 import Button from "@/components/ui/Button";
 import InvoiceStandardView from "./InvoiceStandardView";
 import { useLineItems } from "@/hooks/useLineItems";
+import { downloadServerPdf } from "@/lib/download-pdf";
 import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X, XCircle, CheckCircle } from "lucide-react";
 
 interface InvoiceItem {
@@ -93,28 +94,14 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
    * ни статуса оплаты, а в скачанном файле они были.
    */
   async function handleDownloadPDF() {
-    if (!documentRef.current) return;
     setDownloading(true);
     try {
-      const { captureToPdf } = await import("@/lib/pdf-capture");
-      await captureToPdf(documentRef.current, {
-        fileName: `Счёт ${invoice.number}`,
-      });
+      await downloadServerPdf(
+        `/api/invoices/${invoice.id}/pdf`,
+        `Счёт ${invoice.number}`,
+      );
     } finally { setDownloading(false); }
   }
-
-  // Приход из списка со ссылкой ?download=1 — скачиваем сразу, чтобы нажатие
-  // в списке осталось одним действием. Метку из адреса убираем, иначе
-  // обновление страницы скачивало бы файл снова.
-  useEffect(() => {
-    if (!new URLSearchParams(window.location.search).has("download")) return;
-    window.history.replaceState(null, "", window.location.pathname);
-    // Ждём отрисовки логотипа и печати: снимок с полупустого документа хуже,
-    // чем полсекунды ожидания.
-    const t = setTimeout(handleDownloadPDF, 400);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function handleTogglePaid() {
     setTogglingPaid(true);

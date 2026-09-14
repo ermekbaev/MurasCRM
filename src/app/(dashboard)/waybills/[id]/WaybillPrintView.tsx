@@ -9,6 +9,7 @@ import { formatCurrency, formatDate, legalName } from "@/lib/utils";
 import { numberToWords } from "@/lib/numberToWords";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
+import { downloadServerPdf } from "@/lib/download-pdf";
 import { ArrowLeft, Download, Printer, Pencil, Check, X, FileText, FileCode } from "lucide-react";
 
 /** Как называется скачанный файл — по выбранной форме. */
@@ -101,7 +102,13 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
   // Показываем только официальные бланки. Собственная простая форма
   // сохранена ниже и остаётся в коде: чтобы вернуть её, достаточно
   // добавить "simple" в переключатель и поставить начальным значением.
-  const [form, setForm] = useState<"simple" | "torg12" | "upd">("torg12");
+  // Форму можно задать адресом: по ней сервер открывает страницу, когда
+  // печатает документ в PDF.
+  const [form, setForm] = useState<"simple" | "torg12" | "upd">(() => {
+    if (typeof window === "undefined") return "torg12";
+    const asked = new URLSearchParams(window.location.search).get("form");
+    return asked === "upd" || asked === "simple" ? asked : "torg12";
+  });
 
   /**
    * Выгрузка УПД в XML формата ФНС для ручной загрузки в ЭДО.
@@ -180,13 +187,10 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
   async function handleDownloadPDF() {
     setDownloading(true);
     try {
-      if (!documentRef.current) return;
-      const { captureToPdf } = await import("@/lib/pdf-capture");
-      await captureToPdf(documentRef.current, {
-        fileName: `${FORM_LABELS[form]} ${waybill.number}`,
-        // Унифицированные бланки шире страницы — печатаются лёжа.
-        landscape: form !== "simple",
-      });
+      await downloadServerPdf(
+        `/api/waybills/${waybill.id}/pdf?form=${form}`,
+        `${FORM_LABELS[form]} ${waybill.number}`,
+      );
     } finally {
       setDownloading(false);
     }

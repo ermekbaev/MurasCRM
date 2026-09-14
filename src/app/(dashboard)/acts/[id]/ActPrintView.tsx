@@ -6,6 +6,7 @@ import Image from "next/image";
 import { formatCurrency, formatDate, legalName } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import { useLineItems } from "@/hooks/useLineItems";
+import { downloadServerPdf } from "@/lib/download-pdf";
 import { ArrowLeft, Download, Printer, Pencil, Plus, Trash2, Check, X } from "lucide-react";
 
 interface ActItem {
@@ -56,13 +57,9 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
 
   /** PDF снимаем с того же узла, что виден на экране, — см. lib/pdf-capture. */
   async function handleDownloadPDF() {
-    if (!documentRef.current) return;
     setDownloading(true);
     try {
-      const { captureToPdf } = await import("@/lib/pdf-capture");
-      await captureToPdf(documentRef.current, {
-        fileName: `Акт ${act.number}`,
-      });
+      await downloadServerPdf(`/api/acts/${act.id}/pdf`, `Акт ${act.number}`);
     } finally {
       setDownloading(false);
     }
