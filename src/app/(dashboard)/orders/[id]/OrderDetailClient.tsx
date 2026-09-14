@@ -758,12 +758,15 @@ export default function OrderDetailClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-line-soft bg-surface-sunken">
+                      {/* Ширины заданы в шапке: тогда колонки одинаковы и при
+                          просмотре, и при правке. Раньше ширина зависела от
+                          содержимого, и поля ввода уезжали из-под заголовков. */}
                       <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase">Наименование</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Кол-во</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Цена</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Скидка%</th>
-                      <th className="text-right px-5 py-3 text-xs font-medium text-fg-muted uppercase">Итого</th>
-                      {editingItems && <th className="px-2 py-3 w-8"></th>}
+                      <th className="w-44 text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Кол-во</th>
+                      <th className="w-36 text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Цена</th>
+                      <th className="w-28 text-right px-4 py-3 text-xs font-medium text-fg-muted uppercase">Скидка%</th>
+                      <th className="w-36 text-right px-5 py-3 text-xs font-medium text-fg-muted uppercase">Итого</th>
+                      {editingItems && <th className="w-10 px-2 py-3"></th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line-soft">
@@ -771,7 +774,7 @@ export default function OrderDetailClient({
                       <>
                         {editItems.map((item, idx) => (
                           <tr key={idx}>
-                            <td className="px-3 py-2">
+                            <td className="px-5 py-2">
                               <input
                                 value={item.name}
                                 onChange={(e) => updateEditItem(idx, "name", e.target.value)}
@@ -779,35 +782,35 @@ export default function OrderDetailClient({
                                 placeholder="Наименование"
                               />
                             </td>
-                            <td className="px-2 py-2">
+                            <td className="px-4 py-2">
                               <div className="flex gap-1 items-center">
                                 <input
                                   type="number" min="0.01" step="any" value={item.qty}
                                   onChange={(e) => updateEditItem(idx, "qty", parseFloat(e.target.value) || 0)}
-                                  className="w-16 px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
+                                  className="min-w-0 flex-1 px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                                 />
                                 <input
                                   value={item.unit}
                                   onChange={(e) => updateEditItem(idx, "unit", e.target.value)}
-                                  className="w-12 px-2 py-1 text-sm border border-line rounded focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
+                                  className="w-14 shrink-0 px-2 py-1 text-sm border border-line rounded text-center focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                                 />
                               </div>
                             </td>
-                            <td className="px-2 py-2">
+                            <td className="px-4 py-2">
                               <input
                                 type="number" min="0" step="any" value={item.price}
                                 onChange={(e) => updateEditItem(idx, "price", parseFloat(e.target.value) || 0)}
-                                className="w-28 px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
+                                className="w-full px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                               />
                             </td>
-                            <td className="px-2 py-2">
+                            <td className="px-4 py-2">
                               <input
                                 type="number" min="0" max="100" step="any" value={item.discount}
                                 onChange={(e) => updateEditItem(idx, "discount", parseFloat(e.target.value) || 0)}
-                                className="w-16 px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
+                                className="w-full px-2 py-1 text-sm border border-line rounded text-right focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 bg-surface text-fg"
                               />
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-fg-muted">
+                            <td className="px-5 py-2 text-right font-medium text-fg-muted">
                               {formatCurrency(Number(item.qty) * Number(item.price) * (1 - Number(item.discount) / 100))}
                             </td>
                             <td className="px-2 py-2">
@@ -822,7 +825,7 @@ export default function OrderDetailClient({
                           </tr>
                         ))}
                         <tr>
-                          <td colSpan={6} className="px-3 py-2">
+                          <td colSpan={6} className="px-5 py-2">
                             <button onClick={addEditItem} className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover font-medium">
                               <Plus size={13} /> Добавить позицию
                             </button>
