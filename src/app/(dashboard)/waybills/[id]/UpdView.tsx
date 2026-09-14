@@ -56,7 +56,7 @@ function Row({
     <div>
       <div className="flex items-end gap-1">
         <span className="shrink-0 text-[7.5px]">{label}</span>
-        <span className="min-h-[11px] flex-1 border-b border-black px-1 text-[7.5px] leading-[1.3]">
+        <span className="min-h-[11px] flex-1 border-b border-black px-1 pb-[3px] text-[7.5px] leading-[1.3]">
           {value || " "}
         </span>
         <span className="w-7 shrink-0 text-right text-[7px]">({code})</span>
@@ -83,7 +83,7 @@ function SignRow({
       <p className="text-[7.5px]">{role}</p>
       <div className="mt-2 flex items-end gap-2">
         <div className="w-28 shrink-0 text-center">
-          <div className="border-b border-black text-[7.5px]">{title || " "}</div>
+          <div className="border-b border-black pb-[3px] text-[7.5px]">{title || " "}</div>
           <div className={cap}>(должность)</div>
         </div>
         <div className="w-24 shrink-0 text-center">
@@ -91,7 +91,7 @@ function SignRow({
           <div className={cap}>(подпись)</div>
         </div>
         <div className="flex-1 text-center">
-          <div className="border-b border-black text-[7.5px]">{name || " "}</div>
+          <div className="border-b border-black pb-[3px] text-[7.5px]">{name || " "}</div>
           <div className={cap}>(ф.и.о.)</div>
         </div>
         <span className="w-7 shrink-0 text-right text-[7px]">[{code}]</span>
@@ -400,7 +400,7 @@ export default function UpdView({
           />
           <div className="flex items-end gap-2">
             <span className="shrink-0">Дата отгрузки, передачи (сдачи)</span>
-            <span className="flex-1 border-b border-black px-1">{dateLong}</span>
+            <span className="flex-1 border-b border-black px-1 pb-[3px]">{dateLong}</span>
             <span className="w-7 shrink-0 text-right text-[7px]">[11]</span>
           </div>
           <div>

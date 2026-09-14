@@ -58,7 +58,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <div className="min-h-[12px] border-b border-black px-1 text-[8px] leading-[1.3]">
+      <div className="min-h-[12px] border-b border-black px-1 pb-[3px] text-[8px] leading-[1.3]">
         {value || " "}
       </div>
       {caption && <div className={`${cap} text-center`}>{caption}</div>}
@@ -82,7 +82,7 @@ function PartyBlock({
     <div className="flex items-start gap-2">
       <span className="w-[92px] shrink-0 pt-0.5 text-[8px]">{label}</span>
       <div className="flex-1">
-        <div className="min-h-[22px] border-b border-black px-1 text-[8px] leading-[1.35]">
+        <div className="min-h-[22px] border-b border-black px-1 pb-[3px] text-[8px] leading-[1.35]">
           {line || " "}
         </div>
         <div className={cap}>организация, адрес, телефон, факс, банковские реквизиты</div>
@@ -237,7 +237,7 @@ export default function Torg12View({
         <div className="flex items-start gap-2">
           <span className="w-[92px] shrink-0 pt-0.5 text-[8px]">Основание</span>
           <div className="flex-1">
-            <div className="min-h-[14px] border-b border-black px-1 text-[8px] leading-[1.35]">
+            <div className="min-h-[14px] border-b border-black px-1 pb-[3px] text-[8px] leading-[1.35]">
               {basis || " "}
             </div>
             <div className={cap}>договор, заказ-наряд</div>
