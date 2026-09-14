@@ -58,7 +58,11 @@ export default function InvoiceStandardView({
   onUpdateItem,
   onAddItem,
   onRemoveItem,
+  rootRef,
 }: {
+  /** Сам бланк — с него снимается PDF. Оборачивать нельзя: обёртка занимает
+   *  всю ширину страницы, и документ в снимке оказывается крошечным. */
+  rootRef?: React.Ref<HTMLDivElement>;
   invoice: {
     number: string;
     date: string;
@@ -120,6 +124,7 @@ export default function InvoiceStandardView({
 
   return (
     <div
+      ref={rootRef}
       className="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white print:max-w-full print:rounded-none print:border-0"
       style={{ fontFamily: "Arial, sans-serif", color: "#000" }}
     >

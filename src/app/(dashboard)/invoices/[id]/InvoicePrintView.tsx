@@ -181,9 +181,9 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
       </div>
 
       {/* Invoice document */}
-      <div ref={documentRef}>
       {form === "standard" ? (
         <InvoiceStandardView
+          rootRef={documentRef}
           invoice={invoice}
           company={company}
           logoUrl={logoUrl}
@@ -196,7 +196,8 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
           onRemoveItem={removeItem}
         />
       ) : (
-      <div className="bg-white max-w-3xl mx-auto border border-gray-200 rounded-xl print:border-0 print:max-w-full print:rounded-none"
+      <div ref={documentRef}
+           className="bg-white max-w-3xl mx-auto border border-gray-200 rounded-xl print:border-0 print:max-w-full print:rounded-none"
            style={{ fontFamily: "Arial, sans-serif", fontSize: "11px", color: "#000" }}>
         <div className="p-10 print:p-8">
 
@@ -431,7 +432,6 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
         </div>
       </div>
       )}
-      </div>
 
     </div>
   );

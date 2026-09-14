@@ -61,8 +61,19 @@ export async function captureToPdf(
   // Высота снимка в миллиметрах, если вписать его по ширине страницы.
   const imgH = (canvas.height * pageW) / canvas.width;
 
+  /**
+   * Насколько документ может перерасти страницу, чтобы его имело смысл сжать,
+   * а не разрезать. Счёт часто вылезает на пару сантиметров, и подпись уезжает
+   * на второй лист одна — выглядит это хуже, чем чуть уменьшенный шрифт.
+   */
+  const FIT_LIMIT = 1.3;
+
   if (imgH <= pageH) {
     pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pageW, imgH);
+  } else if (imgH <= pageH * FIT_LIMIT) {
+    // Вписываем целиком по высоте и ставим по центру страницы.
+    const w = (canvas.width * pageH) / canvas.height;
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", (pageW - w) / 2, 0, w, pageH);
   } else {
     // Документ длиннее страницы — режем снимок на полосы по высоте страницы.
     const sliceHeightPx = Math.floor((pageH * canvas.width) / pageW);

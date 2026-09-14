@@ -252,9 +252,8 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         </div>
       </div>
 
-      <div ref={documentRef}>
       {form === "upd" ? (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
+        <div ref={documentRef} className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
           <UpdView
             waybill={waybill}
             company={company}
@@ -266,7 +265,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
           />
         </div>
       ) : form === "torg12" ? (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
+        <div ref={documentRef} className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
           <Torg12View
             waybill={waybill}
             company={company}
@@ -278,7 +277,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
           />
         </div>
       ) : (
-      <div className="mx-auto max-w-4xl rounded-xl border border-gray-200 bg-white p-10 print:max-w-full print:border-0 print:p-0">
+      <div ref={documentRef} className="mx-auto max-w-4xl rounded-xl border border-gray-200 bg-white p-10 print:max-w-full print:border-0 print:p-0">
         {/* Заголовок */}
         <div className="mb-8 flex items-start justify-between">
           <div className="flex items-start gap-4">
@@ -502,7 +501,6 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
         </div>
       </div>
       )}
-      </div>
     </div>
   );
 }
