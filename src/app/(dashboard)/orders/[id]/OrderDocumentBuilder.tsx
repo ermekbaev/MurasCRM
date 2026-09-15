@@ -19,6 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
   ACT: "Письмо по акту",
   CONTRACT: "Договор",
   COMMERCIAL_OFFER: "КП",
+  WAYBILL: "Бланк накладной",
   OTHER: "Другое",
 };
 

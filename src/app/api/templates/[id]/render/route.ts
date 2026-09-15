@@ -30,8 +30,8 @@ export async function POST(
   const template = await prisma.documentTemplate.findUnique({ where: { id } });
   if (!template) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { orderId, invoiceId, clientId } = await req.json();
-  const vars = await buildTemplateVars({ orderId, invoiceId, clientId });
+  const { orderId, invoiceId, clientId, waybillId } = await req.json();
+  const vars = await buildTemplateVars({ orderId, invoiceId, clientId, waybillId });
 
   const rendered = substitute(template.body, vars);
   return NextResponse.json({ rendered, variables: vars });

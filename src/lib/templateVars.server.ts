@@ -2,6 +2,8 @@
 import { prisma } from "@/lib/prisma";
 import type { DocumentVarKey } from "@/lib/documentVars";
 import { numberToWords } from "@/lib/numberToWords";
+import { legalName } from "@/lib/utils";
+import { companyRequisitesLine, partyRequisitesLine } from "@/lib/waybillParties";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   NEW: "Новая", IN_PROGRESS: "В работе", REVIEW: "На проверке",
@@ -23,6 +25,8 @@ export interface TemplateContext {
   orderId?: string;
   invoiceId?: string;
   clientId?: string;
+  /** Накладная: её стороны, основание и позиции. */
+  waybillId?: string;
 }
 
 /** Позиция для построчного цикла в DOCX-шаблоне. */
@@ -39,6 +43,8 @@ export interface TemplateRow {
   sum_no_vat: string;
   vat: string;
   discount: string;
+  /** Ставка строкой, как в графе бланка: «20%» или «Без НДС». */
+  rate: string;
 }
 
 /** Коды ОКЕИ для ходовых единиц. Неизвестные оставляем пустыми. */
@@ -59,7 +65,10 @@ export const OKEI: Record<string, string> = {
  * Собирает значения переменных шаблона из заявки, счёта и настроек компании.
  * Общая для текстовых шаблонов и DOCX-бланков — иначе наборы разъехались бы.
  */
-export async function buildTemplateVars({ orderId, invoiceId, clientId }: TemplateContext) {
+export async function buildTemplateVars(ctx: TemplateContext) {
+  const { clientId, waybillId } = ctx;
+  // Накладная может сама подсказать заявку и счёт — поэтому не const.
+  let { orderId, invoiceId } = ctx;
   // Ключи ограничены справочником @/lib/documentVars — если добавить сюда
   // переменную, которой там нет, сборка упадёт, и подсказка в интерфейсе
   // не разойдётся с реальным набором.
@@ -74,14 +83,96 @@ export async function buildTemplateVars({ orderId, invoiceId, clientId }: Templa
     vars.company_inn    = company.inn ?? "";
     vars.company_kpp    = company.kpp ?? "";
     vars.company_ogrn   = company.ogrn ?? "";
+    vars.company_okpo   = company.okpo ?? "";
     vars.company_address = company.legalAddress ?? "";
     vars.company_phone  = company.phone ?? "";
     vars.director       = company.director ?? "";
+    vars.director_title = company.directorTitle ?? "";
     vars.accountant     = company.accountant ?? "";
     vars.bank_name      = company.bankName ?? "";
     vars.bank_account   = company.bankAccount ?? "";
     vars.bank_bik       = company.bankBik ?? "";
     vars.corr_account   = company.corrAccount ?? "";
+  }
+
+  // Waybill context
+  //
+  // Накладная тянет за собой свою заявку и свой счёт: в бланке нужны и номер
+  // счёта-основания, и данные заказа. Явно переданные orderId и invoiceId важнее.
+  if (waybillId) {
+    const waybill = await prisma.waybill.findUnique({
+      where: { id: waybillId },
+      include: {
+        client: true,
+        payer: true,
+        consignee: true,
+        items: true,
+        invoice: { select: { number: true, date: true } },
+      },
+    });
+    if (waybill) {
+      orderId = orderId ?? waybill.orderId ?? undefined;
+      invoiceId = invoiceId ?? waybill.invoiceId ?? undefined;
+
+      // Реквизиты отправителя — те же, что во встроенной ТОРГ-12: выбранная
+      // в накладной доп.компания, иначе основная.
+      const shipper = waybill.companyId
+        ? (await prisma.company.findUnique({ where: { id: waybill.companyId } })) ?? company
+        : company;
+
+      const payer = waybill.payer ?? waybill.client;
+      const consignee = waybill.consignee ?? waybill.client;
+
+      // Цены хранятся с НДС внутри — налог выделяем, как и в самой форме.
+      const total = Number(waybill.total);
+      const rate = company?.worksWithVat ? Number(company.defaultVatRate) : 0;
+      const vat = rate > 0 ? (total * rate) / (100 + rate) : 0;
+
+      vars.waybill_number = waybill.number;
+      vars.waybill_date = fmtDate(waybill.date);
+      vars.waybill_date_long = waybill.date.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      vars.waybill_basis =
+        waybill.basis ||
+        (waybill.invoice
+          ? `Счёт № ${waybill.invoice.number} от ${fmtDate(waybill.invoice.date)}`
+          : "");
+
+      vars.shipper_line = companyRequisitesLine(shipper);
+
+      vars.consignee_line = partyRequisitesLine(consignee);
+      vars.consignee_name = legalName(consignee);
+      vars.consignee_inn = consignee.inn ?? "";
+      vars.consignee_kpp = consignee.kpp ?? "";
+      vars.consignee_address = consignee.legalAddress ?? "";
+      vars.consignee_okpo = consignee.okpo ?? "";
+
+      vars.payer_line = partyRequisitesLine(payer);
+      vars.payer_name = legalName(payer);
+      vars.payer_inn = payer.inn ?? "";
+      vars.payer_kpp = payer.kpp ?? "";
+      vars.payer_address = payer.legalAddress ?? "";
+      vars.payer_okpo = payer.okpo ?? "";
+
+      vars.waybill_items_count = String(waybill.items.length);
+      vars.waybill_total = fmt(total);
+      vars.waybill_total_no_vat = fmt(total - vat);
+      vars.waybill_vat = fmt(vat);
+      vars.waybill_total_in_words = numberToWords(total);
+
+      // Общие переменные клиента — по плательщику: документ адресован ему.
+      vars.client_name = legalName(payer) || payer.name;
+      vars.client_full_name = payer.fullName || payer.name;
+      vars.client_inn = payer.inn ?? "";
+      vars.client_kpp = payer.kpp ?? "";
+      vars.client_ogrn = payer.ogrn ?? "";
+      vars.client_address = payer.legalAddress ?? "";
+      vars.client_phone = payer.phone ?? "";
+      vars.client_email = payer.email ?? "";
+    }
   }
 
   // Order context
@@ -187,7 +278,11 @@ export async function buildTemplateVars({ orderId, invoiceId, clientId }: Templa
 }
 
 /** Те же позиции, но структурой — для цикла по строкам таблицы в DOCX. */
-export async function buildTemplateRows({ orderId, invoiceId }: TemplateContext): Promise<TemplateRow[]> {
+export async function buildTemplateRows({
+  orderId,
+  invoiceId,
+  waybillId,
+}: TemplateContext): Promise<TemplateRow[]> {
   // Ставку берём из настроек: в позициях её нет, а бланкам с графами НДС
   // она нужна построчно.
   const settings = await prisma.companySettings.findFirst();
@@ -211,8 +306,20 @@ export async function buildTemplateRows({ orderId, invoiceId }: TemplateContext)
       sum_no_vat: fmt(total - vat),
       vat: fmt(vat),
       discount: i.discount === undefined ? "" : String(Number(i.discount)),
+      rate: rate > 0 ? `${rate}%` : "Без НДС",
     };
   };
+  // Накладная первой: позиции в ней могли поправить после выставления счёта,
+  // и в бланк должно попасть то, что реально отгружено.
+  if (waybillId) {
+    const waybill = await prisma.waybill.findUnique({
+      where: { id: waybillId },
+      include: { items: true },
+    });
+    if (waybill) {
+      return waybill.items.map(row);
+    }
+  }
   if (invoiceId) {
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },

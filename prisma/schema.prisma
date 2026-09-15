@@ -107,6 +107,8 @@ enum DocumentTemplateType {
   ACT
   CONTRACT
   COMMERCIAL_OFFER
+  /// Свой бланк накладной: выбирается на странице накладной рядом с ТОРГ-12 и УПД.
+  WAYBILL
   OTHER
 }
 

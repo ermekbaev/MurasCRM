@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const createSchema = z.object({
   name: z.string().min(1),
-  type: z.enum(["INVOICE", "ACT", "CONTRACT", "COMMERCIAL_OFFER", "OTHER"]).default("OTHER"),
+  type: z.enum(["INVOICE", "ACT", "CONTRACT", "COMMERCIAL_OFFER", "WAYBILL", "OTHER"]).default("OTHER"),
   kind: z.enum(["TEXT", "DOCX"]).default("TEXT"),
   body: z.string().default(""),
   fileKey: z.string().optional(),

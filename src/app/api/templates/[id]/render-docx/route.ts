@@ -36,13 +36,13 @@ export async function POST(
     return apiError.badRequest("У шаблона нет загруженного файла .docx");
   }
 
-  const { orderId, invoiceId, clientId, withStamp, format } = await req
+  const { orderId, invoiceId, clientId, waybillId, withStamp, format } = await req
     .json()
     .catch(() => ({}));
 
   const [vars, items, file] = await Promise.all([
-    buildTemplateVars({ orderId, invoiceId, clientId }),
-    buildTemplateRows({ orderId, invoiceId }),
+    buildTemplateVars({ orderId, invoiceId, clientId, waybillId }),
+    buildTemplateRows({ orderId, invoiceId, waybillId }),
     getObjectBuffer(template.fileKey).catch(() => null),
   ]);
 
@@ -60,6 +60,19 @@ export async function POST(
     ]);
 
     const zip = new PizZip(file);
+
+    // docxtemplater, заполняя текст, дописывает xml:space="preserve" и ищет
+    // уже существующий атрибут с учётом кавычек. Если бланк сохранён программой,
+    // пишущей атрибуты в одинарных кавычках, получается дубль, и заполненный
+    // файл не открывают ни Word, ни LibreOffice. Приводим к двойным заранее.
+    for (const part of Object.keys(zip.files)) {
+      if (!/^word\/(document|header\d*|footer\d*)\.xml$/.test(part)) continue;
+      const xml = zip.file(part)?.asText();
+      if (xml && xml.includes("xml:space='preserve'")) {
+        zip.file(part, xml.replaceAll("xml:space='preserve'", 'xml:space="preserve"'));
+      }
+    }
+
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,

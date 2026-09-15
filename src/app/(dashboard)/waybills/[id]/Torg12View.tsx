@@ -1,6 +1,6 @@
 "use client";
 
-import { legalName } from "@/lib/utils";
+import { companyRequisitesLine, partyRequisitesLine } from "@/lib/waybillParties";
 import { numberToWords } from "@/lib/numberToWords";
 import type { Party } from "./WaybillPrintView";
 
@@ -144,36 +144,10 @@ export default function Torg12View({
   const fmt = (n: number) =>
     n.toLocaleString("ru", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  /** Полная строка реквизитов, как в бланке: адрес, ИНН, счета, банк, телефон. */
-  const companyLine = company
-    ? [
-        company.name,
-        company.legalAddress,
-        company.inn ? `ИНН ${company.inn}` : "",
-        company.bankAccount ? `р/с ${company.bankAccount}` : "",
-        company.bankName ? `банк ${company.bankName}` : "",
-        company.corrAccount ? `к/с ${company.corrAccount}` : "",
-        company.bankBik ? `БИК ${company.bankBik}` : "",
-        company.phone ? `тел.: ${company.phone}` : "",
-      ]
-        .filter(Boolean)
-        .join(", ")
-    : "";
-
-  const partyLine = (p: Party | null) =>
-    p
-      ? [
-          legalName(p),
-          p.legalAddress,
-          p.inn ? `ИНН ${p.inn}` : "",
-          p.bankAccount ? `р/с ${p.bankAccount}` : "",
-          p.bankName ? `банк ${p.bankName}` : "",
-          p.corrAccount ? `к/с ${p.corrAccount}` : "",
-          p.bankBik ? `БИК ${p.bankBik}` : "",
-        ]
-          .filter(Boolean)
-          .join(", ")
-      : "";
+  // Строки реквизитов собирает общий модуль: те же строки подставляются в
+  // загруженный Word-бланк, и разойтись им нельзя.
+  const companyLine = companyRequisitesLine(company);
+  const partyLine = (p: Party | null) => partyRequisitesLine(p);
 
   const vatSum = worksWithVat ? (total * vatRate) / (100 + vatRate) : 0;
   const withoutVat = total - vatSum;

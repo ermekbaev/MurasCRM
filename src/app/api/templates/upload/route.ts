@@ -12,7 +12,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 /** Служебные имена docxtemplater — это не переменные шаблона. */
 const LOOP_KEYS = new Set([
   "items", "n", "name", "qty", "unit", "okei", "price", "total",
-  "sum_no_vat", "vat", "discount",
+  "sum_no_vat", "vat", "discount", "rate",
   "has_vat", "has_items", "has_stamp", "logo", "stamp", "signature",
 ]);
 

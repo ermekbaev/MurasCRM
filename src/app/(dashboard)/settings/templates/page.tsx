@@ -8,7 +8,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { DOCUMENT_VAR_UI_GROUPS, DOCUMENT_VARS } from "@/lib/documentVars";
 import PageHeader from "@/components/layout/PageHeader";
-import { Plus, FileCode, Edit3, Trash2, Eye, Copy, Check } from "lucide-react";
+import { Plus, FileCode, Edit3, Trash2, Eye, Copy, Check, Download } from "lucide-react";
 
 interface Template {
   id: string;
@@ -27,6 +27,7 @@ const TEMPLATE_TYPE_LABELS: Record<string, string> = {
   ACT: "Письмо по акту",
   CONTRACT: "Договор",
   COMMERCIAL_OFFER: "Коммерческое предложение",
+  WAYBILL: "Бланк накладной",
   OTHER: "Другое",
 };
 
@@ -206,7 +207,7 @@ export default function TemplatesPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<FileCode size={18} />}
-        title="Шаблоны договоров и КП"
+        title="Шаблоны документов"
         subtitle="Свой DOCX-бланк или текст — данные подставляются из заявки, счёта и настроек компании"
         actions={
           <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "", isDefault: false }); setDocxFile(null); setDocxName(null); setSaveError(null); setModalOpen(true); }}>
@@ -218,8 +219,13 @@ export default function TemplatesPage() {
             Доступно {DOCUMENT_VARS.length} переменных — полный список внутри редактора
             шаблона, вставляются кликом.
             <span className="mt-1 block text-fg-subtle">
-              Печатные формы счёта, акта и накладной здесь не редактируются — у них
-              своя фиксированная вёрстка.
+              Встроенные формы счёта, акта, ТОРГ-12 и УПД здесь не редактируются. Чтобы
+              печатать накладные по своему бланку, скачайте{" "}
+              <a href="/templates/torg12-blank.docx" download className="text-accent hover:underline">
+                готовый бланк ТОРГ-12
+              </a>
+              , поправьте его в Word и загрузите с типом «Бланк накладной» — он появится
+              на странице накладной рядом с ТОРГ-12 и УПД.
             </span>
           </div>
         }
@@ -250,6 +256,16 @@ export default function TemplatesPage() {
                   >
                     <Eye size={14} />
                   </button>
+                  {t.kind === "DOCX" && (
+                    // Пустой бланк с переменными — тот, что загружали: его и правят в Word.
+                    <a
+                      href={`/api/templates/${t.id}/file`}
+                      className="p-1.5 rounded hover:bg-surface-hover text-fg-muted"
+                      title="Скачать бланк Word"
+                    >
+                      <Download size={14} />
+                    </a>
+                  )}
                   <button onClick={() => openEdit(t)} className="p-1.5 rounded hover:bg-surface-hover text-fg-muted">
                     <Edit3 size={14} />
                   </button>

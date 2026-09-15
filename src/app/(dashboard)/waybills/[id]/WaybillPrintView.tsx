@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Torg12View from "./Torg12View";
 import UpdView from "./UpdView";
+import WaybillBlankBuilder from "./WaybillBlankBuilder";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency, formatDate, legalName } from "@/lib/utils";
@@ -255,6 +256,13 @@ export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
           )}
         </div>
       </div>
+
+      {/* Свой Word-бланк: встроенные формы поправить нельзя, бланк — можно. */}
+      {!editing && (
+        <div className="mb-4 print:hidden">
+          <WaybillBlankBuilder waybillId={waybill.id} waybillNumber={waybill.number} />
+        </div>
+      )}
 
       {form === "upd" ? (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">

@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
-  type: z.enum(["INVOICE", "ACT", "CONTRACT", "COMMERCIAL_OFFER", "OTHER"]).optional(),
+  type: z.enum(["INVOICE", "ACT", "CONTRACT", "COMMERCIAL_OFFER", "WAYBILL", "OTHER"]).optional(),
   kind: z.enum(["TEXT", "DOCX"]).optional(),
   body: z.string().optional(),
   fileKey: z.string().nullable().optional(),

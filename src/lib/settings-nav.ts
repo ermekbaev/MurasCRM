@@ -96,8 +96,8 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     group: "Справочники",
   },
   {
-    label: "Шаблоны договоров и КП",
-    description: "Текстовые документы с подстановкой данных",
+    label: "Шаблоны документов",
+    description: "Договоры, КП и свой бланк накладной в Word",
     href: "/settings/templates",
     icon: FileCode,
     roles: ["ADMIN", "ACCOUNTANT"],
