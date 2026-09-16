@@ -104,6 +104,13 @@ export const authConfig = {
         return true;
       }
 
+      // Готовые бланки для скачивания — всем, кто вошёл. Ссылка на бланк ТОРГ-12
+      // стоит на странице накладной, а её видят менеджер и бухгалтер; без этого
+      // их перекидывало на дашборд вместо скачивания. Данных в бланке нет.
+      if (pathname.startsWith("/templates/")) {
+        return true;
+      }
+
       // Check role-based access
       if (!canAccess(role, pathname)) {
         return Response.redirect(new URL("/dashboard", nextUrl));
