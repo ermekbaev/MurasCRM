@@ -67,7 +67,7 @@ async function getDashboardData() {
         id: true,
         name: true,
         orders: {
-          where: { status: { not: "CANCELLED" } },
+          where: { status: { not: "CANCELLED" }, deletedAt: null },
           select: { amount: true },
         },
       },

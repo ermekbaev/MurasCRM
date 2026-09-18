@@ -82,6 +82,7 @@ export const authConfig = {
         pathname.startsWith("/login") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/telegram/webhook") ||
+        pathname.startsWith("/api/cron") ||
         pathname.startsWith("/api/whatsapp/webhook")
       ) {
         return true;

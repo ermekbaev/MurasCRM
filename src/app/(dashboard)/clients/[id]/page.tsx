@@ -42,10 +42,11 @@ export default async function ClientDetailPage({
     where: { id },
     include: {
       orders: {
+        where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
         include: { _count: { select: { items: true } } },
       },
-      invoices: { orderBy: { date: "desc" }, take: 10 },
+      invoices: { where: { deletedAt: null }, orderBy: { date: "desc" }, take: 10 },
       contacts: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
       payments: {
         orderBy: { createdAt: "desc" },

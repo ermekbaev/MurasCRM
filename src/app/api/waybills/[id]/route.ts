@@ -99,6 +99,11 @@ export async function DELETE(_req: Request, { params }: Params) {
   const waybill = await prisma.waybill.findUnique({ where: { id }, select: { id: true } });
   if (!waybill) return apiError.notFound();
 
-  await prisma.waybill.delete({ where: { id } });
+  // В корзину, а не насовсем: запись пропадает из списков, но её можно вернуть
+  // вместе со всем, что к ней привязано. Чистится через 30 дней.
+  await prisma.waybill.update({
+    where: { id },
+    data: { deletedAt: new Date(), deletedById: session.user.id },
+  });
   return NextResponse.json({ ok: true });
 }

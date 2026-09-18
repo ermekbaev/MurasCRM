@@ -1,5 +1,7 @@
 // Только для серверных модулей: тянет prisma.
-import { prisma } from "@/lib/prisma";
+// Сырой клиент: номера удалённых документов тоже заняты, иначе
+// восстановление из корзины упрётся в конфликт уникальности.
+import { prismaRaw as prisma } from "@/lib/prisma";
 
 export type DocumentKind = "order" | "invoice" | "act" | "waybill";
 

@@ -82,6 +82,11 @@ export async function DELETE(
   }
   const { id } = await params;
 
-  await prisma.act.delete({ where: { id } });
+  // В корзину, а не насовсем: запись пропадает из списков, но её можно вернуть
+  // вместе со всем, что к ней привязано. Чистится через 30 дней.
+  await prisma.act.update({
+    where: { id },
+    data: { deletedAt: new Date(), deletedById: session.user.id },
+  });
   return NextResponse.json({ ok: true });
 }

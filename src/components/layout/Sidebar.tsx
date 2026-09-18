@@ -17,6 +17,7 @@ import {
   Package,
   BarChart3,
   History,
+  Trash2,
   Settings,
   MessagesSquare,
   Cpu,
@@ -77,6 +78,7 @@ const navGroups: NavGroup[] = [
       { label: "Поставщики", href: "/settings/suppliers", icon: Truck, roles: ["ADMIN", "MANAGER"] },
       { label: "Журнал брака", href: "/defects", icon: AlertTriangle, roles: ["ADMIN", "MANAGER", "OPERATOR"] },
       { label: "Журнал изменений", href: "/changelog", icon: History, roles: ["ADMIN"] },
+      { label: "Корзина", href: "/trash", icon: Trash2, roles: ["ADMIN"] },
     ],
   },
 ];

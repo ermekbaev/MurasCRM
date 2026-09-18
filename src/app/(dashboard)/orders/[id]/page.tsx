@@ -38,14 +38,17 @@ export default async function OrderDetailPage({
           orderBy: { createdAt: "desc" },
         },
         invoices: {
+          where: { deletedAt: null },
           select: { id: true, number: true, date: true, total: true, isPaid: true },
           orderBy: { date: "desc" },
         },
         acts: {
+          where: { deletedAt: null },
           select: { id: true, number: true, date: true, total: true },
           orderBy: { date: "desc" },
         },
         waybills: {
+          where: { deletedAt: null },
           select: { id: true, number: true, date: true, total: true },
           orderBy: { date: "desc" },
         },

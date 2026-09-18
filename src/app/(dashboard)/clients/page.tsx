@@ -12,7 +12,7 @@ export default async function ClientsPage() {
     include: {
       _count: { select: { orders: true } },
       orders: {
-        where: { status: { not: "CANCELLED" } },
+        where: { status: { not: "CANCELLED" }, deletedAt: null },
         select: { amount: true },
       },
     },

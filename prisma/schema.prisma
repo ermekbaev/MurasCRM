@@ -173,6 +173,10 @@ model Client {
   notes         String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  /// Мягкое удаление: запись уходит в корзину, а не стирается из базы.
+  /// Все списки скрывают такие записи; корзина чистится через 30 дней.
+  deletedAt     DateTime?
+  deletedById   String?
 
   orders        Order[]
   invoices      Invoice[]
@@ -183,6 +187,8 @@ model Client {
   waybills            Waybill[] @relation("WaybillClient")
   waybillsAsPayer     Waybill[] @relation("WaybillPayer")
   waybillsAsConsignee Waybill[] @relation("WaybillConsignee")
+
+  @@index([deletedAt])
 }
 
 // ─── ClientContact (сотрудники клиента, с кем ведутся дела) ───────────────────
@@ -242,6 +248,10 @@ model Order {
   notes         String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  /// Мягкое удаление: запись уходит в корзину, а не стирается из базы.
+  /// Все списки скрывают такие записи; корзина чистится через 30 дней.
+  deletedAt     DateTime?
+  deletedById   String?
 
   client        Client         @relation(fields: [clientId], references: [id])
   manager       User?          @relation("OrderManager", fields: [managerId], references: [id])
@@ -262,6 +272,7 @@ model Order {
   @@index([managerId])
   @@index([status])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model OrderItem {
@@ -386,21 +397,25 @@ model TaskFile {
 // ─── Invoice & Act ────────────────────────────────────────────────────────────
 
 model Invoice {
-  id        String    @id @default(cuid())
-  number    String    @unique
-  clientId  String
-  orderId   String?
-  date      DateTime  @default(now())
-  dueDate   DateTime?
-  vatRate   Decimal   @default(0) @db.Decimal(5, 2)
-  subtotal  Decimal   @default(0) @db.Decimal(12, 2)
-  vatAmount Decimal   @default(0) @db.Decimal(12, 2)
-  total     Decimal   @default(0) @db.Decimal(12, 2)
-  basis     String?
-  isPaid    Boolean   @default(false)
-  companyId String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  number      String    @unique
+  clientId    String
+  orderId     String?
+  date        DateTime  @default(now())
+  dueDate     DateTime?
+  vatRate     Decimal   @default(0) @db.Decimal(5, 2)
+  subtotal    Decimal   @default(0) @db.Decimal(12, 2)
+  vatAmount   Decimal   @default(0) @db.Decimal(12, 2)
+  total       Decimal   @default(0) @db.Decimal(12, 2)
+  basis       String?
+  isPaid      Boolean   @default(false)
+  companyId   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  /// Мягкое удаление: запись уходит в корзину, а не стирается из базы.
+  /// Все списки скрывают такие записи; корзина чистится через 30 дней.
+  deletedAt   DateTime?
+  deletedById String?
 
   client   Client        @relation(fields: [clientId], references: [id])
   order    Order?        @relation(fields: [orderId], references: [id])
@@ -408,6 +423,8 @@ model Invoice {
   items    InvoiceItem[]
   acts     Act[]
   waybills Waybill[]
+
+  @@index([deletedAt])
 }
 
 model InvoiceItem {
@@ -423,27 +440,33 @@ model InvoiceItem {
 }
 
 model Act {
-  id        String   @id @default(cuid())
-  number    String   @unique
-  invoiceId String?
-  orderId   String?
-  companyId String?
-  date      DateTime @default(now())
-  total     Decimal  @default(0) @db.Decimal(12, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  number      String    @unique
+  invoiceId   String?
+  orderId     String?
+  companyId   String?
+  date        DateTime  @default(now())
+  total       Decimal   @default(0) @db.Decimal(12, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  /// Мягкое удаление: запись уходит в корзину, а не стирается из базы.
+  /// Все списки скрывают такие записи; корзина чистится через 30 дней.
+  deletedAt   DateTime?
+  deletedById String?
 
   invoice Invoice?  @relation(fields: [invoiceId], references: [id])
   order   Order?    @relation(fields: [orderId], references: [id])
   company Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   items   ActItem[]
+
+  @@index([deletedAt])
 }
 
 // ─── Waybill (товарная накладная, ТОРГ-12) ────────────────────────────────────
 
 model Waybill {
-  id          String   @id @default(cuid())
-  number      String   @unique
+  id          String    @id @default(cuid())
+  number      String    @unique
   /// Счёт-основание: из него подтягиваются позиции и реквизиты.
   invoiceId   String?
   orderId     String?
@@ -454,12 +477,16 @@ model Waybill {
   payerId     String?
   /// Грузополучатель, если груз принимает не плательщик.
   consigneeId String?
-  date        DateTime @default(now())
+  date        DateTime  @default(now())
   /// Основание отгрузки. По умолчанию — связанный счёт, можно заменить вручную.
   basis       String?
-  total       Decimal  @default(0) @db.Decimal(12, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  total       Decimal   @default(0) @db.Decimal(12, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  /// Мягкое удаление: запись уходит в корзину, а не стирается из базы.
+  /// Все списки скрывают такие записи; корзина чистится через 30 дней.
+  deletedAt   DateTime?
+  deletedById String?
 
   invoice   Invoice?      @relation(fields: [invoiceId], references: [id])
   order     Order?        @relation(fields: [orderId], references: [id])
@@ -472,6 +499,7 @@ model Waybill {
   @@index([clientId])
   @@index([invoiceId])
   @@index([orderId])
+  @@index([deletedAt])
 }
 
 model WaybillItem {
