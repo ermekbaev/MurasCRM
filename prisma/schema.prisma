@@ -852,6 +852,15 @@ model CompanySettings {
   invoicePrefix    String   @default("СЧ")
   actPrefix        String   @default("АКТ")
   waybillPrefix    String   @default("НАКЛ")
+  /// С какого номера начать нумерацию — чтобы продолжить счёт из прежней
+  /// системы, не вводя номер руками при каждом документе.
+  orderStartNumber   Int?
+  invoiceStartNumber Int?
+  actStartNumber     Int?
+  waybillStartNumber Int?
+  /// Год, к которому относятся стартовые номера. Первого января нумерация
+  /// начинается заново с единицы, а не со старой стартовой цифры.
+  numberStartYear    Int?
   worksWithVat     Boolean  @default(false)
   /// Ставка по умолчанию для новых счетов, если НДС включён.
   defaultVatRate   Decimal  @default(20) @db.Decimal(5, 2)

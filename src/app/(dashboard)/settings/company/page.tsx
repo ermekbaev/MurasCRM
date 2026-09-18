@@ -14,6 +14,8 @@ interface Settings {
   bankName: string; bankAccount: string; bankBik: string; corrAccount: string;
   director: string; directorTitle: string; accountant: string; invoiceNotice: string;
   orderPrefix: string; invoicePrefix: string; actPrefix: string; waybillPrefix: string;
+  orderStartNumber: string; invoiceStartNumber: string;
+  actStartNumber: string; waybillStartNumber: string;
   worksWithVat: boolean; defaultVatRate: number;
   logoUrl?: string | null;
   stampUrl?: string | null;
@@ -46,6 +48,8 @@ const FIELD_LABELS: Record<string, string> = {
   accountant: "Бухгалтер", invoiceNotice: "Текст в шапке счёта",
   orderPrefix: "Префикс заявок", invoicePrefix: "Префикс счетов",
   actPrefix: "Префикс актов", waybillPrefix: "Префикс накладных",
+  orderStartNumber: "Начальный номер заявок", invoiceStartNumber: "Начальный номер счетов",
+  actStartNumber: "Начальный номер актов", waybillStartNumber: "Начальный номер накладных",
   worksWithVat: "Работа с НДС", defaultVatRate: "Ставка НДС",
 };
 
@@ -66,6 +70,7 @@ export default function CompanySettingsPage() {
     phone: "", email: "", website: "", bankName: "", bankAccount: "",
     bankBik: "", corrAccount: "", director: "", directorTitle: "", accountant: "", invoiceNotice: "",
     orderPrefix: "ЗАК", invoicePrefix: "СЧ", actPrefix: "АКТ", waybillPrefix: "НАКЛ",
+    orderStartNumber: "", invoiceStartNumber: "", actStartNumber: "", waybillStartNumber: "",
     worksWithVat: false, defaultVatRate: 20,
   });
   const [loading, setLoading] = useState(false);
@@ -85,7 +90,14 @@ export default function CompanySettingsPage() {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
-        setForm((prev) => ({ ...prev, ...data }));
+        setForm((prev) => ({
+          ...prev,
+          ...data,
+          orderStartNumber: data.orderStartNumber?.toString() ?? "",
+          invoiceStartNumber: data.invoiceStartNumber?.toString() ?? "",
+          actStartNumber: data.actStartNumber?.toString() ?? "",
+          waybillStartNumber: data.waybillStartNumber?.toString() ?? "",
+        }));
         setBrandingUrls({
           logoKey:      data.logoUrl      ?? null,
           stampKey:     data.stampUrl     ?? null,
@@ -221,15 +233,26 @@ export default function CompanySettingsPage() {
         <Section title="Нумерация документов" icon={<Hash size={16} />}>
           <p className="-mt-2 text-xs text-fg-muted">
             Номер собирается как ПРЕФИКС-ГОД-НОМЕР, например {form.invoicePrefix}-{new Date().getFullYear()}-001.
-            Счёт внутри года начинается заново с 1 января. Чтобы продолжить нумерацию
-            с нужной цифры, один раз укажите номер вручную при создании документа —
-            дальше отсчёт пойдёт от него.
+            Счёт внутри года начинается заново с 1 января.
           </p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Input label="Заявки" value={form.orderPrefix} onChange={(e) => update("orderPrefix", e.target.value)} placeholder="ЗАК" />
             <Input label="Счета" value={form.invoicePrefix} onChange={(e) => update("invoicePrefix", e.target.value)} placeholder="СЧ" />
             <Input label="Акты" value={form.actPrefix} onChange={(e) => update("actPrefix", e.target.value)} placeholder="АКТ" />
             <Input label="Накладные" value={form.waybillPrefix} onChange={(e) => update("waybillPrefix", e.target.value)} placeholder="НАКЛ" />
+          </div>
+
+          <p className="text-xs text-fg-muted">
+            Начальный номер — для перехода с другой системы. Если там дошли,
+            например, до 72-го документа, поставьте 73: следующий документ получит
+            этот номер, дальше отсчёт пойдёт сам. Вводить номер при каждом
+            документе не нужно. Пусто — нумерация с единицы.
+          </p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Input label="Заявки с номера" type="number" min={1} value={form.orderStartNumber} onChange={(e) => update("orderStartNumber", e.target.value)} placeholder="с начала" />
+            <Input label="Счета с номера" type="number" min={1} value={form.invoiceStartNumber} onChange={(e) => update("invoiceStartNumber", e.target.value)} placeholder="с начала" />
+            <Input label="Акты с номера" type="number" min={1} value={form.actStartNumber} onChange={(e) => update("actStartNumber", e.target.value)} placeholder="с начала" />
+            <Input label="Накладные с номера" type="number" min={1} value={form.waybillStartNumber} onChange={(e) => update("waybillStartNumber", e.target.value)} placeholder="с начала" />
           </div>
         </Section>
 

@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { generateDownloadUrl } from "@/lib/s3";
 import { z } from "zod";
 
+/** Стартовый номер нумерации: число либо «не задано». */
+const startNumber = z.preprocess(
+  (v) => (v === "" || v === null || v === undefined ? null : v),
+  z.coerce.number().int().min(1).max(999999).nullable(),
+).optional();
+
 const settingsSchema = z.object({
   name: z.string().optional(),
   inn: z.string().optional(),
@@ -26,6 +32,11 @@ const settingsSchema = z.object({
   invoicePrefix: z.string().max(12).optional(),
   actPrefix: z.string().max(12).optional(),
   waybillPrefix: z.string().max(12).optional(),
+  // Пустое поле формы приходит строкой "" — это «не задано», а не ноль.
+  orderStartNumber: startNumber,
+  invoiceStartNumber: startNumber,
+  actStartNumber: startNumber,
+  waybillStartNumber: startNumber,
   worksWithVat: z.boolean().optional(),
   // coerce, а не number: Prisma отдаёт Decimal строкой, и форма возвращает
   // её обратно как строку — строгий z.number() ронял сохранение целиком.
@@ -65,16 +76,31 @@ export async function PATCH(req: Request) {
   const parsed = settingsSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  // Год привязки проставляем сами: стартовый номер осмыслен только в том году,
+  // когда его задали, иначе первого января нумерация прыгнула бы обратно на него.
+  const startKeys = [
+    "orderStartNumber",
+    "invoiceStartNumber",
+    "actStartNumber",
+    "waybillStartNumber",
+  ] as const;
+  const touchesStart = startKeys.some((k) => k in body);
+  const data: Record<string, unknown> = { ...parsed.data };
+  if (touchesStart) {
+    const anySet = startKeys.some((k) => parsed.data[k] != null);
+    data.numberStartYear = anySet ? new Date().getFullYear() : null;
+  }
+
   let settings = await prisma.companySettings.findFirst();
 
   if (settings) {
     settings = await prisma.companySettings.update({
       where: { id: settings.id },
-      data: parsed.data,
+      data,
     });
   } else {
     settings = await prisma.companySettings.create({
-      data: { id: "default", ...parsed.data },
+      data: { id: "default", ...data },
     });
   }
 

@@ -56,5 +56,21 @@ export async function nextDocumentNumber(kind: DocumentKind, attempt = 0): Promi
     return Number.isFinite(seq) && seq > acc ? seq : acc;
   }, 0);
 
-  return head + String(max + 1 + attempt).padStart(3, "0");
+  // Стартовый номер — для перехода с другой системы: там дошли до 72-го
+  // документа, продолжать надо с 73. Действует только в свой год: первого
+  // января счёт начинается заново с единицы, а не со старой стартовой цифры.
+  const configuredStart =
+    kind === "order" ? settings?.orderStartNumber
+    : kind === "invoice" ? settings?.invoiceStartNumber
+    : kind === "act" ? settings?.actStartNumber
+    : settings?.waybillStartNumber;
+
+  const start =
+    configuredStart && settings?.numberStartYear === year ? configuredStart : 0;
+
+  // Назад нумерация не идёт: если документов уже больше, чем стартовый номер,
+  // выигрывает существующий максимум.
+  const from = Math.max(max, start - 1);
+
+  return head + String(from + 1 + attempt).padStart(3, "0");
 }
