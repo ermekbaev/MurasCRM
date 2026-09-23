@@ -62,6 +62,9 @@ export async function GET(req: Request) {
     materialCostsAgg,
     prevMaterialCostsAgg,
     prevEarningsItems,
+    otherExpensesAgg,
+    prevOtherExpensesAgg,
+    expensesByCategoryAgg,
   ] = await Promise.all([
     prisma.order.aggregate({
       where: { createdAt: { gte: startDate, lte: endDate }, status: { not: "CANCELLED" } },
@@ -165,6 +168,21 @@ export async function GET(req: Request) {
         equipment: { select: { operatorRate: true, costPerLm: true } },
       },
     }),
+    // Живые расходы: аренда, закупки, реклама, налоги. Без них прибыль
+    // считалась только по себестоимости производства и выходила завышенной.
+    prisma.expense.aggregate({
+      where: { date: { gte: startDate, lte: endDate } },
+      _sum: { amount: true },
+    }),
+    prisma.expense.aggregate({
+      where: { date: { gte: prevStartDate, lt: startDate } },
+      _sum: { amount: true },
+    }),
+    prisma.expense.groupBy({
+      by: ["categoryId"],
+      where: { date: { gte: startDate, lte: endDate } },
+      _sum: { amount: true },
+    }),
   ]);
 
   // Revenue by equipment
@@ -251,9 +269,25 @@ export async function GET(req: Request) {
     prevOperatorWages += Number(item.qty) * rate;
   }
 
-  const totalExpenses = materialCosts + totalOperatorWages + productionCost;
+  const otherExpenses = Number(otherExpensesAgg._sum.amount || 0);
+  const prevOtherExpenses = Number(prevOtherExpensesAgg._sum.amount || 0);
+
+  // Разбивка «на что ушло» — по тем же статьям, что и в разделе «Деньги».
+  const expenseCategories = expensesByCategoryAgg.some((c) => c.categoryId)
+    ? await prisma.expenseCategory.findMany({ select: { id: true, name: true } })
+    : [];
+  const expenseCategoryNames = Object.fromEntries(expenseCategories.map((c) => [c.id, c.name]));
+  const expensesByCategory = expensesByCategoryAgg
+    .map((c) => ({
+      name: c.categoryId ? expenseCategoryNames[c.categoryId] ?? "Удалённая статья" : "Без статьи",
+      amount: Number(c._sum.amount || 0),
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const totalExpenses = materialCosts + totalOperatorWages + productionCost + otherExpenses;
   const profit = currentRev - totalExpenses;
-  const prevExpenses = prevMaterialCosts + prevOperatorWages + prevProductionCost;
+  const prevExpenses =
+    prevMaterialCosts + prevOperatorWages + prevProductionCost + prevOtherExpenses;
   const prevProfit = prevRev - prevExpenses;
   const profitGrowth = prevProfit !== 0 ? ((profit - prevProfit) / Math.abs(prevProfit)) * 100 : null;
 
@@ -374,6 +408,7 @@ export async function GET(req: Request) {
       materialCosts,
       operatorWages: totalOperatorWages,
       productionCost,
+      otherExpenses,
       totalExpenses,
       profit,
       prevProfit,
@@ -405,6 +440,7 @@ export async function GET(req: Request) {
       }))
       .sort((a, b) => b.orders - a.orders),
     operatorEarnings,
+    expensesByCategory,
     details,
   });
 }

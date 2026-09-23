@@ -32,7 +32,10 @@ const ROLE_ROUTES: Record<Role, string[]> = {
     "/waybills",
     "/chats",
     "/analytics",
+    "/money",
     "/settings/templates",
+    "/settings/money-accounts",
+    "/settings/expense-categories",
   ],
 };
 

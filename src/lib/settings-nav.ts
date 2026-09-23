@@ -10,6 +10,8 @@ import {
   Columns3,
   FileCode,
   Zap,
+  Wallet,
+  Receipt,
 } from "lucide-react";
 
 export interface SettingsSection {
@@ -93,6 +95,22 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     href: "/settings/quick-replies",
     icon: Zap,
     roles: ["ADMIN", "MANAGER"],
+    group: "Справочники",
+  },
+  {
+    label: "Счета и кассы",
+    description: "Карты, наличные и расчётный счёт для учёта денег",
+    href: "/settings/money-accounts",
+    icon: Wallet,
+    roles: ["ADMIN", "ACCOUNTANT"],
+    group: "Справочники",
+  },
+  {
+    label: "Статьи расходов",
+    description: "Аренда, закупка, реклама — разбивка в отчёте",
+    href: "/settings/expense-categories",
+    icon: Receipt,
+    roles: ["ADMIN", "ACCOUNTANT"],
     group: "Справочники",
   },
   {

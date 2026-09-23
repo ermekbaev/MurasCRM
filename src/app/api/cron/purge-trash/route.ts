@@ -26,6 +26,7 @@ export async function GET(req: Request) {
   const invoices = await prismaRaw.invoice.deleteMany({ where });
   const acts = await prismaRaw.act.deleteMany({ where });
   const waybills = await prismaRaw.waybill.deleteMany({ where });
+  const expenses = await prismaRaw.expense.deleteMany({ where });
   const orders = await prismaRaw.order.deleteMany({ where });
   const clients = await prismaRaw.client.deleteMany({ where });
 
@@ -33,6 +34,7 @@ export async function GET(req: Request) {
     invoices: invoices.count,
     acts: acts.count,
     waybills: waybills.count,
+    expenses: expenses.count,
     orders: orders.count,
     clients: clients.count,
   };

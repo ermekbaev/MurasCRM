@@ -37,6 +37,8 @@ interface AnalyticsData {
     materialCosts: number;
     operatorWages: number;
     productionCost: number;
+    /** Аренда, закупки, реклама — то, что записано в разделе «Деньги». */
+    otherExpenses: number;
     totalExpenses: number;
     profit: number;
     prevProfit: number;
@@ -167,6 +169,7 @@ export default function AnalyticsPage() {
         ["  в т.ч. материалы", s.materialCosts],
         ["  в т.ч. себестоимость", s.productionCost],
         ["  в т.ч. ЗП операторов", s.operatorWages],
+        ["  в т.ч. прочие (аренда, закупки, реклама)", s.otherExpenses],
         ["Прибыль", s.profit],
         ["Заказов", s.ordersCount],
         ["Средний чек", Math.round(s.avgCheck)],
@@ -289,6 +292,7 @@ export default function AnalyticsPage() {
           ["  в т.ч. материалы", `${data.summary.materialCosts.toLocaleString("ru-RU")} ₽`],
           ["  в т.ч. себестоимость", `${data.summary.productionCost.toLocaleString("ru-RU")} ₽`],
           ["  в т.ч. ЗП операторов", `${data.summary.operatorWages.toLocaleString("ru-RU")} ₽`],
+          ["  в т.ч. прочие", `${data.summary.otherExpenses.toLocaleString("ru-RU")} ₽`],
           ["Прибыль", `${data.summary.profit.toLocaleString("ru-RU")} ₽`],
           ["Выручка (пред. период)", `${data.summary.prevRevenue.toLocaleString("ru-RU")} ₽`],
           ["Заказов", String(data.summary.ordersCount)],
@@ -456,6 +460,9 @@ export default function AnalyticsPage() {
                 <p className="text-xs text-fg-subtle">Материалы: {formatCurrency(summary.materialCosts)}</p>
                 <p className="text-xs text-fg-subtle">Себест.: {formatCurrency(summary.productionCost)}</p>
                 <p className="text-xs text-fg-subtle">ЗП: {formatCurrency(summary.operatorWages)}</p>
+                <p className="text-xs text-fg-subtle">
+                  Прочие: {formatCurrency(summary.otherExpenses)}
+                </p>
               </div>
             </div>
             <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-lg text-red-500 dark:text-red-400">

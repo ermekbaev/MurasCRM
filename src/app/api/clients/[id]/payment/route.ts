@@ -9,6 +9,10 @@ const EPS = 0.005;
 
 const schema = z.object({
   amount: z.number().positive(),
+  /** Куда пришли деньги: карта, наличные, расчётный счёт. */
+  accountId: z.string().nullable().optional(),
+  date: z.string().datetime().optional(),
+  comment: z.string().max(500).optional(),
 });
 
 function derivePaymentStatus(
@@ -45,6 +49,9 @@ export async function POST(
     orderBy: { createdAt: "asc" },
   });
 
+  const { accountId = null, comment = "" } = parsed.data;
+  const date = parsed.data.date ? new Date(parsed.data.date) : new Date();
+
   let remaining = parsed.data.amount;
   const ops: Prisma.PrismaPromise<unknown>[] = [];
   const allocations: { number: string; pay: number; status: string }[] = [];
@@ -72,6 +79,9 @@ export async function POST(
         data: {
           clientId: id,
           orderId: o.id,
+          accountId,
+          date,
+          comment,
           amount: pay,
           userId: session.user.id,
           userName: session.user.name ?? null,
@@ -82,10 +92,22 @@ export async function POST(
     remaining = Math.round((remaining - pay) * 100) / 100;
   }
 
-  if (allocations.length === 0) {
-    return NextResponse.json(
-      { error: "У клиента нет неоплаченных заявок" },
-      { status: 400 }
+  // Переплата (и аванс, когда долгов нет) — это тоже пришедшие деньги. Раньше
+  // остаток просто возвращался в ответе и нигде не оседал, так что в кассе его
+  // не было. Записываем его как приход без заявки.
+  if (remaining > EPS) {
+    ops.push(
+      prisma.payment.create({
+        data: {
+          clientId: id,
+          accountId,
+          date,
+          comment: comment || "Аванс / переплата",
+          amount: remaining,
+          userId: session.user.id,
+          userName: session.user.name ?? null,
+        },
+      })
     );
   }
 

@@ -8,7 +8,14 @@ import { PrismaPg } from "@prisma/adapter-pg";
  * полусотне запросов: иначе где-нибудь его забудут, и удалённая заявка
  * всплывёт в списке — а при следующей правке забудут снова.
  */
-const SOFT_DELETE_MODELS = new Set(["Order", "Client", "Invoice", "Act", "Waybill"]);
+const SOFT_DELETE_MODELS = new Set([
+  "Order",
+  "Client",
+  "Invoice",
+  "Act",
+  "Waybill",
+  "Expense",
+]);
 
 /** Операции чтения, в которые подставляется фильтр. */
 const READ_OPERATIONS = new Set([

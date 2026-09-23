@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Banknote } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import type { MoneyAccount } from "@/lib/money";
 
 type Allocation = { number: string; pay: number; status: string };
 
@@ -22,6 +23,22 @@ export default function ClientPaymentButton({
     { allocated: number; leftover: number; allocations: Allocation[] } | null
   >(null);
 
+  // Куда пришли деньги. Без этого оплата не попадает в отчёт по картам и кассе.
+  const [accounts, setAccounts] = useState<MoneyAccount[]>([]);
+  const [accountId, setAccountId] = useState("");
+
+  useEffect(() => {
+    if (!open || accounts.length > 0) return;
+    fetch("/api/settings/money-accounts")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: MoneyAccount[]) => {
+        const active = Array.isArray(d) ? d.filter((a) => a.isActive) : [];
+        setAccounts(active);
+        setAccountId((prev) => prev || active[0]?.id || "");
+      })
+      .catch(() => {});
+  }, [open, accounts.length]);
+
   function close() {
     setOpen(false);
     setResult(null);
@@ -40,7 +57,7 @@ export default function ClientPaymentButton({
     const res = await fetch(`/api/clients/${clientId}/payment`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: value }),
+      body: JSON.stringify({ amount: value, accountId: accountId || null }),
     });
     setLoading(false);
     if (res.ok) {
@@ -90,6 +107,20 @@ export default function ClientPaymentButton({
                   placeholder="Сумма"
                   className="w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
                 />
+                {accounts.length > 0 && (
+                  <select
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
+                    className="mt-3 w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20"
+                  >
+                    <option value="">Счёт не указан</option>
+                    {accounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
                 <div className="flex gap-2 justify-end mt-5">
                   <button
@@ -117,7 +148,7 @@ export default function ClientPaymentButton({
                   {result.leftover > 0 && (
                     <span className="text-orange-600">
                       {" "}
-                      · переплата {formatCurrency(result.leftover)} не распределена
+                      · переплата {formatCurrency(result.leftover)} записана как аванс
                     </span>
                   )}
                 </p>

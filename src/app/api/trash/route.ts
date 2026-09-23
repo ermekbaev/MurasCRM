@@ -18,7 +18,7 @@ const TRASH_ROLES = ["ADMIN"];
 /** Сколько дней запись лежит в корзине, прежде чем её вычистит крон. */
 export const TRASH_KEEP_DAYS = 30;
 
-const TYPES = ["order", "client", "invoice", "act", "waybill"] as const;
+const TYPES = ["order", "client", "invoice", "act", "waybill", "expense"] as const;
 type TrashType = (typeof TYPES)[number];
 
 const LABELS: Record<TrashType, string> = {
@@ -27,6 +27,7 @@ const LABELS: Record<TrashType, string> = {
   invoice: "Счёт",
   act: "Акт",
   waybill: "Накладная",
+  expense: "Расход",
 };
 
 const actionSchema = z.object({
@@ -53,7 +54,7 @@ export async function GET() {
   const deleted = { deletedAt: { not: null } };
   const order = { deletedAt: "desc" } as const;
 
-  const [orders, clients, invoices, acts, waybills, users] = await Promise.all([
+  const [orders, clients, invoices, acts, waybills, expenses, users] = await Promise.all([
     prismaRaw.order.findMany({
       where: deleted,
       orderBy: order,
@@ -78,6 +79,20 @@ export async function GET() {
       where: deleted,
       orderBy: order,
       select: { id: true, number: true, total: true, deletedAt: true, deletedById: true, client: { select: { name: true } } },
+    }),
+    prismaRaw.expense.findMany({
+      where: deleted,
+      orderBy: order,
+      select: {
+        id: true,
+        amount: true,
+        date: true,
+        comment: true,
+        deletedAt: true,
+        deletedById: true,
+        category: { select: { name: true } },
+        account: { select: { name: true } },
+      },
     }),
     prismaRaw.user.findMany({ select: { id: true, name: true } }),
   ]);
@@ -132,6 +147,17 @@ export async function GET() {
       subtitle: [w.client?.name, money(w.total)].filter(Boolean).join(" · "),
       deletedAt: w.deletedAt!.toISOString(),
       deletedBy: who(w.deletedById),
+    })),
+    ...expenses.map((e) => ({
+      type: "expense" as const,
+      typeLabel: LABELS.expense,
+      id: e.id,
+      title: [e.category?.name ?? "Без статьи", money(e.amount)].join(" · "),
+      subtitle: [e.date.toLocaleDateString("ru-RU"), e.account?.name, e.comment]
+        .filter(Boolean)
+        .join(" · "),
+      deletedAt: e.deletedAt!.toISOString(),
+      deletedBy: who(e.deletedById),
     })),
   ].sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
 
