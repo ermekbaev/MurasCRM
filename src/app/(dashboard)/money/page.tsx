@@ -9,7 +9,7 @@ import Input from "@/components/ui/Input";
 import EntryModal from "./EntryModal";
 import { formatCurrency } from "@/lib/utils";
 import { isoDate } from "@/lib/money-period";
-import { ACCOUNT_KIND_LABELS } from "@/lib/money";
+import { accountKindHint } from "@/lib/money";
 import type {
   ExpenseCategory,
   ExpenseRow,
@@ -174,17 +174,19 @@ export default function MoneyPage() {
                       <tr key={a.id}>
                         <td className="px-4 py-2.5">
                           <span className="font-medium text-fg">{a.name}</span>
-                          <span className="ml-2 text-xs text-fg-subtle">
-                            {ACCOUNT_KIND_LABELS[a.kind]}
-                          </span>
+                          {accountKindHint(a.name, a.kind) && (
+                            <span className="ml-2 text-xs text-fg-subtle">
+                              {accountKindHint(a.name, a.kind)}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-green-600 dark:text-green-400">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-green-600 dark:text-green-400">
                           {a.income ? formatCurrency(a.income) : "—"}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-red-600 dark:text-red-400">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-red-600 dark:text-red-400">
                           {a.expense ? formatCurrency(a.expense) : "—"}
                         </td>
-                        <td className="px-4 py-2.5 text-right font-semibold text-fg">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold text-fg">
                           {formatCurrency(a.balance)}
                         </td>
                       </tr>
@@ -192,12 +194,12 @@ export default function MoneyPage() {
                     {(report.unassigned.income > 0 || report.unassigned.expense > 0) && (
                       <tr>
                         <td className="px-4 py-2.5 text-fg-muted">Без счёта</td>
-                        <td className="px-4 py-2.5 text-right text-green-600 dark:text-green-400">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-green-600 dark:text-green-400">
                           {report.unassigned.income
                             ? formatCurrency(report.unassigned.income)
                             : "—"}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-red-600 dark:text-red-400">
+                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-red-600 dark:text-red-400">
                           {report.unassigned.expense
                             ? formatCurrency(report.unassigned.expense)
                             : "—"}

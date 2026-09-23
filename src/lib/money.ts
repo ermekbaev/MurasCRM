@@ -8,6 +8,17 @@ export const ACCOUNT_KIND_LABELS: Record<MoneyAccountKind, string> = {
   BANK: "Расчётный счёт",
 };
 
+/**
+ * Подпись типа рядом с названием счёта — или ничего.
+ *
+ * Счёт чаще всего так и называют: «Наличные». Повторять тип следом («Наличные
+ * Наличные») незачем — подпись нужна там, где из названия тип не ясен.
+ */
+export function accountKindHint(name: string, kind: MoneyAccountKind): string | null {
+  const label = ACCOUNT_KIND_LABELS[kind];
+  return name.trim().toLowerCase() === label.toLowerCase() ? null : label;
+}
+
 export interface MoneyAccount {
   id: string;
   name: string;

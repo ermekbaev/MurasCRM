@@ -9,7 +9,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { Plus, Wallet, Edit3, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { ACCOUNT_KIND_LABELS, type MoneyAccount } from "@/lib/money";
+import { ACCOUNT_KIND_LABELS, accountKindHint, type MoneyAccount } from "@/lib/money";
 
 const KIND_OPTIONS = Object.entries(ACCOUNT_KIND_LABELS).map(([value, label]) => ({
   value,
@@ -131,9 +131,11 @@ export default function MoneyAccountsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium text-fg">{a.name}</span>
-                    <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs text-fg-muted">
-                      {ACCOUNT_KIND_LABELS[a.kind]}
-                    </span>
+                    {accountKindHint(a.name, a.kind) && (
+                      <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs text-fg-muted">
+                        {accountKindHint(a.name, a.kind)}
+                      </span>
+                    )}
                     {!a.isActive && (
                       <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs text-fg-muted">
                         Скрыт
