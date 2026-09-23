@@ -5,7 +5,6 @@ import Link from "next/link";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import PageHeader from "@/components/layout/PageHeader";
-import Input from "@/components/ui/Input";
 import EntryModal from "./EntryModal";
 import { formatCurrency } from "@/lib/utils";
 import { isoDate } from "@/lib/money-period";
@@ -17,18 +16,39 @@ import type {
   MoneyReport,
   PaymentRow,
 } from "@/lib/money";
-import { Wallet, Plus, Minus, Trash2, Settings } from "lucide-react";
+import {
+  Wallet,
+  Plus,
+  Minus,
+  Trash2,
+  Calendar,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  TrendingUp,
+  Receipt,
+  Settings2,
+} from "lucide-react";
 
 type Tab = "income" | "expense";
+type Period = "month" | "prev" | "custom";
 
-function monthStart() {
+const PERIODS: { value: Period; label: string }[] = [
+  { value: "month", label: "Месяц" },
+  { value: "prev", label: "Прошлый" },
+  { value: "custom", label: "Период" },
+];
+
+function monthRange(offset = 0) {
   const n = new Date();
-  return isoDate(new Date(n.getFullYear(), n.getMonth(), 1));
+  const from = new Date(n.getFullYear(), n.getMonth() + offset, 1);
+  const to = offset === 0 ? n : new Date(n.getFullYear(), n.getMonth() + offset + 1, 0);
+  return { from: isoDate(from), to: isoDate(to) };
 }
 
 export default function MoneyPage() {
-  const [from, setFrom] = useState(monthStart);
-  const [to, setTo] = useState(() => isoDate(new Date()));
+  const [period, setPeriod] = useState<Period>("month");
+  const [from, setFrom] = useState(() => monthRange().from);
+  const [to, setTo] = useState(() => monthRange().to);
   const [tab, setTab] = useState<Tab>("expense");
 
   const [report, setReport] = useState<MoneyReport | null>(null);
@@ -40,11 +60,11 @@ export default function MoneyPage() {
   const [adding, setAdding] = useState<Tab | null>(null);
 
   const load = useCallback(async () => {
-    const period = `from=${from}&to=${to}`;
+    const range = `from=${from}&to=${to}`;
     const [r, p, e] = await Promise.all([
-      fetch(`/api/money/report?${period}`).then((x) => (x.ok ? x.json() : null)),
-      fetch(`/api/payments?${period}`).then((x) => (x.ok ? x.json() : null)),
-      fetch(`/api/expenses?${period}`).then((x) => (x.ok ? x.json() : null)),
+      fetch(`/api/money/report?${range}`).then((x) => (x.ok ? x.json() : null)),
+      fetch(`/api/payments?${range}`).then((x) => (x.ok ? x.json() : null)),
+      fetch(`/api/expenses?${range}`).then((x) => (x.ok ? x.json() : null)),
     ]);
     setReport(r);
     setPayments(p?.items ?? []);
@@ -65,6 +85,19 @@ export default function MoneyPage() {
       .then((d) => setCategories(Array.isArray(d) ? d : []));
   }, []);
 
+  function choosePeriod(next: Period) {
+    setPeriod(next);
+    if (next === "month") {
+      const r = monthRange();
+      setFrom(r.from);
+      setTo(r.to);
+    } else if (next === "prev") {
+      const r = monthRange(-1);
+      setFrom(r.from);
+      setTo(r.to);
+    }
+  }
+
   async function removeExpense(id: string) {
     if (!confirm("Удалить запись о расходе? Её можно будет вернуть из корзины.")) return;
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
@@ -83,264 +116,387 @@ export default function MoneyPage() {
   }
 
   const day = (iso: string) => new Date(iso).toLocaleDateString("ru-RU");
+  const totals = report?.totals;
+  const profit = totals?.profit ?? 0;
+
+  const dateField =
+    "h-9.5 rounded-lg border border-line bg-surface px-2.5 text-[13px] text-fg-muted " +
+    "focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/20";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <PageHeader
-        icon={<Wallet size={18} />}
+        icon={<Wallet size={18} className="text-accent" />}
         title="Деньги"
         subtitle="Приход и расход по счетам — сколько и по какой карте прошло"
         actions={
-          <div className="flex items-center gap-2">
-            <Link
-              href="/settings/money-accounts"
-              className="flex h-9 items-center gap-2 rounded-lg border border-line px-3 text-[13px] text-fg-muted hover:bg-surface-hover"
-            >
-              <Settings size={15} /> Счета
-            </Link>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {period === "custom" && (
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-fg-subtle" />
+                <input
+                  type="date"
+                  value={from}
+                  max={to}
+                  onChange={(e) => setFrom(e.target.value)}
+                  className={dateField}
+                />
+                <span className="text-sm text-fg-subtle">—</span>
+                <input
+                  type="date"
+                  value={to}
+                  min={from}
+                  onChange={(e) => setTo(e.target.value)}
+                  className={dateField}
+                />
+              </div>
+            )}
+            <div className="flex rounded-lg border border-line bg-surface p-0.5">
+              {PERIODS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => choosePeriod(p.value)}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    period === p.value
+                      ? "bg-accent-soft text-accent-fg"
+                      : "text-fg-muted hover:text-fg"
+                  }`}
+                >
+                  {p.value === "custom" && <Calendar size={13} />}
+                  {p.label}
+                </button>
+              ))}
+            </div>
             <Button variant="outline" onClick={() => setAdding("income")}>
-              <Plus size={16} /> Приход
+              <Plus size={15} /> Приход
             </Button>
             <Button onClick={() => setAdding("expense")}>
-              <Minus size={16} /> Расход
+              <Minus size={15} /> Расход
             </Button>
           </div>
         }
       />
 
-      {/* Период */}
-      <Card padding="md">
-        <div className="flex flex-wrap items-end gap-3">
-          <Input label="С" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <Input label="По" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          <button
-            onClick={() => {
-              setFrom(monthStart());
-              setTo(isoDate(new Date()));
-            }}
-            className="h-9.5 rounded-lg border border-line px-3 text-[13px] text-fg-muted hover:bg-surface-hover"
-          >
-            Текущий месяц
-          </button>
-          <button
-            onClick={() => {
-              const n = new Date();
-              setFrom(isoDate(new Date(n.getFullYear(), n.getMonth() - 1, 1)));
-              setTo(isoDate(new Date(n.getFullYear(), n.getMonth(), 0)));
-            }}
-            className="h-9.5 rounded-lg border border-line px-3 text-[13px] text-fg-muted hover:bg-surface-hover"
-          >
-            Прошлый месяц
-          </button>
-        </div>
-      </Card>
-
       {loading ? (
-        <div className="p-6 text-fg-subtle">Загрузка...</div>
+        <div className="py-16 text-center text-fg-subtle">Загрузка...</div>
       ) : (
         <>
-          {/* Итоги за период */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Summary label="Приход за период" value={report?.totals.income ?? 0} tone="green" />
-            <Summary label="Расход за период" value={report?.totals.expense ?? 0} tone="red" />
-            <Summary
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Stat
+              label="Приход за период"
+              value={formatCurrency(totals?.income ?? 0)}
+              icon={<ArrowDownCircle size={18} />}
+              color="text-emerald-600 bg-emerald-50 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20"
+            />
+            <Stat
+              label="Расход за период"
+              value={formatCurrency(totals?.expense ?? 0)}
+              icon={<ArrowUpCircle size={18} />}
+              color="text-rose-600 bg-rose-50 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20"
+            />
+            <Stat
               label="Разница"
-              value={report?.totals.profit ?? 0}
-              tone={(report?.totals.profit ?? 0) >= 0 ? "green" : "red"}
+              value={formatCurrency(profit)}
+              icon={<TrendingUp size={18} />}
+              color="text-accent bg-accent-soft ring-accent/15"
+              valueClass={
+                profit < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
+              }
+            />
+            <Stat
+              label="Остаток на счетах"
+              value={formatCurrency(totals?.balance ?? 0)}
+              icon={<Wallet size={18} />}
+              color="text-sky-600 bg-sky-50 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-400 dark:ring-sky-500/20"
             />
           </div>
 
-          {/* Счета */}
-          <Card padding="none">
-            <div className="border-b border-line-soft px-4 py-3">
-              <h2 className="text-[13px] font-semibold text-fg">По счетам</h2>
-              <p className="mt-0.5 text-xs text-fg-subtle">
-                Обороты — за выбранный период, остаток — на сегодня
-              </p>
-            </div>
-            {report && report.accounts.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-[13px]">
-                  <thead>
-                    <tr className="border-b border-line-soft text-left text-xs text-fg-subtle">
-                      <th className="px-4 py-2 font-medium">Счёт</th>
-                      <th className="px-4 py-2 text-right font-medium">Пришло</th>
-                      <th className="px-4 py-2 text-right font-medium">Ушло</th>
-                      <th className="px-4 py-2 text-right font-medium">Остаток</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line-soft">
-                    {report.accounts.map((a) => (
-                      <tr key={a.id}>
-                        <td className="px-4 py-2.5">
-                          <span className="font-medium text-fg">{a.name}</span>
-                          {accountKindHint(a.name, a.kind) && (
-                            <span className="ml-2 text-xs text-fg-subtle">
-                              {accountKindHint(a.name, a.kind)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-green-600 dark:text-green-400">
-                          {a.income ? formatCurrency(a.income) : "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-red-600 dark:text-red-400">
-                          {a.expense ? formatCurrency(a.expense) : "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold text-fg">
-                          {formatCurrency(a.balance)}
-                        </td>
-                      </tr>
-                    ))}
-                    {(report.unassigned.income > 0 || report.unassigned.expense > 0) && (
-                      <tr>
-                        <td className="px-4 py-2.5 text-fg-muted">Без счёта</td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-green-600 dark:text-green-400">
-                          {report.unassigned.income
-                            ? formatCurrency(report.unassigned.income)
-                            : "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2.5 text-right text-red-600 dark:text-red-400">
-                          {report.unassigned.expense
-                            ? formatCurrency(report.unassigned.expense)
-                            : "—"}
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-fg-subtle">—</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="px-4 py-10 text-center text-sm text-fg-subtle">
-                Счетов пока нет.{" "}
-                <Link href="/settings/money-accounts" className="text-accent hover:underline">
-                  Завести
-                </Link>
-              </div>
-            )}
-          </Card>
-
-          {/* На что ушло */}
-          {report && report.expensesByCategory.length > 0 && (
-            <Card padding="none">
-              <div className="border-b border-line-soft px-4 py-3">
-                <h2 className="text-[13px] font-semibold text-fg">На что ушло</h2>
-              </div>
-              <div className="divide-y divide-line-soft">
-                {report.expensesByCategory.map((c) => (
-                  <div
-                    key={c.id ?? "none"}
-                    className="flex items-center justify-between px-4 py-2.5 text-[13px]"
-                  >
-                    <span className="text-fg">{c.name}</span>
-                    <span className="font-medium text-fg">{formatCurrency(c.amount)}</span>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* По счетам */}
+            <div className="lg:col-span-2">
+              <Card padding="none" className="h-full">
+                <div className="flex items-center justify-between border-b border-line-soft px-5 py-4">
+                  <div>
+                    <h2 className="flex items-center gap-2 font-semibold text-fg">
+                      <Wallet size={16} className="text-accent" /> По счетам
+                    </h2>
+                    <p className="mt-0.5 text-xs text-fg-subtle">
+                      Обороты — за период, остаток — на сегодня
+                    </p>
                   </div>
-                ))}
-              </div>
+                  <Link
+                    href="/settings/money-accounts"
+                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
+                  >
+                    <Settings2 size={13} /> Настроить
+                  </Link>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-line-soft bg-surface-sunken">
+                        <th className="px-5 py-3 text-left text-xs font-medium uppercase text-fg-muted">
+                          Счёт
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-fg-muted">
+                          Пришло
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium uppercase text-fg-muted">
+                          Ушло
+                        </th>
+                        <th className="px-5 py-3 text-right text-xs font-medium uppercase text-fg-muted">
+                          Остаток
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-line-soft">
+                      {!report || report.accounts.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-5 py-12 text-center text-fg-subtle">
+                            <Wallet size={36} className="mx-auto mb-2 opacity-30" />
+                            <p className="text-sm">Счетов пока нет</p>
+                            <Link
+                              href="/settings/money-accounts"
+                              className="mt-1 inline-block text-xs text-accent hover:underline"
+                            >
+                              Завести наличные, карту, расчётный счёт
+                            </Link>
+                          </td>
+                        </tr>
+                      ) : (
+                        <>
+                          {report.accounts.map((a) => (
+                            <tr key={a.id} className="hover:bg-surface-hover">
+                              <td className="px-5 py-3">
+                                <span className="font-medium text-fg">{a.name}</span>
+                                {accountKindHint(a.name, a.kind) && (
+                                  <span className="ml-2 text-xs text-fg-subtle">
+                                    {accountKindHint(a.name, a.kind)}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                                {a.income ? formatCurrency(a.income) : "—"}
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-rose-600 dark:text-rose-400">
+                                {a.expense ? formatCurrency(a.expense) : "—"}
+                              </td>
+                              <td className="whitespace-nowrap px-5 py-3 text-right font-medium tabular-nums text-fg">
+                                {formatCurrency(a.balance)}
+                              </td>
+                            </tr>
+                          ))}
+                          {(report.unassigned.income > 0 || report.unassigned.expense > 0) && (
+                            <tr className="hover:bg-surface-hover">
+                              <td className="px-5 py-3 text-fg-muted">
+                                Без счёта
+                                <span className="ml-2 text-xs text-fg-subtle">
+                                  не указано, куда пришло
+                                </span>
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
+                                {report.unassigned.income
+                                  ? formatCurrency(report.unassigned.income)
+                                  : "—"}
+                              </td>
+                              <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-rose-600 dark:text-rose-400">
+                                {report.unassigned.expense
+                                  ? formatCurrency(report.unassigned.expense)
+                                  : "—"}
+                              </td>
+                              <td className="px-5 py-3 text-right text-fg-subtle">—</td>
+                            </tr>
+                          )}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+
+            {/* На что ушло */}
+            <Card padding="md" className="h-full">
+              <h2 className="mb-4 flex items-center gap-2 font-semibold text-fg">
+                <Receipt size={16} className="text-accent" /> На что ушло
+              </h2>
+              {!report || report.expensesByCategory.length === 0 ? (
+                <div className="py-10 text-center text-fg-subtle">
+                  <Receipt size={36} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Расходов за период нет</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {report.expensesByCategory.map((c) => {
+                    const max = report.expensesByCategory[0]?.amount || 1;
+                    const pct = (c.amount / max) * 100;
+                    const share = totals?.expense ? (c.amount / totals.expense) * 100 : 0;
+                    return (
+                      <div key={c.id ?? "none"}>
+                        <div className="mb-1 flex items-center justify-between text-sm">
+                          <span className="truncate pr-2 font-medium text-fg-muted">{c.name}</span>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className="text-xs text-fg-subtle">{share.toFixed(0)}%</span>
+                            <span className="font-semibold tabular-nums text-fg">
+                              {formatCurrency(c.amount)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-surface-hover">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${pct}%`, background: "#f43f5e" }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
-          )}
+          </div>
 
           {/* Журнал */}
           <Card padding="none">
-            <div className="flex border-b border-line-soft">
-              {(["expense", "income"] as Tab[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={
-                    "px-4 py-3 text-[13px] font-medium transition-colors " +
-                    (tab === t
-                      ? "border-b-2 border-accent text-fg"
-                      : "text-fg-muted hover:text-fg")
-                  }
-                >
-                  {t === "expense" ? `Расход (${expenses.length})` : `Приход (${payments.length})`}
-                </button>
-              ))}
-            </div>
-
-            {tab === "expense" ? (
-              expenses.length === 0 ? (
-                <div className="px-4 py-10 text-center text-sm text-fg-subtle">
-                  За этот период расходов нет
-                </div>
-              ) : (
-                <div className="divide-y divide-line-soft">
-                  {expenses.map((e) => (
-                    <div key={e.id} className="group flex items-center gap-3 px-4 py-2.5">
-                      <span className="w-20 shrink-0 text-xs text-fg-subtle">{day(e.date)}</span>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[13px] text-fg">
-                          {e.category?.name ?? "Без статьи"}
-                        </span>
-                        {e.comment && (
-                          <span className="ml-2 text-xs text-fg-muted">{e.comment}</span>
-                        )}
-                        <div className="text-xs text-fg-subtle">
-                          {e.account?.name ?? "Счёт не указан"}
-                          {e.supplier && ` · ${e.supplier.name}`}
-                          {e.order && ` · заявка ${e.order.number}`}
-                        </div>
-                      </div>
-                      <span className="shrink-0 font-medium text-red-600 dark:text-red-400">
-                        −{formatCurrency(e.amount)}
-                      </span>
-                      <button
-                        onClick={() => removeExpense(e.id)}
-                        title="Удалить"
-                        className="rounded p-1.5 text-fg-subtle opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:hover:bg-red-900/30"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )
-            ) : payments.length === 0 ? (
-              <div className="px-4 py-10 text-center text-sm text-fg-subtle">
-                За этот период прихода нет
-              </div>
-            ) : (
-              <div className="divide-y divide-line-soft">
-                {payments.map((p) => (
-                  <div key={p.id} className="group flex items-center gap-3 px-4 py-2.5">
-                    <span className="w-20 shrink-0 text-xs text-fg-subtle">{day(p.date)}</span>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[13px] text-fg">
-                        {p.client ? (
-                          <Link href={`/clients/${p.client.id}`} className="hover:underline">
-                            {p.client.name}
-                          </Link>
-                        ) : (
-                          "Без клиента"
-                        )}
-                      </span>
-                      {p.comment && <span className="ml-2 text-xs text-fg-muted">{p.comment}</span>}
-                      <div className="text-xs text-fg-subtle">
-                        {p.account?.name ?? "Счёт не указан"}
-                        {p.order && ` · заявка ${p.order.number}`}
-                      </div>
-                    </div>
-                    <span className="shrink-0 font-medium text-green-600 dark:text-green-400">
-                      +{formatCurrency(p.amount)}
-                    </span>
-                    {/* Оплата по заявке отменяется в самой заявке — здесь только
-                        то, что записали отдельно. */}
-                    {p.order ? (
-                      <span className="w-[30px] shrink-0" />
-                    ) : (
-                      <button
-                        onClick={() => removePayment(p.id)}
-                        title="Удалить"
-                        className="rounded p-1.5 text-fg-subtle opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:hover:bg-red-900/30"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft px-5 py-4">
+              <h2 className="flex items-center gap-2 font-semibold text-fg">
+                <Receipt size={16} className="text-accent" /> Журнал
+              </h2>
+              <div className="flex rounded-lg border border-line bg-surface p-0.5">
+                {(["expense", "income"] as Tab[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      tab === t ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"
+                    }`}
+                  >
+                    {t === "expense"
+                      ? `Расход (${expenses.length})`
+                      : `Приход (${payments.length})`}
+                  </button>
                 ))}
               </div>
-            )}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-line-soft bg-surface-sunken">
+                    <th className="px-5 py-3 text-left text-xs font-medium uppercase text-fg-muted">
+                      Дата
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-fg-muted">
+                      {tab === "expense" ? "Статья" : "От кого"}
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-fg-muted">
+                      Счёт
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-fg-muted">
+                      Комментарий
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase text-fg-muted">
+                      Сумма
+                    </th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line-soft">
+                  {tab === "expense" ? (
+                    expenses.length === 0 ? (
+                      <EmptyRow text="За этот период расходов нет" />
+                    ) : (
+                      expenses.map((e) => (
+                        <tr key={e.id} className="group hover:bg-surface-hover">
+                          <td className="whitespace-nowrap px-5 py-3 text-fg-muted">
+                            {day(e.date)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="font-medium text-fg">
+                              {e.category?.name ?? "Без статьи"}
+                            </span>
+                            {e.supplier && (
+                              <p className="text-xs text-fg-subtle">{e.supplier.name}</p>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-fg-muted">
+                            {e.account?.name ?? <span className="text-fg-subtle">не указан</span>}
+                          </td>
+                          <td className="px-4 py-3 text-fg-muted">
+                            {e.comment || "—"}
+                            {e.order && (
+                              <span className="ml-1.5 text-xs text-fg-subtle">
+                                заявка {e.order.number}
+                              </span>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums text-rose-600 dark:text-rose-400">
+                            −{formatCurrency(e.amount)}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <button
+                              onClick={() => removeExpense(e.id)}
+                              title="Удалить"
+                              className="rounded p-1.5 text-fg-subtle opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )
+                  ) : payments.length === 0 ? (
+                    <EmptyRow text="За этот период прихода нет" />
+                  ) : (
+                    payments.map((p) => (
+                      <tr key={p.id} className="group hover:bg-surface-hover">
+                        <td className="whitespace-nowrap px-5 py-3 text-fg-muted">{day(p.date)}</td>
+                        <td className="px-4 py-3">
+                          {p.client ? (
+                            <Link
+                              href={`/clients/${p.client.id}`}
+                              className="font-medium text-fg hover:text-accent"
+                            >
+                              {p.client.name}
+                            </Link>
+                          ) : (
+                            <span className="text-fg-subtle">Без клиента</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-fg-muted">
+                          {p.account?.name ?? <span className="text-fg-subtle">не указан</span>}
+                        </td>
+                        <td className="px-4 py-3 text-fg-muted">
+                          {p.comment || "—"}
+                          {p.order && (
+                            <span className="ml-1.5 text-xs text-fg-subtle">
+                              заявка {p.order.number}
+                            </span>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums text-emerald-600 dark:text-emerald-400">
+                          +{formatCurrency(p.amount)}
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          {/* Оплату по заявке отменяют в самой заявке — иначе она
+                              разойдётся с тем, сколько заявка считает оплаченным. */}
+                          {!p.order && (
+                            <button
+                              onClick={() => removePayment(p.id)}
+                              title="Удалить"
+                              className="rounded p-1.5 text-fg-subtle opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </>
       )}
@@ -358,28 +514,47 @@ export default function MoneyPage() {
   );
 }
 
-function Summary({
+function Stat({
   label,
   value,
-  tone,
+  icon,
+  color,
+  valueClass = "text-fg",
 }: {
   label: string;
-  value: number;
-  tone: "green" | "red";
+  value: string;
+  icon: React.ReactNode;
+  color: string;
+  valueClass?: string;
 }) {
   return (
-    <Card padding="md">
-      <p className="text-xs text-fg-muted">{label}</p>
-      <p
-        className={
-          "mt-1 text-xl font-semibold " +
-          (tone === "green"
-            ? "text-green-600 dark:text-green-400"
-            : "text-red-600 dark:text-red-400")
-        }
-      >
-        {formatCurrency(value)}
-      </p>
+    <Card padding="md" className="h-full">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-fg-muted">{label}</p>
+          <p
+            className={`mt-1.5 text-[22px] font-semibold leading-none tracking-tight tabular-nums ${valueClass}`}
+          >
+            {value}
+          </p>
+        </div>
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${color}`}
+        >
+          {icon}
+        </div>
+      </div>
     </Card>
+  );
+}
+
+function EmptyRow({ text }: { text: string }) {
+  return (
+    <tr>
+      <td colSpan={6} className="px-5 py-12 text-center text-fg-subtle">
+        <Receipt size={36} className="mx-auto mb-2 opacity-30" />
+        <p className="text-sm">{text}</p>
+      </td>
+    </tr>
   );
 }
