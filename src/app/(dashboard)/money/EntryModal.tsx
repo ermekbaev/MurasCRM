@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -10,11 +10,17 @@ import type { ExpenseCategory, MoneyAccount } from "@/lib/money";
 
 type Kind = "income" | "expense";
 
+/** Строка справочника, из которой собирается выпадающий список. */
+type Named = { id: string; name: string };
+
 /**
  * Одна форма для прихода и расхода.
  *
  * Поля те же, что владелец ведёт в Экселе: дата, сумма, счёт и комментарий.
  * У расхода добавляется статья — без неё разбивка «на что ушло» не собирается.
+ *
+ * Клиент у прихода и поставщик у расхода необязательны: деньги приносят и без
+ * заявки, и не всегда от того, кто заведён в базе.
  */
 export default function EntryModal({
   kind,
@@ -40,6 +46,21 @@ export default function EntryModal({
 
   const isExpense = kind === "expense";
 
+  // От кого пришло / кому заплатили. Списки грузятся один раз при открытии.
+  const [parties, setParties] = useState<Named[]>([]);
+  const [partyId, setPartyId] = useState("");
+
+  useEffect(() => {
+    const url = isExpense ? "/api/suppliers" : "/api/clients?limit=500";
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const list: Named[] = Array.isArray(d) ? d : (d?.clients ?? []);
+        setParties(list.map((p) => ({ id: p.id, name: p.name })));
+      })
+      .catch(() => {});
+  }, [isExpense]);
+
   async function submit() {
     const value = Number(amount);
     if (!value || value <= 0) {
@@ -57,7 +78,9 @@ export default function EntryModal({
           date: new Date(`${date}T12:00:00`).toISOString(),
           amount: value,
           accountId: accountId || null,
-          ...(isExpense ? { categoryId: categoryId || null } : {}),
+          ...(isExpense
+            ? { categoryId: categoryId || null, supplierId: partyId || null }
+            : { clientId: partyId || null }),
           comment: comment.trim(),
         }),
       });
@@ -108,6 +131,23 @@ export default function EntryModal({
               : undefined
           }
         />
+
+        {parties.length > 0 && (
+          <Select
+            label={isExpense ? "Поставщик" : "От кого"}
+            value={partyId}
+            onChange={(e) => setPartyId(e.target.value)}
+            options={[
+              { value: "", label: isExpense ? "Не указан" : "Без клиента" },
+              ...parties.map((p) => ({ value: p.id, label: p.name })),
+            ]}
+            hint={
+              isExpense
+                ? undefined
+                : "Приход попадёт в журнал оплат клиента. Долги по заявкам он не гасит — для этого «Принять оплату» в карточке клиента."
+            }
+          />
+        )}
 
         {isExpense && (
           <Select

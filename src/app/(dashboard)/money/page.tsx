@@ -278,6 +278,7 @@ export default function MoneyPage() {
                         )}
                         <div className="text-xs text-fg-subtle">
                           {e.account?.name ?? "Счёт не указан"}
+                          {e.supplier && ` · ${e.supplier.name}`}
                           {e.order && ` · заявка ${e.order.number}`}
                         </div>
                       </div>
