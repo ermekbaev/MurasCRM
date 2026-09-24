@@ -244,7 +244,7 @@ export default function TemplatesPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-semibold text-fg">{t.name}</p>
-                  <span className="text-xs px-2 py-0.5 bg-accent-soft text-violet-700 dark:text-accent rounded-full mt-1 inline-block">
+                  <span className="text-xs px-2 py-0.5 bg-accent-soft text-accent-fg dark:text-accent rounded-full mt-1 inline-block">
                     {TEMPLATE_TYPE_LABELS[t.type] || t.type}
                   </span>
                 </div>

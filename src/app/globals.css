@@ -61,6 +61,9 @@
   --accent-soft-strong: #e6dcff;
   --accent-on-soft: #6d28d9;
   --accent-ring: rgb(124 58 237 / 0.35);
+  /* Надпись на кнопке. Не всегда белая: на фирменном оранжевом или жёлтом
+     белый текст не читается, там подставляется почти чёрный. */
+  --on-accent: #ffffff;
 
   --canvas: #f4f5f8;
   --surface: #ffffff;
@@ -89,6 +92,7 @@
   --accent-soft-strong: #2f2551;
   --accent-on-soft: #c4b5fd;
   --accent-ring: rgb(139 92 246 / 0.45);
+  --on-accent: #ffffff;
 
   --canvas: #0d1016;
   --surface: #161a21;
@@ -114,6 +118,7 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-soft-strong: var(--accent-soft-strong);
   --color-accent-fg: var(--accent-on-soft);
+  --color-on-accent: var(--on-accent);
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);

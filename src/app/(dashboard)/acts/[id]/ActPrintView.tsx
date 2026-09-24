@@ -171,7 +171,7 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
                       <input
                         value={item.name}
                         onChange={(e) => updateItem(idx, "name", e.target.value)}
-                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
+                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-accent"
                         placeholder="Наименование"
                       />
                     </td>
@@ -179,21 +179,21 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
                       <input
                         type="number" min="0.01" step="any" value={item.qty}
                         onChange={(e) => updateItem(idx, "qty", parseFloat(e.target.value) || 0)}
-                        className="w-20 px-2 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                        className="w-20 px-2 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-accent"
                       />
                     </td>
                     <td className="py-1.5 pr-2">
                       <input
                         value={item.unit}
                         onChange={(e) => updateItem(idx, "unit", e.target.value)}
-                        className="w-16 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-violet-500"
+                        className="w-16 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-accent"
                       />
                     </td>
                     <td className="py-1.5 pr-2">
                       <input
                         type="number" min="0" step="any" value={item.price}
                         onChange={(e) => updateItem(idx, "price", parseFloat(e.target.value) || 0)}
-                        className="w-28 px-2 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                        className="w-28 px-2 py-1 text-sm border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-accent"
                       />
                     </td>
                     <td className="py-1.5 text-right font-medium text-gray-700 pr-2">
@@ -214,7 +214,7 @@ export default function ActPrintView({ act, company, logoUrl }: Props) {
                   <td colSpan={7} className="pt-2">
                     <button
                       onClick={addItem}
-                      className="flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 font-medium"
+                      className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover font-medium"
                     >
                       <Plus size={13} /> Добавить позицию
                     </button>

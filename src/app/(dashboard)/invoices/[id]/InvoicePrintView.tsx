@@ -284,21 +284,21 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
                       <td style={{ border: "1px solid #000", padding: "3px 4px" }}></td>
                       <td style={{ border: "1px solid #000", padding: "3px 4px" }}>
                         <input value={item.name} onChange={(e) => updateItem(idx, "name", e.target.value)}
-                          className="w-full px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                          className="w-full px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-accent" />
                       </td>
                       <td style={{ border: "1px solid #000", padding: "3px 4px" }}>
                         <div className="flex gap-1">
                           <input type="number" min="0.01" step="any" value={item.qty}
                             onChange={(e) => updateItem(idx, "qty", parseFloat(e.target.value) || 0)}
-                            className="w-12 px-1 py-0.5 text-xs border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                            className="w-12 px-1 py-0.5 text-xs border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-accent" />
                           <input value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)}
-                            className="w-10 px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                            className="w-10 px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-accent" />
                         </div>
                       </td>
                       <td style={{ border: "1px solid #000", padding: "3px 4px" }}>
                         <input type="number" min="0" step="any" value={item.price}
                           onChange={(e) => updateItem(idx, "price", parseFloat(e.target.value) || 0)}
-                          className="w-full px-1 py-0.5 text-xs border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                          className="w-full px-1 py-0.5 text-xs border border-gray-200 rounded text-right focus:outline-none focus:ring-1 focus:ring-accent" />
                       </td>
                       <td style={{ border: "1px solid #000", padding: "3px 4px", textAlign: "right", fontWeight: 500 }}>
                         {fmt(Number(item.qty) * Number(item.price))}
@@ -314,7 +314,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
                   <tr>
                     <td colSpan={7} style={{ border: "1px solid #000", padding: "4px 6px" }}>
                       <button onClick={addItem}
-                        className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-medium">
+                        className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover font-medium">
                         <Plus size={12} /> Добавить позицию
                       </button>
                     </td>

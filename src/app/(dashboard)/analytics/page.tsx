@@ -516,15 +516,15 @@ export default function AnalyticsPage() {
           <AreaChart data={data.monthlyRevenue}>
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} />
             <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}к`} />
             <Tooltip formatter={(v) => [formatCurrency(Number(v)), "Выручка"]} contentStyle={tooltipStyle} />
-            <Area type="monotone" dataKey="amount" stroke="#6366f1" strokeWidth={2} fill="url(#grad)" />
+            <Area type="monotone" dataKey="amount" stroke="var(--accent)" strokeWidth={2} fill="url(#grad)" />
           </AreaChart>
         </ResponsiveContainer>
       </Card>
@@ -551,7 +551,7 @@ export default function AnalyticsPage() {
                   labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ""}
                   contentStyle={tooltipStyle}
                 />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={22} />
+                <Bar dataKey="revenue" fill="var(--accent)" radius={[0, 4, 4, 0]} maxBarSize={22} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -657,7 +657,7 @@ export default function AnalyticsPage() {
                       <div className="h-1.5 bg-surface-hover rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${pct}%`, background: "#6366f1" }}
+                          style={{ width: `${pct}%`, background: "var(--accent)" }}
                         />
                       </div>
                     </div>

@@ -89,10 +89,12 @@ interface SidebarProps {
   role: Role;
   userName: string;
   userEmail: string;
+  /** Название, подпись и значок установки — у каждого клиента свои. */
+  brand: { name: string; tagline: string; logo: string };
   onClose?: () => void;
 }
 
-export default function Sidebar({ role, userName, userEmail, onClose }: SidebarProps) {
+export default function Sidebar({ role, userName, userEmail, brand, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const unread = useUnreadChats(role);
@@ -128,11 +130,21 @@ export default function Sidebar({ role, userName, userEmail, onClose }: SidebarP
       {/* Бренд */}
       <div className="flex h-16 shrink-0 items-center gap-2.5 px-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
-          <Image src="/logo.svg" alt="Muras-Brand" width={22} height={22} className="object-contain" priority />
+          {/* Высота фиксирована, картинка вписывается: логотипы у всех
+              разных пропорций, и без этого один растянул бы шапку. */}
+          <Image
+            src={brand.logo}
+            alt={brand.name}
+            width={22}
+            height={22}
+            className="h-[22px] w-[22px] object-contain"
+            unoptimized
+            priority
+          />
         </div>
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-[13px] font-semibold tracking-tight text-fg">Muras-Brand</p>
-          <p className="truncate text-[11px] text-fg-subtle">CRM производства</p>
+          <p className="truncate text-[13px] font-semibold tracking-tight text-fg">{brand.name}</p>
+          <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
         </div>
         {onClose && (
           <button
@@ -161,7 +173,7 @@ export default function Sidebar({ role, userName, userEmail, onClose }: SidebarP
                     <Icon className={iconClass(active)} />
                     <span className="truncate">{item.label}</span>
                     {item.href === "/chats" && unread > 0 && (
-                      <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                      <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-on-accent">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}

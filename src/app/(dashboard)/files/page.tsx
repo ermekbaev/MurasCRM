@@ -510,7 +510,7 @@ export default function FilesPage() {
               <button
                 type="submit"
                 disabled={!newComment.trim() || sendingComment}
-                className="p-2 rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-40 transition-colors"
+                className="p-2 rounded-lg bg-accent text-on-accent hover:bg-accent-hover disabled:opacity-40 transition-colors"
               >
                 <Send size={14} />
               </button>
@@ -546,7 +546,7 @@ export default function FilesPage() {
                   key={v}
                   type="button"
                   onClick={() => { setUploadLinkedTo(v); setUploadLinkedId(""); }}
-                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${uploadLinkedTo === v ? "bg-accent text-white border-violet-600" : "bg-surface text-fg-muted border-line hover:border-violet-300"}`}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${uploadLinkedTo === v ? "bg-accent text-on-accent border-accent" : "bg-surface text-fg-muted border-line hover:border-accent/40"}`}
                 >
                   {l}
                 </button>

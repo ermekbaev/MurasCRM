@@ -166,7 +166,7 @@ export default function ClientPaymentButton({
                 <div className="flex justify-end">
                   <button
                     onClick={close}
-                    className="px-4 py-2 text-sm rounded-lg bg-accent text-white"
+                    className="px-4 py-2 text-sm rounded-lg bg-accent text-on-accent"
                   >
                     Готово
                   </button>

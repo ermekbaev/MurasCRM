@@ -10,7 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants = {
   primary:
-    "bg-accent text-white shadow-[0_1px_2px_rgb(16_20_28/0.16)] hover:bg-accent-hover active:bg-accent-active",
+    "bg-accent text-on-accent shadow-[0_1px_2px_rgb(16_20_28/0.16)] hover:bg-accent-hover active:bg-accent-active",
   secondary:
     "bg-surface-hover text-fg hover:bg-line-soft dark:hover:bg-line",
   danger:

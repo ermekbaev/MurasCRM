@@ -709,7 +709,7 @@ export default function OrderDetailClient({
                     <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
-                <button onClick={addAssignee} disabled={!selectedAssigneeId} className="p-1.5 rounded bg-accent text-white hover:bg-accent-hover disabled:opacity-40">
+                <button onClick={addAssignee} disabled={!selectedAssigneeId} className="p-1.5 rounded bg-accent text-on-accent hover:bg-accent-hover disabled:opacity-40">
                   <Check size={13} />
                 </button>
                 <button onClick={() => { setAddingAssignee(false); setSelectedAssigneeId(""); }} className="p-1.5 rounded border border-line text-fg-muted hover:bg-surface-sunken dark:hover:bg-slate-700/50 dark:hover:bg-slate-700">
@@ -863,13 +863,13 @@ export default function OrderDetailClient({
           {/* Files tab */}
           {activeTab === "files" && (
             <div
-              className={`space-y-4 relative rounded-xl transition-colors ${isDraggingTab ? "ring-2 ring-violet-400 ring-offset-2" : ""}`}
+              className={`space-y-4 relative rounded-xl transition-colors ${isDraggingTab ? "ring-2 ring-accent/60 ring-offset-2" : ""}`}
               onDragOver={(e) => { e.preventDefault(); setIsDraggingTab(true); }}
               onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDraggingTab(false); }}
               onDrop={handleDropOnTab}
             >
               {isDraggingTab && (
-                <div className="absolute inset-0 z-10 rounded-xl border-2 border-dashed border-violet-400 bg-violet-50/90 dark:bg-violet-900/50 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 z-10 rounded-xl border-2 border-dashed border-accent/60 bg-accent-soft/90 dark:bg-accent/20 flex items-center justify-center pointer-events-none">
                   <div className="text-center">
                     <Upload size={28} className="mx-auto mb-1 text-accent" />
                     <p className="text-sm font-medium text-accent">Отпустите для загрузки</p>

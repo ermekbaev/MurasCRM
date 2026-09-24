@@ -104,7 +104,7 @@ export default async function ClientDetailPage({
             <ClientEditButton client={client} />
             <Link
               href={`/orders/new?clientId=${client.id}`}
-              className="inline-flex h-9.5 items-center gap-2 rounded-lg bg-accent px-4 text-[13px] font-medium text-white shadow-[0_1px_2px_rgb(16_20_28/0.16)] transition-colors hover:bg-accent-hover"
+              className="inline-flex h-9.5 items-center gap-2 rounded-lg bg-accent px-4 text-[13px] font-medium text-on-accent shadow-[0_1px_2px_rgb(16_20_28/0.16)] transition-colors hover:bg-accent-hover"
             >
               <ShoppingCart size={15} /> Новая заявка
             </Link>

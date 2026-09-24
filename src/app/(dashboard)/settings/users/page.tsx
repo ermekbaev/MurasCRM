@@ -172,7 +172,7 @@ export default function UsersSettingsPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-xs px-2 py-0.5 bg-violet-50 dark:bg-violet-900/40 text-accent-fg rounded-full font-medium">
+                  <span className="text-xs px-2 py-0.5 bg-accent-soft dark:bg-accent/15 text-accent-fg rounded-full font-medium">
                     {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
                   </span>
                 </td>

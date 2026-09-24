@@ -10,10 +10,11 @@ interface Props {
   role: Role;
   userName: string;
   userEmail: string;
+  brand: { name: string; tagline: string; logo: string };
   children: React.ReactNode;
 }
 
-export default function DashboardShell({ role, userName, userEmail, children }: Props) {
+export default function DashboardShell({ role, userName, userEmail, brand, children }: Props) {
   // Sidebar закрывает меню сам при клике по любому пункту (onClose).
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -35,6 +36,7 @@ export default function DashboardShell({ role, userName, userEmail, children }: 
           role={role}
           userName={userName}
           userEmail={userEmail}
+          brand={brand}
           onClose={() => setMobileOpen(false)}
         />
       </div>
@@ -50,9 +52,16 @@ export default function DashboardShell({ role, userName, userEmail, children }: 
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface">
-            <Image src="/logo.svg" alt="Muras" width={18} height={18} className="object-contain" />
+            <Image
+              src={brand.logo}
+              alt={brand.name}
+              width={18}
+              height={18}
+              className="h-[18px] w-[18px] object-contain"
+              unoptimized
+            />
           </div>
-          <span className="text-[13px] font-semibold tracking-tight text-fg">Muras-Brand</span>
+          <span className="text-[13px] font-semibold tracking-tight text-fg">{brand.name}</span>
         </div>
 
         <main className="flex-1 overflow-y-auto print:overflow-visible">{children}</main>

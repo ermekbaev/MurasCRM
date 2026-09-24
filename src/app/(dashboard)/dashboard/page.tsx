@@ -187,7 +187,7 @@ export default async function DashboardPage() {
         actions={
           <Link
             href="/orders"
-            className="inline-flex h-9.5 items-center gap-2 rounded-lg bg-accent px-4 text-[13px] font-medium text-white shadow-[0_1px_2px_rgb(16_20_28/0.16)] transition-colors hover:bg-accent-hover"
+            className="inline-flex h-9.5 items-center gap-2 rounded-lg bg-accent px-4 text-[13px] font-medium text-on-accent shadow-[0_1px_2px_rgb(16_20_28/0.16)] transition-colors hover:bg-accent-hover"
           >
             <Plus size={16} />
             Новая заявка

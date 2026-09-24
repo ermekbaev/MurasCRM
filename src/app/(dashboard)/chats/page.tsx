@@ -412,7 +412,7 @@ export default function ChatsPage() {
                     <span className="truncate text-sm font-medium text-fg">{c.title}</span>
                     <ChannelBadge channel={c.channel} />
                     {c.unread > 0 && (
-                      <span className="shrink-0 rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">
+                      <span className="shrink-0 rounded-full bg-accent px-1.5 text-[11px] font-medium text-on-accent">
                         {c.unread}
                       </span>
                     )}

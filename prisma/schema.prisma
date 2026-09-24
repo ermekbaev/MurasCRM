@@ -947,6 +947,15 @@ model CompanySettings {
   logoKey            String?
   stampKey           String?
   signatureKey       String?
+  /// Фирменный цвет установки, hex из брендбука клиента. Из него считается
+  /// вся палитра акцента — см. lib/brand-palette. Пусто — наш фиолетовый.
+  brandColor         String?
+  /// Название и подпись в меню и на странице входа. Пусто — «Muras-Brand».
+  brandName          String   @default("")
+  brandTagline       String   @default("")
+  /// Значок для интерфейса. Отдельно от logoKey: в документ ставят широкий
+  /// логотип с названием, а в меню нужен квадратный знак.
+  interfaceLogoKey   String?
   telegramBotToken   String?
   updatedAt          DateTime @updatedAt
 }

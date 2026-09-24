@@ -20,7 +20,7 @@ const variants = {
   info:
     "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/25",
   secondary:
-    "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-accent/10 dark:text-violet-300 dark:ring-violet-500/25",
+    "bg-accent-soft text-accent-fg ring-accent/25",
   accent:
     "bg-accent-soft text-accent-fg ring-accent/20",
 };

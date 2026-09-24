@@ -466,7 +466,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-accent-soft text-violet-800 dark:text-violet-300">
+                      <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-accent-soft text-accent-fg dark:text-accent-fg">
                         {typeLabels[order.type] ?? order.type}
                       </span>
                     </td>
@@ -615,11 +615,11 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                     )}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                       selected
-                        ? "bg-accent text-white border-violet-600"
-                        : "bg-surface text-fg-muted border-line hover:border-violet-400"
+                        ? "bg-accent text-on-accent border-accent"
+                        : "bg-surface text-fg-muted border-line hover:border-accent/60"
                     }`}
                   >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selected ? "bg-accent text-white" : "bg-surface-hover text-fg-muted"}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selected ? "bg-accent text-on-accent" : "bg-surface-hover text-fg-muted"}`}>
                       {u.name.charAt(0)}
                     </span>
                     {u.name}
@@ -643,7 +643,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-fg-muted">Позиции</label>
               {itemsTotal > 0 && (
-                <span className="text-sm font-semibold text-violet-700">
+                <span className="text-sm font-semibold text-accent-fg">
                   Итого: {itemsTotal.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽
                 </span>
               )}
@@ -750,8 +750,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               onDrop={handleDropFiles}
               onClick={() => pendingFiles.length === 0 && fileInputRef.current?.click()}
               className={`rounded-lg border-2 border-dashed transition-colors ${
-                isDraggingFiles ? "border-violet-400 bg-accent-soft"
-                  : pendingFiles.length === 0 ? "border-line hover:border-violet-300 cursor-pointer"
+                isDraggingFiles ? "border-accent/60 bg-accent-soft"
+                  : pendingFiles.length === 0 ? "border-line hover:border-accent/40 cursor-pointer"
                   : "border-line"
               }`}
             >
@@ -805,8 +805,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
               onDrop={handleDropScreenshots}
               onClick={() => pendingScreenshots.length === 0 && screenshotInputRef.current?.click()}
               className={`rounded-lg border-2 border-dashed transition-colors ${
-                isDraggingScreenshots ? "border-violet-400 bg-accent-soft"
-                  : pendingScreenshots.length === 0 ? "border-line hover:border-violet-300 cursor-pointer"
+                isDraggingScreenshots ? "border-accent/60 bg-accent-soft"
+                  : pendingScreenshots.length === 0 ? "border-line hover:border-accent/40 cursor-pointer"
                   : "border-line"
               }`}
             >

@@ -86,7 +86,9 @@ export const authConfig = {
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/telegram/webhook") ||
         pathname.startsWith("/api/cron") ||
-        pathname.startsWith("/api/whatsapp/webhook")
+        pathname.startsWith("/api/whatsapp/webhook") ||
+        // Значок установки нужен на странице входа — до того, как войдут.
+        pathname.startsWith("/api/branding/")
       ) {
         return true;
       }

@@ -294,7 +294,7 @@ export default function EquipmentSettingsPage() {
                     <p className="text-xs text-fg-muted">Ширина: <span className="font-medium text-fg-muted">{eq.workWidth} м</span></p>
                   )}
                   {eq.pricePerLm && (
-                    <p className="text-xs text-fg-muted">Цена: <span className="font-medium text-violet-700">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "₽/ед"}</span></p>
+                    <p className="text-xs text-fg-muted">Цена: <span className="font-medium text-accent-fg">{eq.pricePerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "₽/ед"}</span></p>
                   )}
                   {eq.costPerLm && (
                     <p className="text-xs text-fg-muted">Себест.: <span className="font-medium text-amber-600">{eq.costPerLm} {PRICING_UNIT_SHORT[eq.pricingUnit] || "₽/ед"}</span></p>
@@ -525,7 +525,7 @@ export default function EquipmentSettingsPage() {
             ) : (
               <button
                 onClick={() => setShowConsForm(true)}
-                className="w-full flex items-center justify-center gap-1 py-2 text-sm text-accent hover:bg-accent-soft rounded-lg border border-dashed border-violet-200 transition-colors"
+                className="w-full flex items-center justify-center gap-1 py-2 text-sm text-accent hover:bg-accent-soft rounded-lg border border-dashed border-accent/25 transition-colors"
               >
                 <Plus size={14} /> Привязать расходник
               </button>
