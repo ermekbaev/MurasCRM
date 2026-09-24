@@ -11,10 +11,19 @@ interface Props {
   userName: string;
   userEmail: string;
   brand: { name: string; tagline: string; logo: string };
+  /** Предупреждение о лицензии над содержимым; null — ничего не показываем. */
+  licenseBanner?: { text: string; tone: "warning" | "danger" } | null;
   children: React.ReactNode;
 }
 
-export default function DashboardShell({ role, userName, userEmail, brand, children }: Props) {
+export default function DashboardShell({
+  role,
+  userName,
+  userEmail,
+  brand,
+  licenseBanner,
+  children,
+}: Props) {
   // Sidebar закрывает меню сам при клике по любому пункту (onClose).
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -63,6 +72,19 @@ export default function DashboardShell({ role, userName, userEmail, brand, child
           </div>
           <span className="text-[13px] font-semibold tracking-tight text-fg">{brand.name}</span>
         </div>
+
+        {licenseBanner && (
+          <div
+            className={
+              "shrink-0 px-4 py-2 text-center text-[13px] font-medium print:hidden " +
+              (licenseBanner.tone === "danger"
+                ? "bg-red-600 text-white"
+                : "bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-300")
+            }
+          >
+            {licenseBanner.text}
+          </div>
+        )}
 
         <main className="flex-1 overflow-y-auto print:overflow-visible">{children}</main>
       </div>

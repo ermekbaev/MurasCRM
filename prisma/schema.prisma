@@ -960,6 +960,10 @@ model CompanySettings {
   /// Если у клиента уже есть свой на сайте, лучше поставить его: вкладка CRM
   /// должна выглядеть так же, как вкладка их сайта.
   faviconKey         String?
+  /// Активный лицензионный ключ установки. Проверяется публичным ключом из
+  /// LICENSE_PUBLIC_KEY; действует только при LICENSE_ENFORCED=true. Хранится
+  /// открыто — подделать его без приватного ключа владельца нельзя.
+  licenseKey         String?
   telegramBotToken   String?
   updatedAt          DateTime @updatedAt
 }

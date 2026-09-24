@@ -88,7 +88,10 @@ export const authConfig = {
         pathname.startsWith("/api/cron") ||
         pathname.startsWith("/api/whatsapp/webhook") ||
         // Значок установки нужен на странице входа — до того, как войдут.
-        pathname.startsWith("/api/branding/")
+        pathname.startsWith("/api/branding/") ||
+        // Активация лицензии: когда срок истёк, войти нельзя, а ключ ввести надо.
+        pathname === "/license" ||
+        pathname.startsWith("/api/license")
       ) {
         return true;
       }
