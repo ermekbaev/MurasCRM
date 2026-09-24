@@ -242,12 +242,15 @@ export default function ChatsPage() {
 
   // Счётчик в заголовке вкладки — видно, даже когда CRM в фоне.
   useEffect(() => {
+    // Заголовок запоминаем, а не пишем своими словами: у каждой установки в
+    // нём своё название, и жёсткая строка подставила бы чужое.
+    const original = document.title;
     const total = list.reduce((sum, c) => sum + c.unread, 0);
     document.title = total > 0 ? `(${total}) Переписка` : "Переписка";
     // Уходя со страницы, счётчик убираем: иначе он висит в заголовке вкладки
     // на всех остальных разделах.
     return () => {
-      document.title = "Muras-Brand CRM";
+      document.title = original;
     };
   }, [list]);
 

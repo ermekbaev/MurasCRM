@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import ThemeProvider from "@/components/providers/ThemeProvider";
-import { getBranding } from "@/lib/branding.server";
+import { getBranding, DEFAULT_BRAND } from "@/lib/branding.server";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -15,7 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${brand.name} CRM`,
     description: "CRM-система для рекламно-производственного цеха",
-    icons: { icon: brand.logo },
+    // Не логотип: у большинства он — вытянутая надпись, а во вкладке нужен
+    // квадрат. Значок рисуется из цвета и первой буквы названия.
+    icons: { icon: brand.configured ? "/api/branding/favicon" : DEFAULT_BRAND.logo },
   };
 }
 

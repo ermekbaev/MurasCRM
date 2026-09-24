@@ -152,7 +152,7 @@ export default function LoginForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
-                  placeholder="admin@muras.com"
+                  placeholder="you@example.com"
                   autoComplete="email"
                   required
                   className="w-full px-4 py-2.5 pl-10 text-sm border border-slate-200 rounded-lg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 transition-all bg-white text-slate-900 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400"

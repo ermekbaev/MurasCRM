@@ -18,6 +18,8 @@ export interface Branding {
   logo: string;
   /** Пустая строка, если цвет не задан — тогда действует палитра из globals.css. */
   css: string;
+  /** Установку настроили под клиента: свой цвет или своё название. */
+  configured: boolean;
 }
 
 /**
@@ -43,7 +45,12 @@ export const getBranding = cache(async (): Promise<Branding> => {
       ? settings.brandColor
       : DEFAULT_BRAND.color;
 
+  const configured = Boolean(
+    (settings?.brandColor && isHexColor(settings.brandColor)) || settings?.brandName?.trim(),
+  );
+
   return {
+    configured,
     name: settings?.brandName?.trim() || DEFAULT_BRAND.name,
     tagline: settings?.brandTagline?.trim() || DEFAULT_BRAND.tagline,
     color,
