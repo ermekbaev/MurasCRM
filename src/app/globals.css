@@ -65,17 +65,17 @@
      белый текст не читается, там подставляется почти чёрный. */
   --on-accent: #ffffff;
 
-  --canvas: #f4f5f8;
-  --surface: #ffffff;
-  --surface-sunken: #f7f8fa;
-  --surface-hover: #f1f3f7;
-  --rail: #fbfbfd;
+  --canvas: #eeeff2;
+  --surface: #fcfcfc;
+  --surface-sunken: #f3f4f6;
+  --surface-hover: #eaecf0;
+  --rail: #f6f7f9;
 
-  --line: #e3e6ec;
-  --line-soft: #edeff3;
+  --line: #dde0e6;
+  --line-soft: #e8eaee;
 
   --fg: #161a21;
-  --fg-muted: #6e7788;
+  --fg-muted: #6a7283;
   --fg-subtle: #99a1b2;
 
   --scrollbar-thumb: #cdd2dc;

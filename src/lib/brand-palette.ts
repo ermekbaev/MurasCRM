@@ -102,20 +102,19 @@ const STATE_STEPS = { hover: 0.05, active: 0.109 };
  * оранжевом. Поэтому вся шкала ужимается до потолка ниже, пропорции между
  * ролями сохраняются.
  *
- * Белый лист карточки остаётся чистым белым: подкрашенная бумага выглядит
- * несвежей.
+ * Лист карточки оттенка не получает вовсе — у него насыщенность ноль.
  */
 const NEUTRALS = {
   light: {
-    canvas: { L: 0.970, C: 0.0041 },
-    surface: { L: 1.0, C: 0 },
-    "surface-sunken": { L: 0.979, C: 0.0029 },
-    "surface-hover": { L: 0.964, C: 0.0058 },
-    rail: { L: 0.989, C: 0.0026 },
-    line: { L: 0.924, C: 0.0087 },
-    "line-soft": { L: 0.952, C: 0.0058 },
+    canvas: { L: 0.952, C: 0.0041 },
+    surface: { L: 0.992, C: 0 },
+    "surface-sunken": { L: 0.966, C: 0.0029 },
+    "surface-hover": { L: 0.944, C: 0.0058 },
+    rail: { L: 0.976, C: 0.0026 },
+    line: { L: 0.906, C: 0.0087 },
+    "line-soft": { L: 0.936, C: 0.0058 },
     fg: { L: 0.217, C: 0.0151 },
-    "fg-muted": { L: 0.568, C: 0.0284 },
+    "fg-muted": { L: 0.552, C: 0.0284 },
     "fg-subtle": { L: 0.708, C: 0.0264 },
     "scrollbar-thumb": { L: 0.863, C: 0.0148 },
     "scrollbar-thumb-hover": { L: 0.708, C: 0.0264 },
@@ -137,13 +136,15 @@ const NEUTRALS = {
 } as const;
 
 /**
- * Потолок насыщенности нейтралей.
+ * Потолок насыщенности нейтралей — свой для каждой темы.
  *
- * Самая насыщенная из них — приглушённый текст, 0.028. На синем тоне это
- * читалось как серый, на оранжевом — как бежевый. Ужимаем всю шкалу так,
- * чтобы верх не превышал этого значения.
+ * На светлом фоне тёплый оттенок читается как тёплый белый, и это приятно.
+ * На тёмном тот же оттенок попадает в отдельную цветовую категорию — он
+ * читается как коричневый, а не как «тёплый чёрный». Поэтому в тёмной теме
+ * оттенка нужно втрое меньше: достаточно, чтобы фон перестал быть синим, и
+ * мало, чтобы он стал бурым.
  */
-const NEUTRAL_MAX_C = 0.01;
+const NEUTRAL_MAX_C = { light: 0.01, dark: 0.0035 };
 
 export type NeutralPalette = Record<string, string>;
 
@@ -350,14 +351,12 @@ function buildNeutrals(brand: Oklch, theme: "light" | "dark"): NeutralPalette {
   // Шкалу ужимаем целиком, одним множителем: так фон, линии и текст остаются
   // в тех же отношениях друг к другу, что и в исходной палитре.
   const peak = Math.max(...Object.values(roles).map((r) => r.C));
-  const scale = peak > NEUTRAL_MAX_C ? NEUTRAL_MAX_C / peak : 1;
+  const cap = NEUTRAL_MAX_C[theme];
+  const scale = peak > cap ? cap / peak : 1;
 
   const out: NeutralPalette = {};
   for (const [name, role] of Object.entries(roles)) {
-    out[name] =
-      role.C === 0 && theme === "light"
-        ? "#ffffff"
-        : oklchToHex({ L: role.L, C: role.C * scale, H: brand.H });
+    out[name] = oklchToHex({ L: role.L, C: role.C * scale, H: brand.H });
   }
   return out;
 }
