@@ -52,4 +52,6 @@ next-env.d.ts
 /*.docx
 /*.pdf
 /*.xml
+# Логотипы заказчиков: фирменный знак чужой компании.
+/*.svg
 /docs/reference/

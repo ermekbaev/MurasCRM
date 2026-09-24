@@ -98,6 +98,15 @@ export default function Sidebar({ role, userName, userEmail, brand, onClose }: S
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const unread = useUnreadChats(role);
+  const [wideLogo, setWideLogo] = useState(false);
+
+  // Широким считаем логотип, который заметно длиннее своей высоты: в нём
+  // почти всегда набрано название, и в квадратике 22×22 он превратился бы
+  // в нечитаемую полоску.
+  const measureLogo = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.naturalHeight > 0) setWideLogo(img.naturalWidth / img.naturalHeight > 1.6);
+  };
 
   const groups = navGroups
     .map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(role)) }))
@@ -129,23 +138,41 @@ export default function Sidebar({ role, userName, userEmail, brand, onClose }: S
     <aside className="flex h-full min-h-screen w-64 shrink-0 flex-col border-r border-line bg-rail">
       {/* Бренд */}
       <div className="flex h-16 shrink-0 items-center gap-2.5 px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
-          {/* Высота фиксирована, картинка вписывается: логотипы у всех
-              разных пропорций, и без этого один растянул бы шапку. */}
+        {/* Логотипы у всех разной формы. Широкий — с названием внутри, его
+            растягиваем на всю шапку и подпись рядом не повторяем. Квадратный
+            знак ставим в рамку и подписываем, как было. Пропорции меряем по
+            самой картинке: гадать по имени файла нельзя. */}
+        {wideLogo ? (
           <Image
             src={brand.logo}
             alt={brand.name}
-            width={22}
-            height={22}
-            className="h-[22px] w-[22px] object-contain"
+            width={180}
+            height={28}
+            onLoad={measureLogo}
+            className="h-7 w-auto max-w-[180px] shrink-0 object-contain object-left"
             unoptimized
             priority
           />
-        </div>
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-[13px] font-semibold tracking-tight text-fg">{brand.name}</p>
-          <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
-        </div>
+        ) : (
+          <>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
+              <Image
+                src={brand.logo}
+                alt={brand.name}
+                width={22}
+                height={22}
+                onLoad={measureLogo}
+                className="h-[22px] w-[22px] object-contain"
+                unoptimized
+                priority
+              />
+            </div>
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="truncate text-[13px] font-semibold tracking-tight text-fg">{brand.name}</p>
+              <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
+            </div>
+          </>
+        )}
         {onClose && (
           <button
             onClick={onClose}

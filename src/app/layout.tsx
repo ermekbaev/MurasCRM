@@ -32,13 +32,12 @@ export default async function RootLayout({
       className={`${inter.variable} h-full`}
       suppressHydrationWarning
     >
-      <head>
-        {/* Фирменный цвет установки. Пусто, когда цвет не задан, — тогда
-            действует палитра из globals.css. Значения приходят из генератора
-            палитры, а не из пользовательского ввода. */}
-        {brand.css && <style id="brand-palette">{brand.css}</style>}
-      </head>
       <body className="h-full font-sans antialiased">
+        {/* Фирменный цвет установки. Свой тег head здесь не ставим: корневой
+            layout задаёт только html и body, а в head Next сам кладёт ссылку на
+            стили — ручной head её вытесняет, и страница приезжает голой.
+            Значения приходят из генератора палитры, а не из ввода. */}
+        {brand.css && <style id="brand-palette">{brand.css}</style>}
         <ThemeProvider>
           <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>
