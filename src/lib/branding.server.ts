@@ -75,7 +75,7 @@ export const getBranding = cache(async (): Promise<Branding> => {
  */
 export function paletteCss(brandHex: string): string {
   const p = buildBrandPalette(brandHex);
-  const vars = (a: AccentPalette) =>
+  const vars = (a: AccentPalette, neutrals: Record<string, string>) =>
     [
       `--accent:${a.accent}`,
       `--accent-hover:${a.accentHover}`,
@@ -85,7 +85,13 @@ export function paletteCss(brandHex: string): string {
       `--accent-on-soft:${a.accentOnSoft}`,
       `--accent-ring:${a.accentRing}`,
       `--on-accent:${a.accentFg}`,
+      // Фон и текст тоже в тоне бренда: наши «серые» на самом деле
+      // сине-серые, и с тёплым акцентом они спорят.
+      ...Object.entries(neutrals).map(([name, value]) => `--${name}:${value}`),
     ].join(";");
 
-  return `html:root{${vars(p.light)}}html:root.dark{${vars(p.dark)}}`;
+  return (
+    `html:root{${vars(p.light, p.neutrals.light)}}` +
+    `html:root.dark{${vars(p.dark, p.neutrals.dark)}}`
+  );
 }

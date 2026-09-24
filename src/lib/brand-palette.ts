@@ -30,6 +30,8 @@ export interface AccentPalette {
 export interface BrandPalette {
   light: AccentPalette;
   dark: AccentPalette;
+  /** Фон, поверхности и текст в тоне фирменного цвета. */
+  neutrals: { light: NeutralPalette; dark: NeutralPalette };
   /** Контраст надписи на кнопке — ниже 4.5 текст не читается. */
   contrast: { light: number; dark: number };
   /** Пришлось ли двигать светлоту кнопки ради читаемости надписи. */
@@ -84,6 +86,54 @@ const DARK_L_OFFSET = 0.065;
 
 /** Насколько наведение и нажатие темнее самой кнопки. */
 const STATE_STEPS = { hover: 0.05, active: 0.109 };
+
+/**
+ * Нейтрали: фон, поверхности, линии, текст.
+ *
+ * Они только кажутся серыми. На деле у всех до единой тон 258–271 — холодный
+ * синий, подобранный под наш фиолетовый: там расхождение 25–35°, и цвета
+ * звучат вместе. С оранжевым акцентом (тон 39) расхождение под 220° — это
+ * предел, и фон начинает спорить с акцентом.
+ *
+ * Поэтому тон нейтралей поворачиваем к фирменному, а светлоту и насыщенность
+ * оставляем как есть. Насыщенность тут и так на уровне шёпота (не выше 0.028),
+ * так что фон не красится, а лишь перестаёт быть холодным.
+ *
+ * Белый лист карточки остаётся чистым белым: подкрашенная бумага выглядит
+ * несвежей.
+ */
+const NEUTRALS = {
+  light: {
+    canvas: { L: 0.970, C: 0.0041 },
+    surface: { L: 1.0, C: 0 },
+    "surface-sunken": { L: 0.979, C: 0.0029 },
+    "surface-hover": { L: 0.964, C: 0.0058 },
+    rail: { L: 0.989, C: 0.0026 },
+    line: { L: 0.924, C: 0.0087 },
+    "line-soft": { L: 0.952, C: 0.0058 },
+    fg: { L: 0.217, C: 0.0151 },
+    "fg-muted": { L: 0.568, C: 0.0284 },
+    "fg-subtle": { L: 0.708, C: 0.0264 },
+    "scrollbar-thumb": { L: 0.863, C: 0.0148 },
+    "scrollbar-thumb-hover": { L: 0.708, C: 0.0264 },
+  },
+  dark: {
+    canvas: { L: 0.173, C: 0.0134 },
+    surface: { L: 0.217, C: 0.0151 },
+    "surface-sunken": { L: 0.199, C: 0.0136 },
+    "surface-hover": { L: 0.255, C: 0.0186 },
+    rail: { L: 0.190, C: 0.0138 },
+    line: { L: 0.292, C: 0.0202 },
+    "line-soft": { L: 0.255, C: 0.0186 },
+    fg: { L: 0.955, C: 0.0058 },
+    "fg-muted": { L: 0.708, C: 0.0264 },
+    "fg-subtle": { L: 0.568, C: 0.0284 },
+    "scrollbar-thumb": { L: 0.315, C: 0.0220 },
+    "scrollbar-thumb-hover": { L: 0.380, C: 0.0230 },
+  },
+} as const;
+
+export type NeutralPalette = Record<string, string>;
 
 const RING_ALPHA = { light: 0.35, dark: 0.45 };
 
@@ -282,6 +332,20 @@ function buildTheme(
   };
 }
 
+/** Нейтрали в тоне фирменного цвета. */
+function buildNeutrals(brand: Oklch, theme: "light" | "dark"): NeutralPalette {
+  const out: NeutralPalette = {};
+  for (const [name, role] of Object.entries(NEUTRALS[theme])) {
+    out[name] =
+      role.C === 0
+        ? theme === "light"
+          ? "#ffffff"
+          : oklchToHex({ L: role.L, C: 0, H: brand.H })
+        : oklchToHex({ L: role.L, C: role.C, H: brand.H });
+  }
+  return out;
+}
+
 /** Цвет из брендбука клиента — в полную палитру обеих тем. */
 export function buildBrandPalette(brandHex: string): BrandPalette {
   const brand = hexToOklch(brandHex);
@@ -290,6 +354,10 @@ export function buildBrandPalette(brandHex: string): BrandPalette {
   return {
     light: light.palette,
     dark: dark.palette,
+    neutrals: {
+      light: buildNeutrals(brand, "light"),
+      dark: buildNeutrals(brand, "dark"),
+    },
     contrast: { light: light.contrast, dark: dark.contrast },
     adjusted: light.adjusted || dark.adjusted,
   };
