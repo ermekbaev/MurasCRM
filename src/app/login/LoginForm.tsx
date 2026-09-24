@@ -18,6 +18,14 @@ export default function LoginForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [wideLogo, setWideLogo] = useState(false);
+
+  // Пропорции меряем по самой картинке: у одних клиентов знак квадратный,
+  // у других — длинная плашка с названием.
+  const measureLogo = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.naturalHeight > 0) setWideLogo(img.naturalWidth / img.naturalHeight > 1.6);
+  };
 
   // Трекинг захода в демо по метке ?ref= (какой заказчик открыл ссылку).
   useEffect(() => {
@@ -93,23 +101,30 @@ export default function LoginForm({
           {/* Шапка */}
           <div className="px-8 pt-8 pb-6 border-b border-slate-100">
             <div className="flex items-center gap-3 mb-5">
-              <div className="flex items-center justify-center w-10 h-10">
-                <Image
-                  src={brand.logo}
-                  alt={brand.name}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 object-contain"
-                  unoptimized
-                  priority
-                />
-              </div>
-              <div>
-                <h1 className="text-base font-bold text-slate-800 leading-tight">
-                  {brand.name}
-                </h1>
-                <p className="text-xs text-slate-500">{brand.tagline}</p>
-              </div>
+              {/* В широком логотипе название уже набрано — второй раз его не
+                  пишем и в квадрат 40×40 не ужимаем. */}
+              <Image
+                src={brand.logo}
+                alt={brand.name}
+                width={wideLogo ? 200 : 40}
+                height={40}
+                onLoad={measureLogo}
+                className={
+                  wideLogo
+                    ? "h-10 w-auto max-w-[200px] object-contain object-left"
+                    : "h-10 w-10 object-contain"
+                }
+                unoptimized
+                priority
+              />
+              {!wideLogo && (
+                <div>
+                  <h1 className="text-base font-bold text-slate-800 leading-tight">
+                    {brand.name}
+                  </h1>
+                  <p className="text-xs text-slate-500">{brand.tagline}</p>
+                </div>
+              )}
             </div>
             <div className="inline-flex items-center gap-2 bg-accent-soft border border-accent/25 rounded-full px-4 py-1.5">
               <LogIn className="w-3.5 h-3.5 text-accent" />
@@ -204,7 +219,7 @@ export default function LoginForm({
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-accent hover:bg-accent-hover active:bg-accent-active text-white text-sm font-medium rounded-lg shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg mt-1"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-accent hover:bg-accent-hover active:bg-accent-active text-on-accent text-sm font-medium rounded-lg shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg mt-1"
             >
               {loading ? (
                 <>
@@ -222,7 +237,7 @@ export default function LoginForm({
         </div>
 
         <p className="text-center text-slate-600 text-xs mt-4">
-          © 2026 МурасПринт
+          © {new Date().getFullYear()} {brand.name}
         </p>
       </div>
     </div>
