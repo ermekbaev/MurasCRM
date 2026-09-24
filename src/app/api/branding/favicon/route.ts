@@ -1,23 +1,40 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getObjectWithType } from "@/lib/s3";
 import { getBranding, DEFAULT_BRAND } from "@/lib/branding.server";
 import { buildBrandPalette } from "@/lib/brand-palette";
 
 /**
- * Значок вкладки: буква на плашке фирменного цвета.
+ * Значок вкладки.
  *
- * Логотип для этого не годится. У большинства мастерских он — надпись с
- * названием, вытянутая по горизонтали; в квадрате 16×16 от неё остаётся
- * неразборчивая крошка. Буква на цветной плашке читается в любом размере и
- * сразу отличает вкладку клиента от соседних.
+ * Свой файл, если он загружен: у клиента обычно уже есть фавикон на сайте, и
+ * вкладка CRM должна выглядеть так же — иначе в браузере рядом висят две
+ * вкладки одной компании с разными значками.
  *
- * Рисуется на лету, потому что зависит только от цвета и названия — хранить
- * ещё один файл и просить его у клиента незачем.
+ * Если файла нет — рисуем букву на плашке фирменного цвета. Логотип для этого
+ * не годится: у большинства он надпись с названием, вытянутая по горизонтали,
+ * и в квадрате 16×16 от неё остаётся неразборчивая крошка.
  */
 export async function GET() {
-  const brand = await getBranding();
+  const settings = await prisma.companySettings
+    .findFirst({ select: { faviconKey: true } })
+    .catch(() => null);
 
-  // Цвет буквы берём тот же, что и для надписи на кнопке: на светлом
-  // фирменном цвете белая буква не читается.
+  if (settings?.faviconKey) {
+    try {
+      const { buffer, contentType } = await getObjectWithType(settings.faviconKey);
+      return new NextResponse(new Uint8Array(buffer), {
+        headers: {
+          "Content-Type": contentType,
+          "Cache-Control": "public, max-age=3600",
+        },
+      });
+    } catch {
+      // Файл пропал из хранилища — не оставлять же вкладку без значка.
+    }
+  }
+
+  const brand = await getBranding();
   const palette = buildBrandPalette(brand.color);
   const letter = firstLetter(brand.name);
 
