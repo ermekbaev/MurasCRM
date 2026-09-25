@@ -26,16 +26,29 @@ export async function GET(req: Request) {
   const { from, to } = periodRange(url.searchParams);
   const period = { date: { gte: from, lte: to } };
 
-  const [accounts, incomePeriod, expensePeriod, incomeAll, expenseAll, byCategory, categories] =
-    await Promise.all([
-      prisma.moneyAccount.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
-      prisma.payment.groupBy({ by: ["accountId"], where: period, _sum: { amount: true } }),
-      prisma.expense.groupBy({ by: ["accountId"], where: period, _sum: { amount: true } }),
-      prisma.payment.groupBy({ by: ["accountId"], _sum: { amount: true } }),
-      prisma.expense.groupBy({ by: ["accountId"], _sum: { amount: true } }),
-      prisma.expense.groupBy({ by: ["categoryId"], where: period, _sum: { amount: true } }),
-      prisma.expenseCategory.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
-    ]);
+  const [
+    accounts,
+    incomePeriod,
+    expensePeriod,
+    incomeAll,
+    expenseAll,
+    byCategory,
+    categories,
+    incomeCount,
+    expenseCount,
+  ] = await Promise.all([
+    prisma.moneyAccount.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
+    prisma.payment.groupBy({ by: ["accountId"], where: period, _sum: { amount: true } }),
+    prisma.expense.groupBy({ by: ["accountId"], where: period, _sum: { amount: true } }),
+    prisma.payment.groupBy({ by: ["accountId"], _sum: { amount: true } }),
+    prisma.expense.groupBy({ by: ["accountId"], _sum: { amount: true } }),
+    prisma.expense.groupBy({ by: ["categoryId"], where: period, _sum: { amount: true } }),
+    prisma.expenseCategory.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
+    // Число операций за период — считаем в базе, а не по длине списков: журнал
+    // на странице обрезан лимитом, а тут нужен точный счёт.
+    prisma.payment.count({ where: period }),
+    prisma.expense.count({ where: period }),
+  ]);
 
   const inP = toMap(incomePeriod);
   const exP = toMap(expensePeriod);
@@ -78,6 +91,9 @@ export async function GET(req: Request) {
     income: round(rows.reduce((s, r) => s + r.income, 0) + unassigned.income),
     expense: round(rows.reduce((s, r) => s + r.expense, 0) + unassigned.expense),
     balance: round(rows.reduce((s, r) => s + r.balance, 0)),
+    // Сколько было приходов и расходов за период — числом операций.
+    incomeCount,
+    expenseCount,
   };
 
   return NextResponse.json({

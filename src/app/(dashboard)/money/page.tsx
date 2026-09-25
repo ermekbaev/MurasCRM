@@ -8,7 +8,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import EntryModal from "./EntryModal";
 import { formatCurrency } from "@/lib/utils";
 import { isoDate } from "@/lib/money-period";
-import { accountKindHint } from "@/lib/money";
+import { accountKindHint, plural } from "@/lib/money";
 import type {
   ExpenseCategory,
   ExpenseRow,
@@ -185,12 +185,14 @@ export default function MoneyPage() {
             <Stat
               label="Приход за период"
               value={formatCurrency(totals?.income ?? 0)}
+              hint={`${totals?.incomeCount ?? 0} ${plural(totals?.incomeCount ?? 0, ["перевод", "перевода", "переводов"])}`}
               icon={<ArrowDownCircle size={18} />}
               color="text-emerald-600 bg-emerald-50 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20"
             />
             <Stat
               label="Расход за период"
               value={formatCurrency(totals?.expense ?? 0)}
+              hint={`${totals?.expenseCount ?? 0} ${plural(totals?.expenseCount ?? 0, ["операция", "операции", "операций"])}`}
               icon={<ArrowUpCircle size={18} />}
               color="text-rose-600 bg-rose-50 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20"
             />
@@ -517,12 +519,14 @@ export default function MoneyPage() {
 function Stat({
   label,
   value,
+  hint,
   icon,
   color,
   valueClass = "text-fg",
 }: {
   label: string;
   value: string;
+  hint?: string;
   icon: React.ReactNode;
   color: string;
   valueClass?: string;
@@ -537,6 +541,7 @@ function Stat({
           >
             {value}
           </p>
+          {hint && <p className="mt-1.5 text-xs text-fg-subtle">{hint}</p>}
         </div>
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${color}`}

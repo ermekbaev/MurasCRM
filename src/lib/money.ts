@@ -70,5 +70,26 @@ export interface MoneyReport {
   }[];
   unassigned: { income: number; expense: number };
   expensesByCategory: { id: string | null; name: string; amount: number }[];
-  totals: { income: number; expense: number; balance: number; profit: number };
+  totals: {
+    income: number;
+    expense: number;
+    balance: number;
+    profit: number;
+    /** Число приходов и расходов за период. */
+    incomeCount: number;
+    expenseCount: number;
+  };
+}
+
+/**
+ * Русское склонение по числу: 1 перевод, 2 перевода, 5 переводов.
+ * forms = [один, два-четыре, пять и «дцать»].
+ */
+export function plural(n: number, forms: [string, string, string]): string {
+  const abs = Math.abs(n) % 100;
+  const d = abs % 10;
+  if (abs > 10 && abs < 20) return forms[2];
+  if (d > 1 && d < 5) return forms[1];
+  if (d === 1) return forms[0];
+  return forms[2];
 }
