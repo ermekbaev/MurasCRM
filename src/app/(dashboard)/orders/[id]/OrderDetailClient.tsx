@@ -201,6 +201,16 @@ export default function OrderDetailClient({
   // Ссылка статуса для клиента: создаётся по кнопке и копируется в буфер.
   const [trackCopied, setTrackCopied] = useState(false);
   const [trackBusy, setTrackBusy] = useState(false);
+  // Прибыль по заявке — деньги владельца, грузим только администратору.
+  const [profit, setProfit] = useState<{
+    revenue: number;
+    materialCost: number;
+    productionCost: number;
+    operatorWages: number;
+    cost: number;
+    profit: number;
+    margin: number | null;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
   const localPreviewsRef = useRef<Map<string, string>>(new Map());
@@ -243,6 +253,22 @@ export default function OrderDetailClient({
   }
 
   const canEdit = ["ADMIN", "MANAGER"].includes(currentRole);
+  const isAdmin = currentRole === "ADMIN";
+
+  // Прибыль пересчитываем при смене суммы/состава — админу.
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    fetch(`/api/orders/${order.id}/profit`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled) setProfit(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, order.id, order.amount, order.updatedAt]);
 
   async function updateField(field: string, value: string) {
     setSaving(true);
@@ -698,6 +724,58 @@ export default function OrderDetailClient({
               </span>
             </div>
           </Card>
+
+          {/* Прибыль — только администратору. Себестоимость из ставок
+              оборудования и списанных материалов; показываем, если считать
+              есть из чего. */}
+          {isAdmin && profit && profit.cost > 0 && (
+            <Card padding="md">
+              <h2 className="mb-3 flex items-center gap-2 font-semibold text-fg">
+                <ArrowUpRight size={15} /> Прибыль по заявке
+              </h2>
+              <div className="flex items-end justify-between">
+                <span
+                  className={
+                    "text-2xl font-bold " +
+                    (profit.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")
+                  }
+                >
+                  {formatCurrency(profit.profit)}
+                </span>
+                {profit.margin !== null && (
+                  <span className="text-sm font-medium text-fg-muted">маржа {profit.margin}%</span>
+                )}
+              </div>
+              <dl className="mt-3 space-y-1.5 border-t border-line-soft pt-3 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-fg-muted">Выручка</dt>
+                  <dd className="tabular-nums text-fg">{formatCurrency(profit.revenue)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-fg-muted">Себестоимость</dt>
+                  <dd className="tabular-nums text-fg">−{formatCurrency(profit.cost)}</dd>
+                </div>
+                {profit.materialCost > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <dt className="text-fg-subtle pl-3">материалы</dt>
+                    <dd className="tabular-nums text-fg-subtle">{formatCurrency(profit.materialCost)}</dd>
+                  </div>
+                )}
+                {profit.productionCost > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <dt className="text-fg-subtle pl-3">себест. работы</dt>
+                    <dd className="tabular-nums text-fg-subtle">{formatCurrency(profit.productionCost)}</dd>
+                  </div>
+                )}
+                {profit.operatorWages > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <dt className="text-fg-subtle pl-3">оплата оператора</dt>
+                    <dd className="tabular-nums text-fg-subtle">{formatCurrency(profit.operatorWages)}</dd>
+                  </div>
+                )}
+              </dl>
+            </Card>
+          )}
 
           {/* Assignees */}
           <Card padding="md">
