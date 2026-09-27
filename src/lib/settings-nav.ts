@@ -12,6 +12,7 @@ import {
   Zap,
   Wallet,
   Receipt,
+  DatabaseBackup,
 } from "lucide-react";
 
 export interface SettingsSection {
@@ -38,6 +39,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     description: "Сотрудники, роли и доступ в систему",
     href: "/settings/users",
     icon: Users,
+    roles: ["ADMIN"],
+    group: "Организация",
+  },
+  {
+    label: "Резервные копии",
+    description: "Копии базы, скачивание и восстановление",
+    href: "/settings/backups",
+    icon: DatabaseBackup,
     roles: ["ADMIN"],
     group: "Организация",
   },
