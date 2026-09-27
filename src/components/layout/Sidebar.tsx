@@ -31,6 +31,7 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  Search as SearchIcon,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { settingsSectionsFor } from "@/lib/settings-nav";
@@ -228,6 +229,18 @@ export default function Sidebar({
 
         {/* Навигация */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3">
+          {/* Поиск по Ctrl+K — кнопка для тех, кто про сочетание не знает. */}
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-search"))}
+            title={collapsed ? "Поиск (Ctrl+K)" : undefined}
+            className="group mb-3 flex h-9 w-full items-center gap-2.5 rounded-lg border border-line bg-surface px-2.5 text-[13px] text-fg-subtle transition-colors hover:border-accent/40 hover:text-fg"
+          >
+            <SearchIcon className="h-[17px] w-[17px] shrink-0" />
+            <span className={cn("truncate", labelFade)}>Поиск</span>
+            <kbd className={cn("ml-auto rounded border border-line bg-surface-sunken px-1.5 py-0.5 text-[10px] text-fg-subtle", labelFade)}>
+              Ctrl K
+            </kbd>
+          </button>
           {groups.map((group) => (
             <div key={group.label} className="mb-4 last:mb-0">
               <p className={cn("mb-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-fg-subtle", labelFade)}>

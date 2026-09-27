@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
+import CommandPalette from "@/components/layout/CommandPalette";
 import { Role } from "@prisma/client";
+
+/** Открыть глобальный поиск из любого места. */
+const openSearch = () => window.dispatchEvent(new Event("open-search"));
 
 interface Props {
   role: Role;
@@ -95,6 +99,13 @@ export default function DashboardShell({
             />
           </div>
           <span className="text-[13px] font-semibold tracking-tight text-fg">{brand.name}</span>
+          <button
+            onClick={openSearch}
+            aria-label="Поиск"
+            className="ml-auto rounded-lg p-2 text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+          >
+            <Search className="h-5 w-5" />
+          </button>
         </div>
 
         {licenseBanner && (
@@ -112,6 +123,8 @@ export default function DashboardShell({
 
         <main className="flex-1 overflow-y-auto print:overflow-visible">{children}</main>
       </div>
+
+      <CommandPalette />
     </div>
   );
 }
