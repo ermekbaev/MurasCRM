@@ -8,7 +8,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { DOCUMENT_VAR_UI_GROUPS, DOCUMENT_VARS } from "@/lib/documentVars";
 import PageHeader from "@/components/layout/PageHeader";
-import { Plus, FileCode, Edit3, Trash2, Eye, Copy, Check, Download } from "lucide-react";
+import { Plus, FileCode, Edit3, Trash2, Eye, Copy, Check, Download, BookOpen, Search } from "lucide-react";
 
 interface Template {
   id: string;
@@ -46,6 +46,18 @@ export default function TemplatesPage() {
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
+
+  // Отдельный справочник переменных — открывается с самой страницы, чтобы не
+  // лезть в редактор шаблона и не переспрашивать «что где».
+  const [refOpen, setRefOpen] = useState(false);
+  const [refQuery, setRefQuery] = useState("");
+  const [refCopied, setRefCopied] = useState<string | null>(null);
+
+  async function copyRefVar(key: string) {
+    await navigator.clipboard.writeText(`{${key}}`).catch(() => {});
+    setRefCopied(key);
+    setTimeout(() => setRefCopied(null), 1500);
+  }
 
   /** Как переменная выглядит в шаблоне: в DOCX скобки одинарные. */
   function varToken(key: string) {
@@ -210,9 +222,14 @@ export default function TemplatesPage() {
         title="Шаблоны документов"
         subtitle="Свой DOCX-бланк или текст — данные подставляются из заявки, счёта и настроек компании"
         actions={
-          <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "", isDefault: false }); setDocxFile(null); setDocxName(null); setSaveError(null); setModalOpen(true); }}>
-            <Plus size={16} /> Новый шаблон
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => { setRefQuery(""); setRefOpen(true); }}>
+              <BookOpen size={16} /> Справочник переменных
+            </Button>
+            <Button onClick={() => { setEditingTemplate(null); setForm({ name: "", type: "INVOICE", kind: "TEXT", body: "", isDefault: false }); setDocxFile(null); setDocxName(null); setSaveError(null); setModalOpen(true); }}>
+              <Plus size={16} /> Новый шаблон
+            </Button>
+          </div>
         }
         meta={
           <div className="rounded-lg border border-line bg-surface-sunken px-3 py-2.5 text-xs text-fg-muted">
@@ -288,6 +305,94 @@ export default function TemplatesPage() {
           ))}
         </div>
       )}
+
+      {/* Справочник переменных — открывается со страницы, без входа в редактор */}
+      <Modal isOpen={refOpen} onClose={() => setRefOpen(false)} title="Справочник переменных" size="lg">
+        <div className="space-y-4">
+          <p className="text-xs leading-relaxed text-fg-muted">
+            Что можно подставить в счета, акты и накладные. В бланке Word пишется{" "}
+            <code className="rounded bg-surface-hover px-1 font-mono">{"{ключ}"}</code>, в
+            текстовом шаблоне —{" "}
+            <code className="rounded bg-surface-hover px-1 font-mono">{"{{ключ}}"}</code>.
+            Нажмите на переменную, чтобы скопировать. Пустые поля просто не подставятся —
+            например, номер счёта в документе из заявки.
+          </p>
+
+          <div className="relative">
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
+            <input
+              value={refQuery}
+              onChange={(e) => setRefQuery(e.target.value)}
+              placeholder="Поиск: инн, срок, итого..."
+              className="w-full rounded-lg border border-line bg-surface py-2 pl-9 pr-3 text-sm text-fg focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/20"
+            />
+          </div>
+
+          <div className="max-h-[55vh] space-y-5 overflow-y-auto pr-1">
+            {DOCUMENT_VAR_UI_GROUPS.map((group) => {
+              const q = refQuery.trim().toLowerCase();
+              const vars = q
+                ? group.vars.filter(
+                    (v) =>
+                      v.key.toLowerCase().includes(q) ||
+                      v.label.toLowerCase().includes(q) ||
+                      v.sample.toLowerCase().includes(q),
+                  )
+                : group.vars;
+              if (vars.length === 0) return null;
+              return (
+                <div key={group.title}>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">
+                    {group.title}
+                    {group.hint && (
+                      <span className="ml-2 font-normal normal-case tracking-normal">· {group.hint}</span>
+                    )}
+                  </p>
+                  <div className="overflow-hidden rounded-lg border border-line-soft">
+                    <table className="w-full text-xs">
+                      <tbody className="divide-y divide-line-soft">
+                        {vars.map((v) => (
+                          <tr key={v.key} className="hover:bg-surface-hover">
+                            <td className="w-px whitespace-nowrap px-2 py-2 align-top">
+                              <button
+                                type="button"
+                                onClick={() => copyRefVar(v.key)}
+                                title="Скопировать"
+                                className="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-1.5 py-1 font-mono text-[11px] text-fg transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent-fg"
+                              >
+                                {refCopied === v.key ? (
+                                  <>
+                                    <Check size={11} className="text-green-500" /> скопировано
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={11} /> {`{${v.key}}`}
+                                  </>
+                                )}
+                              </button>
+                            </td>
+                            <td className="px-2 py-2 align-top text-fg">{v.label}</td>
+                            <td className="px-2 py-2 align-top text-fg-subtle">{v.sample || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-xs leading-relaxed text-fg-subtle">
+            Позиции таблицы в бланке — циклом на строке:{" "}
+            <code className="rounded bg-surface-hover px-1 font-mono">
+              {"{#items}{n} {name} {qty} {unit} {price} {total}{/items}"}
+            </code>
+            . Блоки по условию:{" "}
+            <code className="rounded bg-surface-hover px-1 font-mono">{"{#has_vat}…{/has_vat}"}</code>.
+          </p>
+        </div>
+      </Modal>
 
       {/* Preview modal */}
       <Modal
