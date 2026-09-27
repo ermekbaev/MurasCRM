@@ -4,6 +4,7 @@ import DashboardShell from "@/components/layout/DashboardShell";
 import { Role } from "@prisma/client";
 import { getBranding } from "@/lib/branding.server";
 import { getLicenseStatus } from "@/lib/license.server";
+import { needsSetup } from "@/lib/setup.server";
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +18,10 @@ export default async function DashboardLayout({
   // целы, войти обратно можно сразу после ввода действующего ключа.
   const license = await getLicenseStatus();
   if (license.locked) redirect("/license");
+
+  // Новую установку админа встречает мастер первичной настройки. Остальных
+  // ролей не трогаем: заполнять реквизиты компании может только админ.
+  if (session.user.role === "ADMIN" && (await needsSetup())) redirect("/setup");
 
   const brand = await getBranding();
 

@@ -964,6 +964,10 @@ model CompanySettings {
   /// LICENSE_PUBLIC_KEY; действует только при LICENSE_ENFORCED=true. Хранится
   /// открыто — подделать его без приватного ключа владельца нельзя.
   licenseKey         String?
+  /// Когда завершён мастер первичной настройки. Пусто и реквизиты не заполнены
+  /// — значит установка новая, админа встречает мастер. Заполненные вручную
+  /// прежние установки мастер не трогает.
+  setupCompletedAt   DateTime?
   telegramBotToken   String?
   updatedAt          DateTime @updatedAt
 }
