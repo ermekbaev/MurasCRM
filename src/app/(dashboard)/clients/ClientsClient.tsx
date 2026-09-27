@@ -11,7 +11,8 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import { Plus, Search, Phone, Mail, Users, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Phone, Mail, Users, Pencil, Trash2, Loader2, Upload } from "lucide-react";
+import ImportClientsModal from "./ImportClientsModal";
 
 interface ClientRow {
   id: string;
@@ -345,6 +346,7 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
   const [loading, setLoading] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const filtered = clients.filter((c) => {
@@ -440,10 +442,21 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
         title="Клиенты"
         subtitle={`${clients.length} клиент(ов) в базе`}
         actions={
-          <Button onClick={openCreate}>
-            <Plus size={16} /> Добавить клиента
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload size={16} /> Импорт из Excel
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus size={16} /> Добавить клиента
+            </Button>
+          </div>
         }
+      />
+
+      <ImportClientsModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onDone={() => window.location.reload()}
       />
 
       {/* Filters */}

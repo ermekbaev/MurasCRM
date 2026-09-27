@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
@@ -27,6 +27,28 @@ export default function DashboardShell({
   // Sidebar закрывает меню сам при клике по любому пункту (onClose).
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Свёрнутость меню запоминаем на устройстве: удобнее один раз выбрать и
+  // не переключать каждый вход. localStorage может быть недоступен (приватный
+  // режим) — тогда просто работаем без запоминания.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("sidebarCollapsed") === "1");
+    } catch {
+      /* нет доступа к хранилищу — оставляем развёрнутым */
+    }
+  }, []);
+  const toggleCollapsed = () =>
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem("sidebarCollapsed", next ? "1" : "0");
+      } catch {
+        /* игнорируем — просто не запомнится */
+      }
+      return next;
+    });
+
   return (
     <div className="flex h-screen overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible print:bg-white">
       {mobileOpen && (
@@ -46,6 +68,8 @@ export default function DashboardShell({
           userName={userName}
           userEmail={userEmail}
           brand={brand}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapsed}
           onClose={() => setMobileOpen(false)}
         />
       </div>
