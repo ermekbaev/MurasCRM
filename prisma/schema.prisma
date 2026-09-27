@@ -324,6 +324,10 @@ model Order {
   paidAmount    Decimal       @default(0) @db.Decimal(12, 2)
   paymentStatus PaymentStatus @default(UNPAID)
   notes         String?
+  /// Токен публичной ссылки статуса для клиента. Пусто, пока менеджер её не
+  /// создал. Случайный и уникальный — по нему открывается страница /track без
+  /// входа, где виден только статус этой заявки, без сумм и чужих данных.
+  publicToken   String?       @unique
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   /// Мягкое удаление: запись уходит в корзину, а не стирается из базы.

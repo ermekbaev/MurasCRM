@@ -91,7 +91,9 @@ export const authConfig = {
         pathname.startsWith("/api/branding/") ||
         // Активация лицензии: когда срок истёк, войти нельзя, а ключ ввести надо.
         pathname === "/license" ||
-        pathname.startsWith("/api/license")
+        pathname.startsWith("/api/license") ||
+        // Публичная ссылка статуса заказа для клиента — открывается без входа.
+        pathname.startsWith("/track/")
       ) {
         return true;
       }

@@ -22,7 +22,7 @@ import {
   ArrowLeft, Send, CheckSquare, Clock, User, CreditCard, AlertCircle,
   Paperclip, Download, FileText, Image as ImageIcon, Upload,
   Pencil, Plus, Trash2, Check, X, UserPlus,
-  ClipboardList, FileSpreadsheet, ArrowUpRight,
+  ClipboardList, FileSpreadsheet, ArrowUpRight, Link2,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 
@@ -198,6 +198,9 @@ export default function OrderDetailClient({
   const [isDraggingTab, setIsDraggingTab] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  // Ссылка статуса для клиента: создаётся по кнопке и копируется в буфер.
+  const [trackCopied, setTrackCopied] = useState(false);
+  const [trackBusy, setTrackBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
   const localPreviewsRef = useRef<Map<string, string>>(new Map());
@@ -258,6 +261,22 @@ export default function OrderDetailClient({
   async function saveTitle() {
     await updateField("title", titleDraft.trim());
     setEditingTitle(false);
+  }
+
+  /** Создать (если ещё нет) и скопировать ссылку статуса для клиента. */
+  async function copyTrackLink() {
+    setTrackBusy(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/track-link`, { method: "POST" });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.path) {
+        await navigator.clipboard.writeText(`${window.location.origin}${data.path}`).catch(() => {});
+        setTrackCopied(true);
+        setTimeout(() => setTrackCopied(false), 2500);
+      }
+    } finally {
+      setTrackBusy(false);
+    }
   }
 
   /**
@@ -590,6 +609,21 @@ export default function OrderDetailClient({
             </Link>
             {order.client.phone && (
               <p className="text-xs text-fg-muted mt-1">{order.client.phone}</p>
+            )}
+            {canEdit && (
+              <div className="mt-3 border-t border-line-soft pt-3">
+                <button
+                  onClick={copyTrackLink}
+                  disabled={trackBusy}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent-hover disabled:opacity-50"
+                >
+                  {trackCopied ? <Check size={13} className="text-green-500" /> : <Link2 size={13} />}
+                  {trackCopied ? "Ссылка скопирована" : "Ссылка статуса для клиента"}
+                </button>
+                <p className="mt-1 text-[11px] leading-snug text-fg-subtle">
+                  Клиент увидит статус заказа по ссылке, без входа и без сумм
+                </p>
+              </div>
             )}
           </Card>
 
