@@ -560,7 +560,7 @@ export default function OrderDetailClient({
         >
           <ArrowLeft size={14} /> Все заявки
         </Link>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             {editingTitle ? (
               <div className="flex items-center gap-2">
@@ -602,29 +602,28 @@ export default function OrderDetailClient({
               <span className="text-xs text-fg-subtle">· {formatDate(order.createdAt)}</span>
             </div>
           </div>
-          <div className="flex flex-col gap-3 lg:col-span-2">
-            {canEdit && (
-              <div className="flex items-center gap-2 lg:justify-end">
-                <Select
-                  value={order.status}
-                  onChange={(e) => updateField("status", e.target.value)}
-                  options={statusOptions}
-                />
-                <Select
-                  value={order.paymentStatus}
-                  onChange={(e) => updateField("paymentStatus", e.target.value)}
-                  options={paymentOptions}
-                />
-              </div>
-            )}
-            <div className="hidden lg:block">{tabBar}</div>
-          </div>
+          {canEdit && (
+            <div className="flex items-center gap-2 lg:justify-end">
+              <Select
+                value={order.status}
+                onChange={(e) => updateField("status", e.target.value)}
+                options={statusOptions}
+              />
+              <Select
+                value={order.paymentStatus}
+                onChange={(e) => updateField("paymentStatus", e.target.value)}
+                options={paymentOptions}
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:-mt-2 lg:grid-cols-3">
-        {/* Left column - details */}
-        <div className="space-y-4">
+      {/* Карточки-реквизиты компактной лентой сверху: раньше они стояли высоким
+          столбцом слева и растягивали страницу, из-за чего под короткой таблицей
+          позиций зияла пустота. Masonry-раскладкой лента занимает ширину и
+          подстраивает высоту под содержимое. */}
+      <div className="columns-1 gap-4 sm:columns-2 xl:columns-3 *:mb-4 *:break-inside-avoid">
           {/* Client */}
           <Card padding="md">
             <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
@@ -837,11 +836,11 @@ export default function OrderDetailClient({
               <p className="text-sm text-fg-muted whitespace-pre-line">{order.notes}</p>
             </Card>
           )}
-        </div>
+      </div>
 
-        {/* Right column - tabs */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="lg:hidden">{tabBar}</div>
+      {/* Вкладки на всю ширину под лентой реквизитов */}
+      <div className="space-y-4">
+          {tabBar}
 
           {/* Items tab */}
           {activeTab === "items" && (
@@ -1315,7 +1314,6 @@ export default function OrderDetailClient({
               )}
             </Card>
           )}
-        </div>
       </div>
 
       {/* Create Task Modal */}
