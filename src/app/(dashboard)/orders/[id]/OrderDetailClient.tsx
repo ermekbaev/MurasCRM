@@ -845,6 +845,7 @@ export default function OrderDetailClient({
 
           {/* Items tab */}
           {activeTab === "items" && (
+            <div className={!editingItems && order.items.length > 0 ? "grid items-start gap-4 lg:grid-cols-[1fr_15rem]" : ""}>
             <Card padding="none">
               {canEdit && (
                 <div className="flex justify-end px-4 py-2 border-b border-line-soft">
@@ -970,6 +971,33 @@ export default function OrderDetailClient({
                 </table>
               )}
             </Card>
+
+            {/* Сводка сбоку: заполняет ширину, когда позиций мало, и даёт итог
+                под рукой. Показываем только в режиме просмотра с позициями. */}
+            {!editingItems && order.items.length > 0 && (
+              <Card padding="md" className="lg:sticky lg:top-4">
+                <h3 className="mb-3 text-sm font-semibold text-fg">Итог по заявке</h3>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-fg-muted">Позиций</dt>
+                    <dd className="tabular-nums text-fg">{order.items.length}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-fg-muted">Сумма</dt>
+                    <dd className="font-semibold tabular-nums text-fg">{formatCurrency(order.amount)}</dd>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-line-soft pt-2">
+                    <dt className="text-fg-muted">Оплата</dt>
+                    <dd>
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PAYMENT_STATUS_COLORS[order.paymentStatus as keyof typeof PAYMENT_STATUS_COLORS]}`}>
+                        {PAYMENT_STATUS_LABELS[order.paymentStatus as keyof typeof PAYMENT_STATUS_LABELS]}
+                      </span>
+                    </dd>
+                  </div>
+                </dl>
+              </Card>
+            )}
+            </div>
           )}
 
           {/* Files tab */}
