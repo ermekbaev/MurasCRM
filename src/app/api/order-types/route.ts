@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { slugifyOrderTypeCode } from "@/lib/orderTypes";
+import { ensureDefaultOrderTypes } from "@/lib/defaults.server";
 
 const schema = z.object({
   label: z.string().min(1).max(64),
@@ -12,6 +13,11 @@ const schema = z.object({
 export async function GET() {
   const session = await requireAuth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Подстраховка от пустого справочника: на установке, где мастер настройки не
+  // проходили (реквизиты внесли сразу), типов могло не быть — без них не
+  // создать заявку. Заводим дефолтные при первом обращении, дальше не трогаем.
+  await ensureDefaultOrderTypes();
 
   const types = await prisma.orderTypeOption.findMany({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth, apiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
+import { ensureDefaultOrderTypes } from "@/lib/defaults.server";
 
 /**
  * Отметить мастер первичной настройки завершённым.
@@ -13,6 +14,10 @@ export async function POST() {
   const session = await requireAuth();
   if (!session) return apiError.unauthorized();
   if (session.user.role !== "ADMIN") return apiError.forbidden();
+
+  // Свежая установка стартует с пустым справочником типов — без него заявку
+  // не создать. Заводим дефолтные, если их ещё нет.
+  await ensureDefaultOrderTypes();
 
   const existing = await prisma.companySettings.findFirst({ select: { id: true } });
   if (existing) {
