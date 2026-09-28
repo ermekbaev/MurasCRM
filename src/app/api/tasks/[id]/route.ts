@@ -39,7 +39,9 @@ export async function GET(
   });
 
   if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(task);
+  // Роль смотрящего — чтобы клиент показал кнопку удаления только тем, кому
+  // DELETE и так разрешён (админ/менеджер). Сам DELETE проверяет роль отдельно.
+  return NextResponse.json({ ...task, viewerRole: session.user.role });
 }
 
 export async function PATCH(

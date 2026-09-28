@@ -13,7 +13,7 @@ import { useTaskColumns } from "@/hooks/useTaskColumns";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
-import { ArrowLeft, CheckCircle2, Circle, Plus, Send, Paperclip, Download, FileText, Image as ImageIcon, Upload } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Plus, Send, Paperclip, Download, FileText, Image as ImageIcon, Upload, Trash2 } from "lucide-react";
 
 interface TaskFile {
   id: string;
@@ -44,6 +44,7 @@ interface Task {
   order: { id: string; number: string; client: { name: string } } | null;
   checklistItems: { id: string; text: string; isCompleted: boolean; sortOrder: number }[];
   comments: { id: string; text: string; createdAt: string; user: { id: string; name: string } }[];
+  viewerRole?: string;
 }
 
 function formatFileSize(bytes: number) {
@@ -167,6 +168,17 @@ export default function TaskDetailPage() {
     if (res.ok) setTaskFiles((prev) => prev.filter((f) => f.id !== taskFileId));
   }
 
+  /** Удаление задачи целиком — только админ/менеджер (проверяет и сервер). */
+  async function handleDeleteTask() {
+    if (!confirm("Удалить задачу? Действие необратимо.")) return;
+    const res = await fetch(`/api/tasks/${params.id}`, { method: "DELETE" });
+    if (res.ok) {
+      router.push("/tasks");
+    } else {
+      alert("Не удалось удалить задачу");
+    }
+  }
+
   if (loading) return <div className="p-6 text-center text-fg-subtle">Загрузка...</div>;
   if (!task) return <div className="p-6 text-center text-fg-subtle">Задача не найдена</div>;
 
@@ -200,11 +212,22 @@ export default function TaskDetailPage() {
               ))}
             </div>
           </div>
-          <Select
-            value={task.status}
-            onChange={(e) => updateTask({ status: e.target.value })}
-            options={boardColumns.map((c) => ({ value: c.code, label: c.name }))}
-          />
+          <div className="flex items-center gap-2">
+            <Select
+              value={task.status}
+              onChange={(e) => updateTask({ status: e.target.value })}
+              options={boardColumns.map((c) => ({ value: c.code, label: c.name }))}
+            />
+            {["ADMIN", "MANAGER"].includes(task.viewerRole ?? "") && (
+              <button
+                onClick={handleDeleteTask}
+                title="Удалить задачу"
+                className="inline-flex h-9.5 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-medium text-red-500 transition-colors hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                <Trash2 size={15} /> Удалить
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

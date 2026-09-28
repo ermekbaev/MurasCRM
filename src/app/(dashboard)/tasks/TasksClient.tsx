@@ -15,7 +15,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import { Plus, Search, CheckSquare, CheckCircle2, Circle } from "lucide-react";
+import { Plus, Search, CheckSquare, CheckCircle2, Circle, Trash2 } from "lucide-react";
 
 interface Tag {
   id: string;
@@ -48,6 +48,7 @@ interface Props {
 
 export default function TasksClient({ initialTasks, users, orders, currentUserId, currentRole }: Props) {
   const { visible: boardColumns, labels: statusLabels, colors: statusColors } = useTaskColumns();
+  const canDelete = ["ADMIN", "MANAGER"].includes(currentRole);
   const [dragTaskId, setDragTaskId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [tasks, setTasks] = useState(initialTasks);
@@ -136,6 +137,17 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
     const id = dragTaskId;
     setDragTaskId(null);
     if (id) updateTaskStatus(id, status);
+  }
+
+  /** Удаление задачи — только админ/менеджер (сервер тоже проверяет роль). */
+  async function handleDeleteTask(taskId: string) {
+    if (!confirm("Удалить задачу? Действие необратимо.")) return;
+    const res = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+    if (res.ok) {
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    } else {
+      alert("Не удалось удалить задачу");
+    }
   }
 
   return (
@@ -300,17 +312,26 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                             <p className="text-xs text-fg-subtle truncate">{task.assignee.name}</p>
                           )}
                         </Link>
-                        <div className="mt-2 border-t border-line-soft pt-2">
+                        <div className="mt-2 flex items-center gap-1.5 border-t border-line-soft pt-2">
                           <select
                             value={task.status}
                             onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                            className="w-full rounded border border-line bg-surface px-2 py-1 text-xs text-fg focus:outline-none"
+                            className="min-w-0 flex-1 rounded border border-line bg-surface px-2 py-1 text-xs text-fg focus:outline-none"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {boardColumns.map((c) => (
                               <option key={c.code} value={c.code}>{c.name}</option>
                             ))}
                           </select>
+                          {canDelete && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                              title="Удалить задачу"
+                              className="shrink-0 rounded p-1.5 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -342,12 +363,13 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                 <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Приоритет</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-fg-muted uppercase">Срок</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-fg-muted uppercase">Исполнитель</th>
+                {canDelete && <th className="px-4 py-3 w-10"></th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-line-soft">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-10 text-fg-subtle">Задач нет</td>
+                  <td colSpan={canDelete ? 7 : 6} className="text-center py-10 text-fg-subtle">Задач нет</td>
                 </tr>
               ) : (
                 filtered.map((task) => (
@@ -379,6 +401,17 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
                     </td>
                     <td className="px-4 py-3 text-xs text-fg-muted">{formatDate(task.dueDate)}</td>
                     <td className="px-5 py-3 text-xs text-fg-muted">{task.assignee?.name || "—"}</td>
+                    {canDelete && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteTask(task.id)}
+                          title="Удалить задачу"
+                          className="rounded p-1.5 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
