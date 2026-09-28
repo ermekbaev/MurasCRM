@@ -619,11 +619,13 @@ export default function OrderDetailClient({
         </div>
       </div>
 
-      {/* Карточки-реквизиты компактной лентой сверху: раньше они стояли высоким
-          столбцом слева и растягивали страницу, из-за чего под короткой таблицей
-          позиций зияла пустота. Masonry-раскладкой лента занимает ширину и
-          подстраивает высоту под содержимое. */}
-      <div className="columns-1 gap-4 sm:columns-2 xl:columns-3 *:mb-4 *:break-inside-avoid">
+      {/* Карточки-реквизиты лентой сверху в три осмысленные колонки: раньше они
+          стояли высоким столбцом слева и растягивали страницу с пустотой под
+          короткой таблицей позиций. Колонки заданы явно (не masonry), чтобы
+          каждая заполнялась с верха и высоты держались ровно. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 items-start">
+        {/* Колонка 1 — клиент и оплата */}
+        <div className="space-y-4">
           {/* Client */}
           <Card padding="md">
             <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
@@ -652,6 +654,29 @@ export default function OrderDetailClient({
             )}
           </Card>
 
+          {/* Amount */}
+          <Card padding="md">
+            <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
+              <CreditCard size={15} /> Оплата
+            </h2>
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-bold text-fg">{formatCurrency(order.amount)}</span>
+              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PAYMENT_STATUS_COLORS[order.paymentStatus as keyof typeof PAYMENT_STATUS_COLORS]}`}>
+                {PAYMENT_STATUS_LABELS[order.paymentStatus as keyof typeof PAYMENT_STATUS_LABELS]}
+              </span>
+            </div>
+          </Card>
+
+          {order.notes && (
+            <Card padding="md">
+              <h2 className="font-semibold text-fg mb-2">Примечание</h2>
+              <p className="text-sm text-fg-muted whitespace-pre-line">{order.notes}</p>
+            </Card>
+          )}
+        </div>
+
+        {/* Колонка 2 — параметры */}
+        <div className="space-y-4">
           {/* Order info */}
           <Card padding="md">
             <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
@@ -710,20 +735,10 @@ export default function OrderDetailClient({
               </div>
             </dl>
           </Card>
+        </div>
 
-          {/* Amount */}
-          <Card padding="md">
-            <h2 className="font-semibold text-fg mb-3 flex items-center gap-2">
-              <CreditCard size={15} /> Оплата
-            </h2>
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-fg">{formatCurrency(order.amount)}</span>
-              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PAYMENT_STATUS_COLORS[order.paymentStatus as keyof typeof PAYMENT_STATUS_COLORS]}`}>
-                {PAYMENT_STATUS_LABELS[order.paymentStatus as keyof typeof PAYMENT_STATUS_LABELS]}
-              </span>
-            </div>
-          </Card>
-
+        {/* Колонка 3 — прибыль и исполнители */}
+        <div className="space-y-4">
           {/* Прибыль — только администратору. Себестоимость из ставок
               оборудования и списанных материалов; показываем, если считать
               есть из чего. */}
@@ -829,13 +844,7 @@ export default function OrderDetailClient({
               </div>
             )}
           </Card>
-
-          {order.notes && (
-            <Card padding="md">
-              <h2 className="font-semibold text-fg mb-2">Примечание</h2>
-              <p className="text-sm text-fg-muted whitespace-pre-line">{order.notes}</p>
-            </Card>
-          )}
+        </div>
       </div>
 
       {/* Вкладки на всю ширину под лентой реквизитов */}
