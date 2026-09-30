@@ -219,6 +219,7 @@ export default function TemplatesPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<FileCode size={18} />}
+        helpSlug="templates"
         title="Шаблоны документов"
         subtitle="Свой DOCX-бланк или текст — данные подставляются из заявки, счёта и настроек компании"
         actions={

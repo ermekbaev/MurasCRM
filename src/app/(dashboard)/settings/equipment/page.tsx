@@ -259,6 +259,7 @@ export default function EquipmentSettingsPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<Cpu size={18} />}
+        helpSlug="equipment-consumables"
         title="Оборудование"
         subtitle={`${equipment.length} единиц · тарифы и привязка расходников`}
         actions={

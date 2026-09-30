@@ -248,6 +248,7 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
       {/* Header */}
       <PageHeader
         icon={<FileText size={18} />}
+        helpSlug="invoices-acts-waybills"
         title="Счета на оплату"
         subtitle={`${total} счётов`}
         actions={

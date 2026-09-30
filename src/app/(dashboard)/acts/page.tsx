@@ -253,6 +253,7 @@ export default function ActsPage() {
     <div className="p-4 sm:p-6 space-y-5">
       <PageHeader
         icon={<ClipboardList size={18} />}
+        helpSlug="invoices-acts-waybills"
         title="Акты выполненных работ"
         subtitle={`${total} актов`}
         actions={

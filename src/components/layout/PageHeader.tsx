@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -15,6 +15,8 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
   /** Дополнительный ряд под заголовком: статусы, метрики, табы. */
   meta?: React.ReactNode;
+  /** Slug статьи справки — рядом с заголовком появится «?» со ссылкой на неё. */
+  helpSlug?: string;
   className?: string;
 }
 
@@ -26,6 +28,7 @@ export default function PageHeader({
   onBack,
   actions,
   meta,
+  helpSlug,
   className,
 }: PageHeaderProps) {
   return (
@@ -59,9 +62,20 @@ export default function PageHeader({
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight text-fg sm:text-[22px]">
-              {title}
-            </h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="truncate text-xl font-semibold tracking-tight text-fg sm:text-[22px]">
+                {title}
+              </h1>
+              {helpSlug && (
+                <Link
+                  href={`/help#${helpSlug}`}
+                  title="Справка по разделу"
+                  className="shrink-0 rounded-full p-1 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-accent"
+                >
+                  <HelpCircle className="h-4.5 w-4.5" />
+                </Link>
+              )}
+            </div>
             {subtitle && (
               <p className="mt-0.5 text-[13px] text-fg-muted">{subtitle}</p>
             )}

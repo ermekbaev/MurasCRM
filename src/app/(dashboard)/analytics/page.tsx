@@ -386,6 +386,7 @@ export default function AnalyticsPage() {
       {/* Header */}
       <PageHeader
         icon={<BarChart3 size={18} className="text-accent" />}
+        helpSlug="analytics"
         title="Аналитика"
         subtitle="Выручка, загрузка и структура заказов"
         actions={

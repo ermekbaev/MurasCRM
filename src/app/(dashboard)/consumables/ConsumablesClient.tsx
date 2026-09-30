@@ -195,6 +195,7 @@ export default function ConsumablesClient({ initialConsumables, suppliers }: Pro
       {/* Header */}
       <PageHeader
         icon={<Package size={18} />}
+        helpSlug="equipment-consumables"
         title="Расходники"
         subtitle={
           <>

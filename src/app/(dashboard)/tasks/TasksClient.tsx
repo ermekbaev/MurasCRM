@@ -155,6 +155,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
       {/* Header */}
       <PageHeader
         icon={<CheckSquare size={18} />}
+        helpSlug="tasks"
         title="Задачи"
         subtitle={`${tasks.length} задач(и)`}
         actions={

@@ -183,6 +183,7 @@ export default function WaybillsPage() {
     <div className="space-y-5 p-4 sm:p-6">
       <PageHeader
         icon={<FileSpreadsheet size={18} />}
+        helpSlug="invoices-acts-waybills"
         title="Накладные"
         subtitle={`${total} накладных`}
         actions={

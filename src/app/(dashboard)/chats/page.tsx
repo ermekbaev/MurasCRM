@@ -356,6 +356,7 @@ export default function ChatsPage() {
     <div className="space-y-5 p-4 sm:p-6">
       <PageHeader
         icon={<MessagesSquare size={18} />}
+        helpSlug="chats"
         title="Переписка"
         subtitle={channelSummary(list)}
         actions={

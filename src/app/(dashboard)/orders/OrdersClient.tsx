@@ -348,6 +348,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       {/* Header */}
       <PageHeader
         icon={<ShoppingCart size={18} />}
+        helpSlug="orders"
         title="Заявки"
         subtitle={`${filtered.length} из ${orders.length}`}
         actions={

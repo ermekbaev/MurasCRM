@@ -127,6 +127,7 @@ export default function MoneyPage() {
     <div className="space-y-6 p-4 sm:p-6">
       <PageHeader
         icon={<Wallet size={18} className="text-accent" />}
+        helpSlug="money"
         title="Деньги"
         subtitle="Приход и расход по счетам — сколько и по какой карте прошло"
         actions={

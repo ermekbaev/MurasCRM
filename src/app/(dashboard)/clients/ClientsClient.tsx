@@ -439,6 +439,7 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
       {/* Header */}
       <PageHeader
         icon={<Users size={18} />}
+        helpSlug="clients"
         title="Клиенты"
         subtitle={`${clients.length} клиент(ов) в базе`}
         actions={

@@ -92,6 +92,7 @@ export default function BackupsPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<DatabaseBackup size={18} />}
+        helpSlug="backups"
         title="Резервные копии"
         subtitle="Копии базы хранятся в облаке — сохранность данных не зависит от сервера"
         actions={
