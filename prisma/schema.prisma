@@ -128,6 +128,12 @@ model User {
   role           Role     @default(MANAGER)
   phone          String?
   telegramChatId String?
+  /// Стабильный id пользователя в Яндекс.Диалогах (Алиса) — для опознания
+  /// автора голосовой команды после привязки.
+  aliceUserId    String?  @unique
+  /// Одноразовый код привязки Telegram/Алисы: админ выдаёт, сотрудник называет
+  /// боту «код XXXX», и его чат/аккаунт привязывается к профилю.
+  linkCode       String?  @unique
   isBlocked      Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -972,7 +978,15 @@ model CompanySettings {
   /// — значит установка новая, админа встречает мастер. Заполненные вручную
   /// прежние установки мастер не трогает.
   setupCompletedAt   DateTime?
+  /// Токен Telegram-бота для уведомлений и голосовых команд. Задаётся из
+  /// интерфейса (Настройки → Бот и голос), не из env.
   telegramBotToken   String?
+  /// Секрет вебхука Telegram: сверяется с заголовком запросов от Telegram,
+  /// чтобы ручку не дёргали посторонние. Генерируется при подключении.
+  telegramSecret     String?
+  /// Секрет вебхука Алисы: Яндекс не шлёт заголовков, поэтому передаём его в
+  /// URL (?key=...). Генерируется при включении навыка.
+  aliceSecret        String?
   updatedAt          DateTime @updatedAt
 }
 

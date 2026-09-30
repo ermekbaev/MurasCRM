@@ -1,9 +1,52 @@
 import { prisma } from "@/lib/prisma";
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
+/**
+ * Токен бота берём из настроек компании (задаётся в интерфейсе), а не из env —
+ * чтобы каждый клиент подключал своего бота сам. env оставлен как запасной.
+ */
+export async function getBotToken(): Promise<string | null> {
+  const s = await prisma.companySettings.findFirst({ select: { telegramBotToken: true } });
+  return s?.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN || null;
+}
 
-// Экранирование HTML для безопасной интерполяции в parse_mode: "HTML"
+/** Низкоуровневый вызов Bot API. Возвращает разобранный JSON или null при сбое. */
+export async function tgApi(
+  method: string,
+  body: Record<string, unknown>,
+  token?: string,
+): Promise<{ ok: boolean; result?: unknown; description?: string } | null> {
+  const t = token ?? (await getBotToken());
+  if (!t) return null;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${t}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return (await res.json()) as { ok: boolean };
+  } catch {
+    return null;
+  }
+}
+
+/** Зарегистрировать вебхук в Telegram. */
+export async function setWebhook(url: string, secret: string, token: string) {
+  return tgApi(
+    "setWebhook",
+    { url, secret_token: secret, allowed_updates: ["message", "edited_message"] },
+    token,
+  );
+}
+
+export async function deleteWebhook(token?: string) {
+  return tgApi("deleteWebhook", { drop_pending_updates: false }, token);
+}
+
+export async function getWebhookInfo(token?: string) {
+  return tgApi("getWebhookInfo", {}, token);
+}
+
+/** Экранирование HTML для безопасной интерполяции в parse_mode: "HTML" */
 function esc(s: string | null | undefined): string {
   if (s == null) return "";
   return String(s)
@@ -30,16 +73,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 };
 
 export async function sendMessage(chatId: string, text: string): Promise<void> {
-  if (!BOT_TOKEN) return;
-  try {
-    await fetch(`${API_BASE}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
-    });
-  } catch {
-    // не прерываем основной поток при сбое отправки
-  }
+  await tgApi("sendMessage", { chat_id: chatId, text, parse_mode: "HTML" });
 }
 
 async function sendToUsers(userIds: string[], text: string): Promise<void> {

@@ -1,49 +1,28 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendMessage } from "@/lib/telegram";
-import { getTaskColumns } from "@/lib/taskColumns.server";
-import { parseVoiceCommand } from "@/lib/voice-command";
+import { executeVoiceCommand, VOICE_HELP } from "@/lib/voice-run.server";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Входящие команды от сотрудников через Telegram-бота: «задача …», «клиент …».
  *
- * Кто пишет — определяем по telegramChatId пользователя (сотрудник заранее
- * привязал свой Telegram). Незнакомым и заблокированным ничего не создаём.
- * Живой запуск требует бот-токена и регистрации вебхука; логика ниже работает
- * и тестируется независимо от этого.
+ * Кто пишет — определяем по telegramChatId пользователя (привязывается по коду).
+ * Незнакомым и заблокированным ничего не создаём. Живой запуск требует
+ * бот-токена и регистрации вебхука; разбор и создание работают независимо.
  */
 
-const HELP =
-  "Что умею:\n" +
-  "• Задача: «задача напечатать баннер для Васи к пятнице»\n" +
-  "• Клиент: «клиент Иван Петров, телефон +7 900 111-22-33, инн 7701234567»\n\n" +
-  "Срок можно словами: сегодня, завтра, к пятнице, через 3 дня, 5 октября, до 05.10.";
+const HELP = VOICE_HELP;
 
 function esc(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/** Сопоставляет подсказку-имя с активным сотрудником (по имени, регистронезависимо). */
-function matchUser(
-  hint: string,
-  users: { id: string; name: string }[],
-): { id: string; name: string } | null {
-  const h = hint.trim().toLowerCase();
-  if (!h) return null;
-  return (
-    users.find((u) => u.name.toLowerCase() === h) ||
-    users.find((u) => u.name.toLowerCase().split(/\s+/).includes(h)) ||
-    users.find((u) => u.name.toLowerCase().startsWith(h)) ||
-    users.find((u) => u.name.toLowerCase().includes(h)) ||
-    null
-  );
-}
-
 export async function POST(req: Request) {
-  // Проверка секрета вебхука, если задан (Telegram шлёт его заголовком).
-  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  // Секрет вебхука из настроек (fallback — env). Telegram шлёт его заголовком.
+  const settings = await prisma.companySettings.findFirst({ select: { telegramSecret: true } });
+  const secret = settings?.telegramSecret || process.env.TELEGRAM_WEBHOOK_SECRET;
   if (secret && req.headers.get("x-telegram-bot-api-secret-token") !== secret) {
     return NextResponse.json({ error: "forbidden" }, { status: 401 });
   }
@@ -62,8 +41,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const text: string = message.text ?? "";
+  const text: string = (message.text ?? "").trim();
   if (!text) return NextResponse.json({ ok: true });
+
+  // Привязка аккаунта по коду — до проверки «кто пишет», иначе непривязанный
+  // сотрудник не сможет привязаться. Код выдаёт админ в Настройках.
+  const link = text.match(/^\/?(?:link|привяжи|код)\s+(\S+)/i);
+  if (link) {
+    const code = link[1];
+    const target = await prisma.user.findFirst({ where: { linkCode: code, isBlocked: false } });
+    if (!target) {
+      await sendMessage(chatId, "Код не найден или устарел. Попросите администратора выдать новый.");
+      return NextResponse.json({ ok: true });
+    }
+    await prisma.user.update({
+      where: { id: target.id },
+      data: { telegramChatId: chatId, linkCode: null },
+    });
+    await sendMessage(chatId, `✅ Готово, ${esc(target.name)}. Ваш Telegram привязан. Пишите «задача …» или «клиент …». /help — примеры.`);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (/^\/start\b/i.test(text)) {
+    await sendMessage(
+      chatId,
+      "Это бот CRM для сотрудников. Чтобы привязать аккаунт, возьмите код у администратора (Настройки → Бот и голос) и пришлите: «код ВАШ_КОД».",
+    );
+    return NextResponse.json({ ok: true });
+  }
 
   // Кто пишет — только привязанный и не заблокированный сотрудник.
   const user = await prisma.user.findFirst({
@@ -73,97 +78,40 @@ export async function POST(req: Request) {
   if (!user) {
     await sendMessage(
       chatId,
-      "Ваш Telegram не привязан к аккаунту в CRM. Обратитесь к администратору, чтобы он привязал ваш профиль.",
+      "Ваш Telegram не привязан к аккаунту в CRM. Возьмите код привязки у администратора и пришлите: «код ВАШ_КОД».",
     );
     return NextResponse.json({ ok: true });
   }
 
-  const cmd = parseVoiceCommand(text);
+  const result = await executeVoiceCommand(text, user);
 
-  if (cmd.intent === "help") {
-    await sendMessage(chatId, HELP);
-    return NextResponse.json({ ok: true });
+  let reply: string;
+  switch (result.kind) {
+    case "help":
+      reply = HELP;
+      break;
+    case "unknown":
+      reply = "Не понял команду. Начните со слова «задача» или «клиент».\n\n" + HELP;
+      break;
+    case "need":
+      reply = result.message;
+      break;
+    case "task":
+      reply = `✅ Задача создана: <b>${esc(result.title)}</b>`;
+      if (result.assigneeName) reply += `\n👤 Исполнитель: ${esc(result.assigneeName)}`;
+      else if (result.assigneeMiss) reply += `\n⚠️ Сотрудник «${esc(result.assigneeMiss)}» не найден — задача без исполнителя`;
+      if (result.dueDate) reply += `\n📅 Срок: ${result.dueDate.toLocaleDateString("ru-RU")}`;
+      reply += `\n🔗 /tasks/${result.id}`;
+      break;
+    case "client":
+      reply = `✅ Клиент добавлен: <b>${esc(result.name)}</b>`;
+      if (result.phone) reply += `\n📞 ${esc(result.phone)}`;
+      if (result.inn) reply += `\n🏢 ИНН ${esc(result.inn)}`;
+      if (result.email) reply += `\n✉️ ${esc(result.email)}`;
+      reply += `\n🔗 /clients/${result.id}`;
+      break;
   }
 
-  if (cmd.intent === "unknown") {
-    await sendMessage(chatId, "Не понял команду. Начните со слова «задача» или «клиент».\n\n" + HELP);
-    return NextResponse.json({ ok: true });
-  }
-
-  // ── Задача ─────────────────────────────────────────────────────────────────
-  if (cmd.intent === "task") {
-    if (!cmd.title) {
-      await sendMessage(chatId, "Не понял, что за задача. Пример: «задача напечатать баннер для Васи к пятнице».");
-      return NextResponse.json({ ok: true });
-    }
-
-    const users = await prisma.user.findMany({
-      where: { isBlocked: false },
-      select: { id: true, name: true },
-    });
-    let assignee: { id: string; name: string } | null = null;
-    let assigneeMiss = false;
-    if (cmd.assigneeHint) {
-      assignee = matchUser(cmd.assigneeHint, users);
-      assigneeMiss = !assignee;
-    }
-
-    const columns = await getTaskColumns();
-    const firstColumn = columns.find((c) => c.isActive) ?? columns[0];
-
-    const task = await prisma.task.create({
-      data: {
-        title: cmd.title,
-        type: "DESIGN",
-        priority: "NORMAL",
-        status: firstColumn?.code ?? "TODO",
-        assigneeId: assignee?.id,
-        dueDate: cmd.dueDate ? new Date(cmd.dueDate) : undefined,
-      },
-    });
-
-    let reply = `✅ Задача создана: <b>${esc(task.title)}</b>`;
-    if (assignee) reply += `\n👤 Исполнитель: ${esc(assignee.name)}`;
-    else if (assigneeMiss) reply += `\n⚠️ Сотрудник «${esc(cmd.assigneeHint!)}» не найден — задача без исполнителя`;
-    if (task.dueDate) reply += `\n📅 Срок: ${task.dueDate.toLocaleDateString("ru-RU")}`;
-    reply += `\n🔗 /tasks/${task.id}`;
-    await sendMessage(chatId, reply);
-    return NextResponse.json({ ok: true });
-  }
-
-  // ── Клиент ─────────────────────────────────────────────────────────────────
-  if (cmd.intent === "client") {
-    if (!["ADMIN", "MANAGER"].includes(user.role)) {
-      await sendMessage(chatId, "Добавлять клиентов может администратор или менеджер.");
-      return NextResponse.json({ ok: true });
-    }
-    if (!cmd.name) {
-      await sendMessage(chatId, "Не понял имя клиента. Пример: «клиент Иван Петров, телефон +7 900 111-22-33».");
-      return NextResponse.json({ ok: true });
-    }
-
-    // Тип по длине ИНН: 12 — ИП, 10 — юрлицо, иначе физлицо.
-    const type = cmd.inn?.length === 12 ? "IP" : cmd.inn?.length === 10 ? "LEGAL" : "INDIVIDUAL";
-
-    const client = await prisma.client.create({
-      data: {
-        type,
-        name: cmd.name,
-        phone: cmd.phone ?? undefined,
-        inn: cmd.inn ?? undefined,
-        email: cmd.email ?? undefined,
-        source: "OTHER",
-      },
-    });
-
-    let reply = `✅ Клиент добавлен: <b>${esc(client.name)}</b>`;
-    if (client.phone) reply += `\n📞 ${esc(client.phone)}`;
-    if (client.inn) reply += `\n🏢 ИНН ${esc(client.inn)}`;
-    if (client.email) reply += `\n✉️ ${esc(client.email)}`;
-    reply += `\n🔗 /clients/${client.id}`;
-    await sendMessage(chatId, reply);
-    return NextResponse.json({ ok: true });
-  }
-
+  await sendMessage(chatId, reply);
   return NextResponse.json({ ok: true });
 }

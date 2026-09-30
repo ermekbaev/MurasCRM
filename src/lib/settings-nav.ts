@@ -14,6 +14,7 @@ import {
   Receipt,
   DatabaseBackup,
   BookOpen,
+  Bot,
 } from "lucide-react";
 
 export interface SettingsSection {
@@ -48,6 +49,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     description: "Копии базы, скачивание и восстановление",
     href: "/settings/backups",
     icon: DatabaseBackup,
+    roles: ["ADMIN"],
+    group: "Организация",
+  },
+  {
+    label: "Бот и голос",
+    description: "Telegram-бот и Алиса: команды голосом, привязка сотрудников",
+    href: "/settings/bot",
+    icon: Bot,
     roles: ["ADMIN"],
     group: "Организация",
   },
