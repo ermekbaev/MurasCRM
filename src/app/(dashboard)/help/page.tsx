@@ -10,8 +10,10 @@ export default async function HelpPage() {
   const isAdmin = session?.user.role === "ADMIN";
 
   await ensureDefaultHelpArticles();
+  // Порядок — по sortOrder: так «С чего начать» стоит первой, а категории
+  // группируются по первому появлению (см. группировку в HelpClient).
   const articles = await prisma.helpArticle.findMany({
-    orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
 
   return (

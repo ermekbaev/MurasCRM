@@ -21,7 +21,7 @@ export async function GET() {
   await ensureDefaultHelpArticles();
 
   const articles = await prisma.helpArticle.findMany({
-    orderBy: [{ category: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
   return NextResponse.json(articles);
 }
