@@ -180,6 +180,7 @@ export default function DefectsPage() {
     <div className="p-4 sm:p-6 space-y-5">
       <PageHeader
         icon={<AlertTriangle size={18} className="text-amber-500" />}
+        helpSlug="equipment-consumables"
         title="Журнал брака"
         subtitle="Списания и потери по производству"
         actions={

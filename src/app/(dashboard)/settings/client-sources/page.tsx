@@ -94,6 +94,7 @@ export default function ClientSourcesPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Megaphone size={18} />}
+        helpSlug="clients"
         title="Источники клиентов"
         subtitle="Откуда пришёл клиент — список доступен при заполнении карточки"
         actions={

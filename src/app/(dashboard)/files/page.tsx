@@ -259,6 +259,7 @@ export default function FilesPage() {
       {/* Header */}
       <PageHeader
         icon={<FolderOpen size={18} className="text-accent" />}
+        helpSlug="files-hub"
         onBack={
           openFolder
             ? { onClick: () => { setOpenFolder(null); setSearch(""); }, label: "Файловый хаб" }

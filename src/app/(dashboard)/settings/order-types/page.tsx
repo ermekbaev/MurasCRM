@@ -92,6 +92,7 @@ export default function OrderTypesPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Layers size={18} />}
+        helpSlug="orders"
         title="Типы заявок"
         subtitle="Список типов, доступных при создании заявки"
         actions={

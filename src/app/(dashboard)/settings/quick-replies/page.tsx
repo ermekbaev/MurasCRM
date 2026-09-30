@@ -88,6 +88,7 @@ export default function QuickRepliesPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Zap size={18} />}
+        helpSlug="chats"
         title="Быстрые ответы"
         subtitle="Заготовки для переписки — вставляются в одно нажатие"
         actions={

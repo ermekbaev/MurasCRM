@@ -186,6 +186,7 @@ export default function CompanySettingsPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Building2 size={18} />}
+        helpSlug="setup-wizard"
         title="Реквизиты компании"
         subtitle="Используются в счетах, актах и печатных формах"
         actions={

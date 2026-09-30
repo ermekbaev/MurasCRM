@@ -135,6 +135,7 @@ export default function UsersSettingsPage() {
     <div className="space-y-5">
       <PageHeader
         icon={<Users size={18} />}
+        helpSlug="roles-access"
         title="Пользователи"
         subtitle={`${users.length} сотрудников в системе`}
         actions={

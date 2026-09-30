@@ -90,6 +90,7 @@ export default function ExpenseCategoriesPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Receipt size={18} />}
+        helpSlug="money"
         title="Статьи расходов"
         subtitle="На что уходят деньги — разбивка в отчёте строится по этому списку"
         actions={

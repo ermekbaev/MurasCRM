@@ -13,7 +13,7 @@ import { useTaskColumns } from "@/hooks/useTaskColumns";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
-import { ArrowLeft, CheckCircle2, Circle, Plus, Send, Paperclip, Download, FileText, Image as ImageIcon, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Plus, Send, Paperclip, Download, FileText, Image as ImageIcon, Upload, Trash2, HelpCircle } from "lucide-react";
 
 interface TaskFile {
   id: string;
@@ -192,7 +192,16 @@ export default function TaskDetailPage() {
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-fg sm:text-[22px]">{task.title}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight text-fg sm:text-[22px]">{task.title}</h1>
+              <Link
+                href="/help#tasks"
+                title="Справка по задачам"
+                className="shrink-0 rounded-full p-1 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-accent"
+              >
+                <HelpCircle size={17} />
+              </Link>
+            </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-fg-muted ring-1 ring-inset ring-line">
                 <span

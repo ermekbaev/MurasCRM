@@ -104,6 +104,7 @@ export default function MoneyAccountsPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Wallet size={18} />}
+        helpSlug="money"
         title="Счета и кассы"
         subtitle="Карты, наличные и расчётный счёт — куда приходят и откуда уходят деньги"
         actions={

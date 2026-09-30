@@ -130,6 +130,7 @@ export default function TaskColumnsPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Columns3 size={18} />}
+        helpSlug="tasks"
         title="Этапы задач"
         subtitle="Колонки канбан-доски — порядок, названия и цвета настраиваются здесь"
         actions={

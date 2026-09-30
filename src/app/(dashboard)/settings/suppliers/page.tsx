@@ -102,6 +102,7 @@ export default function SuppliersPage() {
     <div className="space-y-6">
       <PageHeader
         icon={<Truck size={18} />}
+        helpSlug="equipment-consumables"
         title="Поставщики"
         subtitle="Справочник поставщиков расходных материалов"
         actions={
