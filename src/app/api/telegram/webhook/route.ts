@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
   // Привязка аккаунта по коду — до проверки «кто пишет», иначе непривязанный
   // сотрудник не сможет привязаться. Код выдаёт админ в Настройках.
-  const link = text.match(/^\/?(?:link|привяжи|код)\s+(\S+)/i);
+  const link = text.match(/^\/?(?:link|привяжи|привязать|код)(?:\s+код)?\s+(\S+)/i);
   if (link) {
     const code = link[1];
     const target = await prisma.user.findFirst({ where: { linkCode: code, isBlocked: false } });

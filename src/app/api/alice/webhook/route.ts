@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   }
 
   // Привязка по коду — до опознания автора.
-  const link = utterance.match(/(?:привяжи|код|привязать)\s+(\S+)/i);
+  const link = utterance.match(/(?:привяжи|привязать|код)(?:\s+код)?\s+(\S+)/i);
   if (link) {
     const code = link[1].replace(/[^\wА-Яа-яЁё]/g, "");
     const target = await prisma.user.findFirst({ where: { linkCode: code, isBlocked: false } });
