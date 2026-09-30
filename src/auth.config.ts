@@ -85,6 +85,8 @@ export const authConfig = {
         pathname.startsWith("/login") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/telegram/webhook") ||
+        // Навык Алисы: Яндекс дёргает вебхук без входа, защита — секрет в URL.
+        pathname.startsWith("/api/alice/webhook") ||
         pathname.startsWith("/api/cron") ||
         pathname.startsWith("/api/whatsapp/webhook") ||
         // Значок установки нужен на странице входа — до того, как войдут.
