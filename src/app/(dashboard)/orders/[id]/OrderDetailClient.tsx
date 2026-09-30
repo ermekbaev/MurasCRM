@@ -22,7 +22,7 @@ import {
   ArrowLeft, Send, CheckSquare, Clock, User, CreditCard, AlertCircle,
   Paperclip, Download, FileText, Image as ImageIcon, Upload,
   Pencil, Plus, Trash2, Check, X, UserPlus,
-  ClipboardList, FileSpreadsheet, ArrowUpRight, Link2,
+  ClipboardList, FileSpreadsheet, ArrowUpRight, Link2, HelpCircle,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 
@@ -589,6 +589,13 @@ export default function OrderDetailClient({
                     <Pencil size={16} />
                   </button>
                 )}
+                <Link
+                  href="/help#orders"
+                  title="Справка по заявкам"
+                  className="shrink-0 rounded-full p-1 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-accent"
+                >
+                  <HelpCircle size={17} />
+                </Link>
               </div>
             )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
