@@ -268,16 +268,28 @@ export const DEFAULT_HELP_ARTICLES: HelpSeed[] = [
 ];
 
 /**
- * Досевает недостающие стартовые статьи (по slug). Идемпотентно: существующие
- * (в т.ч. отредактированные) не трогает, добавляет только те, которых ещё нет.
- * Так новые статьи из набора доезжают и на уже развёрнутые установки.
+ * Держит стартовые статьи в актуальном виде. Идемпотентно и бережно:
+ *  - недостающие (по slug) создаёт — так новые статьи из набора доезжают и на
+ *    уже развёрнутые установки;
+ *  - у существующих выравнивает только порядок (sortOrder) под канон — текст и
+ *    заголовок, которые мог править админ, не трогает;
+ *  - статьи, созданные админом вручную, не затрагивает вовсе.
+ * Когда всё уже синхронизировано, записей в базу не делает.
  */
 export async function ensureDefaultHelpArticles(): Promise<void> {
-  const existing = await prisma.helpArticle.findMany({ select: { slug: true } });
-  const have = new Set(existing.map((a) => a.slug));
-  const missing = DEFAULT_HELP_ARTICLES.map((a, i) => ({ ...a, sortOrder: i })).filter(
-    (a) => !have.has(a.slug),
+  const canonical = DEFAULT_HELP_ARTICLES.map((a, i) => ({ ...a, sortOrder: i }));
+  const existing = await prisma.helpArticle.findMany({ select: { slug: true, sortOrder: true } });
+  const bySlug = new Map(existing.map((e) => [e.slug, e.sortOrder]));
+
+  const toCreate = canonical.filter((a) => !bySlug.has(a.slug));
+  const toReorder = canonical.filter(
+    (a) => bySlug.has(a.slug) && bySlug.get(a.slug) !== a.sortOrder,
   );
-  if (missing.length === 0) return;
-  await prisma.helpArticle.createMany({ data: missing, skipDuplicates: true });
+
+  if (toCreate.length > 0) {
+    await prisma.helpArticle.createMany({ data: toCreate, skipDuplicates: true });
+  }
+  for (const a of toReorder) {
+    await prisma.helpArticle.update({ where: { slug: a.slug }, data: { sortOrder: a.sortOrder } });
+  }
 }
