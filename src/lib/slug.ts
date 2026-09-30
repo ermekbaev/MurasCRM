@@ -17,3 +17,15 @@ export function slugifyCode(label: string, fallback: string): string {
     .toUpperCase();
   return base || fallback;
 }
+
+/** Человекочитаемый slug (kebab-case) из названия — для якорей статей справки. */
+export function slugifyKebab(label: string, fallback: string): string {
+  const base = label
+    .toLowerCase()
+    .split("")
+    .map((c) => (c in RU_TRANSLIT ? RU_TRANSLIT[c] : c))
+    .join("")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return base || fallback;
+}

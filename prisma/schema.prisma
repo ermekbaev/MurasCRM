@@ -1060,3 +1060,21 @@ model QuickReply {
 
   @@index([sortOrder])
 }
+
+// ─── База знаний (Справка) ──────────────────────────────────────────────────
+// Встроенная документация: статьи «что где» для сотрудников и новых клиентов.
+// Редактируется админом из интерфейса, чтобы под каждого клиента правился текст
+// без пересборки кода.
+model HelpArticle {
+  id        String   @id @default(cuid())
+  /// Стабильный якорь: на него ссылаются контекстные «?» подсказки на страницах.
+  slug      String   @unique
+  category  String
+  title     String
+  body      String   @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, sortOrder])
+}

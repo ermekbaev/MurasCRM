@@ -13,6 +13,7 @@ import {
   Wallet,
   Receipt,
   DatabaseBackup,
+  BookOpen,
 } from "lucide-react";
 
 export interface SettingsSection {
@@ -128,6 +129,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     href: "/settings/templates",
     icon: FileCode,
     roles: ["ADMIN", "ACCOUNTANT"],
+    group: "Документы",
+  },
+  {
+    label: "Справка",
+    description: "Статьи базы знаний — редактируются под ваш процесс",
+    href: "/help",
+    icon: BookOpen,
+    roles: ["ADMIN"],
     group: "Документы",
   },
 ];

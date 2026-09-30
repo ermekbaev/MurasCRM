@@ -32,6 +32,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search as SearchIcon,
+  HelpCircle,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { settingsSectionsFor } from "@/lib/settings-nav";
@@ -296,6 +297,21 @@ export default function Sidebar({
               <span className={cn("truncate", labelFade)}>Свернуть</span>
             </button>
           )}
+
+          {(() => {
+            const helpActive = pathname === "/help" || pathname.startsWith("/help/");
+            return (
+              <Link
+                href="/help"
+                onClick={onClose}
+                title={collapsed ? "Справка" : undefined}
+                className={cn(itemClass(helpActive), "mb-1")}
+              >
+                <HelpCircle className={iconClass(helpActive)} />
+                <span className={cn("truncate", labelFade)}>Справка</span>
+              </Link>
+            );
+          })()}
 
           {showSettings && (
             <Link
