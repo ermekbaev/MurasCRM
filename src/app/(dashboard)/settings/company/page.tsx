@@ -204,7 +204,7 @@ export default function CompanySettingsPage() {
 
       <form onSubmit={handleSave} className="space-y-5">
         <Section title="Основная информация" icon={<Building2 size={16} />}>
-          <Input label="Название организации" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="ООО «МурасПринт»" />
+          <Input label="Название организации" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="ООО «Ромашка»" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="ИНН" value={form.inn} onChange={(e) => update("inn", e.target.value)} />
             <Input label="КПП" value={form.kpp} onChange={(e) => update("kpp", e.target.value)} />

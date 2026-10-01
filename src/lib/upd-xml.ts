@@ -341,7 +341,7 @@ export function buildUpdXml(input: UpdInput): UpdXml {
     // на живом операторе, поэтому лишний повод для придирки убираем заранее.
     `<Файл xmlns:xs="http://www.w3.org/2001/XMLSchema"` +
     ` xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"` +
-    ` ИдФайл="${fileId}" ВерсФорм="${VERSION}" ВерсПрог="Muras CRM">` +
+    ` ИдФайл="${fileId}" ВерсФорм="${VERSION}" ВерсПрог="CRM">` +
     `<Документ КНД="${KND}" Функция="${func}"` +
     ` ПоФактХЖ="${OPERATION_NAME}" НаимДокОпр="Универсальный передаточный документ"` +
     ` ДатаИнфПр="${dateRu(now)}" ВремИнфПр="${timeRu(now)}"` +
