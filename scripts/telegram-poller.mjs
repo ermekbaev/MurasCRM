@@ -45,11 +45,17 @@ async function main() {
       await sleep(5000);
       continue;
     }
-    // getUpdates не работает, пока установлен вебхук — снимаем его один раз.
+    // getUpdates не работает, пока установлен вебхук — снимаем его. Повторяем,
+    // пока Telegram не подтвердит удаление (ok), иначе застрянем на Conflict.
     if (webhookCleared !== token) {
-      await tg(token, "deleteWebhook", "?drop_pending_updates=false").catch(() => {});
-      webhookCleared = token;
-      console.log("[tg-poller] вебхук снят, перешли на long-polling");
+      const del = await tg(token, "deleteWebhook", "?drop_pending_updates=false").catch(() => null);
+      if (del && del.ok) {
+        webhookCleared = token;
+        console.log("[tg-poller] вебхук снят, перешли на long-polling");
+      } else {
+        await sleep(3000);
+        continue;
+      }
     }
     try {
       const data = await tg(
