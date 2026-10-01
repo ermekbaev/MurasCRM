@@ -45,11 +45,15 @@ export async function POST(req: Request) {
   if (!text) return NextResponse.json({ ok: true });
 
   // Привязка аккаунта по коду — до проверки «кто пишет», иначе непривязанный
-  // сотрудник не сможет привязаться. Код выдаёт админ в Настройках.
+  // сотрудник не сможет привязаться. Код выдаёт админ в Настройках. Принимаем
+  // и «код XXXX», и просто присланный код из 6 символов.
   const link = text.match(/^\/?(?:link|привяжи|привязать|код)(?:\s+код)?\s+(\S+)/i);
-  if (link) {
-    const code = link[1];
-    const target = await prisma.user.findFirst({ where: { linkCode: code, isBlocked: false } });
+  const bare = !link && /^[A-Za-z2-9]{6}$/.test(text) ? text : null;
+  if (link || bare) {
+    const code = (link ? link[1] : bare)!;
+    const target = await prisma.user.findFirst({
+      where: { linkCode: { equals: code, mode: "insensitive" }, isBlocked: false },
+    });
     if (!target) {
       await sendMessage(chatId, "Код не найден или устарел. Попросите администратора выдать новый.");
       return NextResponse.json({ ok: true });
