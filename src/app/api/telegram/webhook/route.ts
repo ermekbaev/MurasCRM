@@ -100,6 +100,9 @@ export async function POST(req: Request) {
     case "need":
       reply = result.message;
       break;
+    case "say":
+      reply = esc(result.text);
+      break;
     case "task":
       reply = `✅ Задача создана: <b>${esc(result.title)}</b>`;
       if (result.assigneeName) reply += `\n👤 Исполнитель: ${esc(result.assigneeName)}`;

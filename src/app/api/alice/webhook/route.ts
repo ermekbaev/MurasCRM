@@ -85,6 +85,8 @@ export async function POST(req: Request) {
       return reply("Не поняла. Начните со слова задача или клиент.", version);
     case "need":
       return reply(result.message, version);
+    case "say":
+      return reply(result.text, version);
     case "task": {
       let t = `Задача создана: ${result.title}.`;
       if (result.assigneeName) t += ` Исполнитель ${result.assigneeName}.`;

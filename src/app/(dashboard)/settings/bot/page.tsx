@@ -46,6 +46,8 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
 export default function BotSettingsPage() {
   const [tg, setTg] = useState<{ configured: boolean; username?: string | null; webhook?: { url?: string; last_error_message?: string } | null; webhookUrl?: string } | null>(null);
   const [alice, setAlice] = useState<{ enabled: boolean; url: string | null } | null>(null);
+  const [voice, setVoice] = useState<{ enabled: boolean } | null>(null);
+  const [voiceBusy, setVoiceBusy] = useState(false);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,15 +57,28 @@ export default function BotSettingsPage() {
   const [aliceBusy, setAliceBusy] = useState(false);
 
   async function loadAll() {
-    const [t, a, u] = await Promise.all([
+    const [t, a, v, u] = await Promise.all([
       fetch("/api/settings/telegram").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/settings/alice").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/settings/voice").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/users").then((r) => (r.ok ? r.json() : [])),
     ]);
     setTg(t);
     setAlice(a);
+    setVoice(v);
     setUsers(Array.isArray(u) ? u.filter((x: UserRow) => !x.isBlocked) : []);
     setLoading(false);
+  }
+
+  async function toggleVoice(enabled: boolean) {
+    setVoiceBusy(true);
+    const res = await fetch("/api/settings/voice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled }),
+    });
+    if (res.ok) setVoice(await res.json());
+    setVoiceBusy(false);
   }
 
   useEffect(() => {
@@ -213,6 +228,38 @@ export default function BotSettingsPage() {
               </Button>
             </div>
           )}
+        </Card>
+
+        {/* Голосовые запросы-отчёты */}
+        <Card padding="md">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-2 font-semibold text-fg">
+                <Mic size={16} className="text-accent" /> Голосовые запросы (отчёты)
+              </h2>
+              <p className="mt-0.5 text-sm text-fg-muted">
+                Ответы на «мои задачи», «задачи на сегодня», «сколько заказов в работе» — в Telegram и Алисе. Создание задач и клиентов работает всегда, это только про отчёты.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={voice?.enabled ?? true}
+              onClick={() => toggleVoice(!(voice?.enabled ?? true))}
+              disabled={voiceBusy}
+              className={
+                "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 " +
+                ((voice?.enabled ?? true) ? "bg-accent" : "bg-line")
+              }
+            >
+              <span
+                className={
+                  "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform " +
+                  ((voice?.enabled ?? true) ? "translate-x-5" : "translate-x-1")
+                }
+              />
+            </button>
+          </div>
         </Card>
 
         {/* Привязка сотрудников */}

@@ -14,6 +14,7 @@ export type VoiceResult =
   | { kind: "help" }
   | { kind: "unknown" }
   | { kind: "need"; message: string }
+  | { kind: "say"; text: string }
   | {
       kind: "task";
       id: string;
@@ -44,11 +45,69 @@ function matchUser(hint: string, users: { id: string; name: string }[]) {
   );
 }
 
+/** Русское склонение по числу: [1, 2-4, 5+]. */
+function plural(n: number, forms: [string, string, string]): string {
+  const n10 = n % 10;
+  const n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) return forms[0];
+  if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return forms[1];
+  return forms[2];
+}
+
+function listTitles(titles: string[], max = 5): string {
+  const shown = titles.slice(0, max).join(", ");
+  const rest = titles.length - max;
+  return rest > 0 ? `${shown} и ещё ${rest}` : shown;
+}
+
+async function runQuery(
+  query: "my_tasks" | "today_tasks" | "orders_in_progress",
+  user: VoiceUser,
+): Promise<string> {
+  if (query === "orders_in_progress") {
+    const n = await prisma.order.count({ where: { status: "IN_PROGRESS" } });
+    if (n === 0) return "В работе нет заказов.";
+    return `В работе ${n} ${plural(n, ["заказ", "заказа", "заказов"])}.`;
+  }
+
+  const isPrivileged = ["ADMIN", "MANAGER"].includes(user.role);
+
+  if (query === "today_tasks") {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    const where: Record<string, unknown> = { dueDate: { gte: start, lt: end } };
+    if (!isPrivileged) where.assigneeId = user.id;
+    const tasks = await prisma.task.findMany({ where, select: { title: true }, orderBy: { dueDate: "asc" }, take: 20 });
+    if (tasks.length === 0) return "На сегодня задач нет.";
+    return `На сегодня ${tasks.length} ${plural(tasks.length, ["задача", "задачи", "задач"])}: ${listTitles(tasks.map((t) => t.title))}.`;
+  }
+
+  // my_tasks
+  const tasks = await prisma.task.findMany({
+    where: { assigneeId: user.id },
+    select: { title: true },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  if (tasks.length === 0) return "У вас нет задач.";
+  return `У вас ${tasks.length} ${plural(tasks.length, ["задача", "задачи", "задач"])}: ${listTitles(tasks.map((t) => t.title))}.`;
+}
+
 export async function executeVoiceCommand(text: string, user: VoiceUser): Promise<VoiceResult> {
   const cmd = parseVoiceCommand(text);
 
   if (cmd.intent === "help") return { kind: "help" };
   if (cmd.intent === "unknown") return { kind: "unknown" };
+
+  if (cmd.intent === "query") {
+    const settings = await prisma.companySettings.findFirst({ select: { voiceQueriesEnabled: true } });
+    if (settings && settings.voiceQueriesEnabled === false) {
+      return { kind: "need", message: "Голосовые запросы выключены в настройках." };
+    }
+    return { kind: "say", text: await runQuery(cmd.query, user) };
+  }
 
   if (cmd.intent === "task") {
     if (!cmd.title) {
@@ -117,5 +176,6 @@ export async function executeVoiceCommand(text: string, user: VoiceUser): Promis
 export const VOICE_HELP =
   "Что умею:\n" +
   "• Задача: «задача напечатать баннер для Васи к пятнице»\n" +
-  "• Клиент: «клиент Иван Петров, телефон +7 900 111-22-33, инн 7701234567»\n\n" +
+  "• Клиент: «клиент Иван Петров, телефон +7 900 111-22-33, инн 7701234567»\n" +
+  "• Отчёты: «мои задачи», «задачи на сегодня», «сколько заказов в работе»\n\n" +
   "Срок можно словами: сегодня, завтра, к пятнице, через 3 дня, 5 октября, до 05.10.";

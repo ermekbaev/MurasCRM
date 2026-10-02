@@ -10,6 +10,7 @@
 export type ParsedCommand =
   | { intent: "task"; title: string; assigneeHint: string | null; dueDate: string | null }
   | { intent: "client"; name: string; phone: string | null; inn: string | null; email: string | null }
+  | { intent: "query"; query: "my_tasks" | "today_tasks" | "orders_in_progress" }
   | { intent: "help" }
   | { intent: "unknown"; text: string };
 
@@ -120,6 +121,22 @@ export function parseVoiceCommand(raw: string, now: Date = new Date()): ParsedCo
 
   if (/^\/?(help|start|помощь|команды|\?)(?=$|\s|[!.,])/i.test(text)) {
     return { intent: "help" };
+  }
+
+  // ── Запросы-отчёты (чтение) ─────────────────────────────────────────────────
+  // Проверяем ДО создания задачи: «задачи на сегодня» иначе ушло бы в создание.
+  // Шаблоны привязаны к концу строки, чтобы не ловить команды создания.
+  if (/^(?:сколько\s+)?(?:заказ[а-яё]*|заяв[а-яё]*)\s+в\s+работе\s*\??$/i.test(text) ||
+      /^сколько\s+(?:заказ[а-яё]*|заяв[а-яё]*)\s*\??$/i.test(text)) {
+    return { intent: "query", query: "orders_in_progress" };
+  }
+  if (/^(?:какие\s+)?задач[а-яё]*\s+(?:на\s+)?сегодня\s*\??$/i.test(text) ||
+      /^что\s+(?:у меня\s+)?(?:на\s+)?сегодня\s*\??$/i.test(text)) {
+    return { intent: "query", query: "today_tasks" };
+  }
+  if (/^(?:какие\s+)?(?:мои|моих|мой)\s+задач[а-яё]*\s*\??$/i.test(text) ||
+      /^(?:какие\s+)?задач[а-яё]*\s+у\s+меня\s*\??$/i.test(text)) {
+    return { intent: "query", query: "my_tasks" };
   }
 
   // ── Клиент ─────────────────────────────────────────────────────────────────
