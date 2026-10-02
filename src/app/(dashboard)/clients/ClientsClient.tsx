@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { CLIENT_TYPE_LABELS } from "@/lib/constants";
@@ -348,6 +348,21 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
   const [loading, setLoading] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+
+  // Живое обновление списка: подтягиваем клиентов с сервера раз в ~15 сек, чтобы
+  // добавленные голосом/другими появлялись без обновления страницы. Поиск и
+  // фильтр применяются поверх локально, так что их не сбивает.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetch("/api/clients?limit=50")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && Array.isArray(d.clients)) setClients(d.clients);
+        })
+        .catch(() => {});
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
 
   const filtered = clients.filter((c) => {
     const matchSearch =

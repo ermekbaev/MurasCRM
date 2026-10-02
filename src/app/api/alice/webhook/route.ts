@@ -47,12 +47,10 @@ export async function POST(req: Request) {
   const aliceId = body?.session?.user?.user_id || body?.session?.application?.application_id || null;
   const utterance = (body?.request?.original_utterance || body?.request?.command || "").trim();
 
-  // Первый запуск/пустая фраза — короткое приветствие.
+  // Пустой запуск — очень короткое приглашение (чтобы не зачитывать вступление
+  // каждый раз). Команду можно сказать сразу одной фразой при запуске навыка.
   if (body?.session?.new && !utterance) {
-    return reply(
-      "Готова принять команду. Скажите: задача, и что сделать, для кого и срок. Или: клиент, и данные.",
-      version,
-    );
+    return reply("Слушаю. Например: задача напечатать баннер к пятнице.", version);
   }
 
   // Привязка по коду — до опознания автора.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import {
@@ -73,6 +73,26 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
     fetch("/api/tags").then((r) => r.json()).then((data) => {
       if (Array.isArray(data)) setAvailableTags(data);
     });
+  }, []);
+
+  // Живое обновление доски: раз в ~12 сек подтягиваем задачи с сервера, чтобы
+  // созданные голосом/другими сотрудниками появлялись без F5. Во время
+  // перетаскивания не трогаем, чтобы не сбить карточку.
+  const dragRef = useRef<string | null>(null);
+  useEffect(() => {
+    dragRef.current = dragTaskId;
+  }, [dragTaskId]);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (dragRef.current) return;
+      fetch("/api/tasks?limit=200")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && Array.isArray(d.tasks)) setTasks(d.tasks);
+        })
+        .catch(() => {});
+    }, 12000);
+    return () => clearInterval(timer);
   }, []);
 
   const filtered = tasks.filter((t) => {
