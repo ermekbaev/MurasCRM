@@ -85,19 +85,21 @@ export async function POST(req: Request) {
       return reply("Не поняла. Начните со слова задача или клиент.", version);
     case "need":
       return reply(result.message, version);
+    // Готовый результат — закрываем навык (end_session), чтобы Алиса вернула
+    // управление и музыка/обычный режим продолжились, а не «висели» в навыке.
     case "say":
-      return reply(result.text, version);
+      return reply(result.text, version, true);
     case "task": {
       let t = `Задача создана: ${result.title}.`;
       if (result.assigneeName) t += ` Исполнитель ${result.assigneeName}.`;
       else if (result.assigneeMiss) t += ` Сотрудник ${result.assigneeMiss} не найден, задача без исполнителя.`;
       if (result.dueDate) t += ` Срок ${result.dueDate.toLocaleDateString("ru-RU")}.`;
-      return reply(t, version);
+      return reply(t, version, true);
     }
     case "client": {
       let t = `Клиент добавлен: ${result.name}.`;
       if (result.phone) t += ` Телефон ${result.phone}.`;
-      return reply(t, version);
+      return reply(t, version, true);
     }
   }
 }
