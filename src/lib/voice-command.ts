@@ -119,7 +119,8 @@ export function parseVoiceCommand(raw: string, now: Date = new Date()): ParsedCo
   const text = (raw || "").trim();
   if (!text) return { intent: "unknown", text: "" };
 
-  if (/^\/?(help|start|помощь|команды|\?)(?=$|\s|[!.,])/i.test(text)) {
+  if (/^\/?(help|start|помощь|команды|\?)(?=$|\s|[!.,])/i.test(text) ||
+      /^что\s+(?:ты\s+)?(?:умеешь|можешь|знаешь)/i.test(text)) {
     return { intent: "help" };
   }
 

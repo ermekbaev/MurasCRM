@@ -36,13 +36,26 @@ export type VoiceResult =
 function matchUser(hint: string, users: { id: string; name: string }[]) {
   const h = hint.trim().toLowerCase();
   if (!h) return null;
-  return (
+  const exact =
     users.find((u) => u.name.toLowerCase() === h) ||
     users.find((u) => u.name.toLowerCase().split(/\s+/).includes(h)) ||
     users.find((u) => u.name.toLowerCase().startsWith(h)) ||
-    users.find((u) => u.name.toLowerCase().includes(h)) ||
-    null
-  );
+    users.find((u) => u.name.toLowerCase().includes(h));
+  if (exact) return exact;
+  // Падежи имени: «для Ивана», «Ивану» — сравниваем по общему префиксу первого
+  // имени, допуская разные окончания (±2 буквы). Нужно ≥3 совпавших букв.
+  if (h.length >= 3) {
+    return (
+      users.find((u) => {
+        const first = u.name.toLowerCase().split(/\s+/)[0];
+        const n = Math.min(first.length, h.length);
+        let i = 0;
+        while (i < n && first[i] === h[i]) i++;
+        return i >= 3 && i >= first.length - 2;
+      }) || null
+    );
+  }
+  return null;
 }
 
 /** Русское склонение по числу: [1, 2-4, 5+]. */
