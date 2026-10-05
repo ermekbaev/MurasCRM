@@ -36,10 +36,31 @@ async function tg(token, method, params = "") {
 
 let offset = 0;
 let webhookCleared = null; // токен, для которого уже сняли вебхук
+// Раз в час дёргаем напоминания о дедлайнах (у нас нет внешнего cron, а poller
+// и так крутится постоянно). Первый запуск — через час после старта.
+let lastReminder = Date.now();
+
+async function runDeadlineReminders() {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return;
+  try {
+    const res = await fetch(`${APP_URL}/api/cron/deadline-reminders`, {
+      headers: { Authorization: `Bearer ${secret}` },
+    });
+    const d = await res.json().catch(() => null);
+    console.log("[tg-poller] deadline-reminders:", d ? JSON.stringify(d) : res.status);
+  } catch (e) {
+    console.log("[tg-poller] deadline-reminders error:", e?.message);
+  }
+}
 
 async function main() {
   console.log("[tg-poller] старт, APP_URL=" + APP_URL);
   for (;;) {
+    if (Date.now() - lastReminder >= 60 * 60 * 1000) {
+      lastReminder = Date.now();
+      await runDeadlineReminders();
+    }
     const { telegramBotToken: token, telegramSecret: secret } = await getConfig();
     if (!token) {
       await sleep(5000);
