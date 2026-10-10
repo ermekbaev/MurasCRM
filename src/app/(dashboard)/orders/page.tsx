@@ -20,7 +20,7 @@ export default async function OrdersPage() {
         assignees: { select: { id: true, name: true } },
         _count: { select: { items: true, tasks: true } },
       },
-      take: 100,
+      take: 1000,
     }),
     prisma.client.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.user.findMany({

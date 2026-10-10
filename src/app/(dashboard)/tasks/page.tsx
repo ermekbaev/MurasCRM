@@ -12,7 +12,7 @@ export default async function TasksPage() {
     prisma.task.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: 1000,
       include: {
         assignee: { select: { id: true, name: true } },
         order: {

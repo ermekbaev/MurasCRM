@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     orderId: z.string().default(""),
     search: z.string().default(""),
     page: z.coerce.number().int().positive().max(10000).default(1),
-    limit: z.coerce.number().int().min(1).max(200).default(50),
+    limit: z.coerce.number().int().min(1).max(2000).default(50),
   }).safeParse(Object.fromEntries(searchParams));
   if (!q.success) return NextResponse.json({ error: q.error.flatten() }, { status: 400 });
 

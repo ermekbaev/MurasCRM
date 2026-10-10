@@ -85,7 +85,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
   useEffect(() => {
     const timer = setInterval(() => {
       if (dragRef.current) return;
-      fetch("/api/tasks?limit=200")
+      fetch("/api/tasks?limit=1000")
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (d && Array.isArray(d.tasks)) setTasks(d.tasks);

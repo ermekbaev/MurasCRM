@@ -5,7 +5,7 @@ export default async function ConsumablesPage() {
   const [consumables, suppliers] = await Promise.all([
     prisma.consumable.findMany({
       orderBy: { name: "asc" },
-      take: 50,
+      take: 1000,
       include: {
         supplier: { select: { id: true, name: true } },
         _count: { select: { movements: true } },
