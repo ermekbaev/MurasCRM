@@ -16,6 +16,10 @@ const rowSchema = z.object({
   phone: z.string().trim().max(50).optional().default(""),
   email: z.string().trim().max(200).optional().default(""),
   legalAddress: z.string().trim().max(500).optional().default(""),
+  bankName: z.string().trim().max(300).optional().default(""),
+  bankBik: z.string().trim().max(20).optional().default(""),
+  bankAccount: z.string().trim().max(40).optional().default(""),
+  corrAccount: z.string().trim().max(40).optional().default(""),
   notes: z.string().trim().max(2000).optional().default(""),
 });
 
@@ -94,6 +98,10 @@ export async function POST(req: Request) {
           phone: c.phone || null,
           email: email || null,
           legalAddress: c.legalAddress || null,
+          bankName: c.bankName || null,
+          bankBik: c.bankBik || null,
+          bankAccount: c.bankAccount || null,
+          corrAccount: c.corrAccount || null,
           notes: c.notes || null,
           source: "OTHER",
         },
