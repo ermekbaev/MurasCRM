@@ -16,7 +16,7 @@ export default async function ClientsPage() {
         select: { amount: true },
       },
     },
-    take: 50,
+    take: 1000,
   });
 
   const data = clients.map((c) => ({
