@@ -7,6 +7,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { Pencil } from "lucide-react";
+import { LookupButton, useDadataLookup } from "../useDadataLookup";
 
 interface Client {
   id: string;
@@ -52,6 +53,9 @@ export default function ClientEditButton({ client }: { client: Client }) {
     source: client.source,
     notes: client.notes || "",
   });
+
+  const { lookup, partyError, bankError, fillFromInn, fillFromBik, onInnChange, onBikChange } =
+    useDadataLookup(form, setForm);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -112,7 +116,17 @@ export default function ClientEditButton({ client }: { client: Client }) {
           {form.type !== "INDIVIDUAL" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Input label="ИНН" value={form.inn} onChange={(e) => setForm({ ...form, inn: e.target.value })} />
+                <Input
+                  label="ИНН"
+                  value={form.inn}
+                  onChange={(e) => onInnChange(e.target.value)}
+                  hint={lookup === "party" ? "Ищем в DaData…" : partyError ?? "Введите ИНН — реквизиты подставятся сами"}
+                  trailing={
+                    form.inn.trim() ? (
+                      <LookupButton onClick={() => fillFromInn()} busy={lookup === "party"} title="Заполнить реквизиты по ИНН" />
+                    ) : null
+                  }
+                />
                 <Input label="КПП" value={form.kpp} onChange={(e) => setForm({ ...form, kpp: e.target.value })} />
                 <Input label="ОГРН" value={form.ogrn} onChange={(e) => setForm({ ...form, ogrn: e.target.value })} />
               </div>
@@ -120,7 +134,17 @@ export default function ClientEditButton({ client }: { client: Client }) {
               <Input label="Почтовый адрес" value={form.postalAddress} onChange={(e) => setForm({ ...form, postalAddress: e.target.value })} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Банк" value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} />
-                <Input label="БИК" value={form.bankBik} onChange={(e) => setForm({ ...form, bankBik: e.target.value })} />
+                <Input
+                  label="БИК"
+                  value={form.bankBik}
+                  onChange={(e) => onBikChange(e.target.value)}
+                  hint={lookup === "bank" ? "Ищем в DaData…" : bankError ?? "Введите БИК — банк подставится сам"}
+                  trailing={
+                    form.bankBik.trim() ? (
+                      <LookupButton onClick={() => fillFromBik()} busy={lookup === "bank"} title="Заполнить банк по БИК" />
+                    ) : null
+                  }
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Расчётный счёт" value={form.bankAccount} onChange={(e) => setForm({ ...form, bankAccount: e.target.value })} />

@@ -13,6 +13,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { Plus, Search, Phone, Mail, Users, Pencil, Trash2, Loader2, Upload } from "lucide-react";
 import ImportClientsModal from "./ImportClientsModal";
+import { LookupButton, useDadataLookup } from "./useDadataLookup";
 
 interface ClientRow {
   id: string;
@@ -61,23 +62,6 @@ const EMPTY_FORM = {
 };
 
 
-/** Иконка поиска внутри поля — подставляет реквизиты из DaData. */
-function LookupButton({ onClick, busy, title }: { onClick: () => void; busy: boolean; title: string }) {
-  return (
-    <button
-      type="button"
-      tabIndex={-1}
-      onClick={onClick}
-      disabled={busy}
-      title={title}
-      aria-label={title}
-      className="rounded-md p-1 text-fg-subtle transition-colors hover:bg-surface-hover hover:text-accent disabled:opacity-50"
-    >
-      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-    </button>
-  );
-}
-
 interface ClientFormProps {
   form: typeof EMPTY_FORM;
   setForm: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>;
@@ -88,105 +72,9 @@ interface ClientFormProps {
 }
 
 function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }: ClientFormProps) {
-  // Автозаполнение реквизитов через DaData: по ИНН — карточка организации,
-  // по БИК — банк. Ошибки показываем текстом рядом с полем, форму не блокируем.
   const { options: sourceOptions } = useClientSources();
-  const [lookup, setLookup] = useState<"party" | "bank" | null>(null);
-  const [partyError, setPartyError] = useState<string | null>(null);
-  const [bankError, setBankError] = useState<string | null>(null);
-
-  async function fillFromInn() {
-    const query = form.inn.trim();
-    if (!query) return;
-    setLookup("party");
-    setPartyError(null);
-    try {
-      const res = await fetch("/api/dadata/party", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Не удалось получить данные");
-      const d = json?.suggestions?.[0]?.data;
-      if (!d) {
-        setPartyError("Организация с таким ИНН не найдена");
-        return;
-      }
-      setForm((f) => ({
-        ...f,
-        name: d.name?.short_with_opf || d.name?.full_with_opf || f.name,
-        fullName: d.name?.full_with_opf || d.name?.short_with_opf || f.fullName,
-        inn: d.inn || f.inn,
-        kpp: d.kpp || f.kpp,
-        ogrn: d.ogrn || f.ogrn,
-        okpo: d.okpo || f.okpo,
-        legalAddress: d.address?.unrestricted_value || f.legalAddress,
-      }));
-    } catch (e) {
-      setPartyError(e instanceof Error ? e.message : "Ошибка запроса");
-    } finally {
-      setLookup(null);
-    }
-  }
-
-  async function fillFromBik() {
-    const query = form.bankBik.replace(/\D/g, "");
-    if (!query) return;
-    if (query.length !== 9) {
-      setBankError("БИК состоит из 9 цифр");
-      return;
-    }
-    setLookup("bank");
-    setBankError(null);
-    try {
-      const res = await fetch("/api/dadata/bank", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Не удалось получить данные");
-
-      // На один БИК DaData может отдать несколько записей — головной банк и
-      // ликвидированные филиалы. Берём только точное совпадение и действующий банк,
-      // иначе подставится чужое название и устаревший корсчёт.
-      type BankSuggestion = {
-        data?: {
-          bic?: string;
-          correspondent_account?: string | null;
-          name?: { payment?: string; short?: string };
-          state?: { status?: string };
-        };
-      };
-      const all: BankSuggestion[] = Array.isArray(json?.suggestions) ? json.suggestions : [];
-      const exact = all.filter((s) => s.data?.bic === query);
-      const d = (exact.find((s) => s.data?.state?.status === "ACTIVE") ?? exact[0])?.data;
-
-      if (!d) {
-        setBankError(
-          all.length > 0
-            ? "Точного совпадения по БИК нет — проверьте номер"
-            : "Банк с таким БИК не найден",
-        );
-        return;
-      }
-      if (d.state?.status && d.state.status !== "ACTIVE") {
-        setBankError("Внимание: по этому БИК банк не действующий");
-      }
-
-      setForm((f) => ({
-        ...f,
-        bankName: d.name?.payment || d.name?.short || f.bankName,
-        bankBik: d.bic || f.bankBik,
-        corrAccount: d.correspondent_account || f.corrAccount,
-      }));
-    } catch (e) {
-      setBankError(e instanceof Error ? e.message : "Ошибка запроса");
-    } finally {
-      setLookup(null);
-    }
-  }
+  const { lookup, partyError, bankError, fillFromInn, fillFromBik, onInnChange, onBikChange } =
+    useDadataLookup(form, setForm);
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -257,11 +145,11 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
             <Input
               label="ИНН"
               value={form.inn}
-              onChange={(e) => setForm((f) => ({ ...f, inn: e.target.value }))}
-              hint={lookup === "party" ? "Ищем в DaData…" : partyError ?? "Введите ИНН и нажмите на лупу"}
+              onChange={(e) => onInnChange(e.target.value)}
+              hint={lookup === "party" ? "Ищем в DaData…" : partyError ?? "Введите ИНН — реквизиты подставятся сами"}
               trailing={
                 form.inn.trim() ? (
-                  <LookupButton onClick={fillFromInn} busy={lookup === "party"} title="Заполнить реквизиты по ИНН" />
+                  <LookupButton onClick={() => fillFromInn()} busy={lookup === "party"} title="Заполнить реквизиты по ИНН" />
                 ) : null
               }
             />
@@ -296,11 +184,11 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
             <Input
               label="БИК"
               value={form.bankBik}
-              onChange={(e) => setForm((f) => ({ ...f, bankBik: e.target.value }))}
-              hint={lookup === "bank" ? "Ищем в DaData…" : bankError ?? "Введите БИК и нажмите на лупу"}
+              onChange={(e) => onBikChange(e.target.value)}
+              hint={lookup === "bank" ? "Ищем в DaData…" : bankError ?? "Введите БИК — банк подставится сам"}
               trailing={
                 form.bankBik.trim() ? (
-                  <LookupButton onClick={fillFromBik} busy={lookup === "bank"} title="Заполнить банк по БИК" />
+                  <LookupButton onClick={() => fillFromBik()} busy={lookup === "bank"} title="Заполнить банк по БИК" />
                 ) : null
               }
             />
