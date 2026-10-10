@@ -354,7 +354,7 @@ export default function ClientsClient({ initialData }: { initialData: ClientRow[
   // фильтр применяются поверх локально, так что их не сбивает.
   useEffect(() => {
     const timer = setInterval(() => {
-      fetch("/api/clients?limit=50")
+      fetch("/api/clients?limit=1000")
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (d && Array.isArray(d.clients)) setClients(d.clients);
