@@ -72,8 +72,11 @@ export async function buildTemplateVars(ctx: TemplateContext) {
   // Ключи ограничены справочником @/lib/documentVars — если добавить сюда
   // переменную, которой там нет, сборка упадёт, и подсказка в интерфейсе
   // не разойдётся с реальным набором.
+  const longDate = (d: Date) =>
+    d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) + " г.";
   const vars: Partial<Record<DocumentVarKey, string>> = {
     date: fmtDate(new Date()),
+    date_long: longDate(new Date()),
   };
 
   // Company settings
@@ -241,6 +244,7 @@ export async function buildTemplateVars(ctx: TemplateContext) {
     if (invoice) {
       vars.invoice_number  = invoice.number;
       vars.invoice_date    = fmtDate(invoice.date);
+      vars.invoice_date_long = longDate(invoice.date);
       vars.invoice_due_date = fmtDate(invoice.dueDate);
       vars.invoice_basis   = invoice.basis ?? "";
       vars.subtotal        = fmt(Number(invoice.subtotal));

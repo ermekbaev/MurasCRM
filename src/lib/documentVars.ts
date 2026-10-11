@@ -22,7 +22,10 @@ export interface DocumentVarGroup {
 export const DOCUMENT_VAR_GROUPS = [
   {
     title: "Общее",
-    vars: [{ key: "date", label: "Сегодняшняя дата", sample: "27.08.2026" }],
+    vars: [
+      { key: "date", label: "Сегодняшняя дата", sample: "27.08.2026" },
+      { key: "date_long", label: "Сегодняшняя дата прописью", sample: "11 октября 2026 г." },
+    ],
   },
   {
     title: "Наша компания",
@@ -87,6 +90,7 @@ export const DOCUMENT_VAR_GROUPS = [
     vars: [
       { key: "invoice_number", label: "Номер счёта", sample: "СЧ-2026-001" },
       { key: "invoice_date", label: "Дата счёта", sample: "26.08.2026" },
+      { key: "invoice_date_long", label: "Дата счёта прописью", sample: "26 августа 2026 г." },
       { key: "invoice_due_date", label: "Оплатить до", sample: "02.09.2026" },
       { key: "invoice_basis", label: "Основание", sample: "Договор № 7 от 01.08.2026" },
       { key: "subtotal", label: "Сумма без НДС", sample: "15 000,00" },
