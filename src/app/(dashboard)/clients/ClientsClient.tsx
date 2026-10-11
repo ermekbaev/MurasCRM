@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { CLIENT_TYPE_LABELS } from "@/lib/constants";
@@ -94,6 +94,10 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
   const [lookup, setLookup] = useState<"party" | "bank" | null>(null);
   const [partyError, setPartyError] = useState<string | null>(null);
   const [bankError, setBankError] = useState<string | null>(null);
+  // Последние ИНН/БИК, по которым уже тянули — чтобы авто-подстановка на blur
+  // не перезапрашивала и не перетирала поля при случайном уходе из поля.
+  const lastInn = useRef("");
+  const lastBik = useRef("");
 
   async function fillFromInn() {
     const query = form.inn.trim();
@@ -257,8 +261,23 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
             <Input
               label="ИНН"
               value={form.inn}
-              onChange={(e) => setForm((f) => ({ ...f, inn: e.target.value }))}
-              hint={lookup === "party" ? "Ищем в DaData…" : partyError ?? "Введите ИНН и нажмите на лупу"}
+              onChange={(e) => {
+                const v = e.target.value;
+                // Очистили поле — забываем прошлый ИНН, чтобы повторный ввод того
+                // же значения снова подтянул данные (сценарий «обновить реквизиты»).
+                if (v.replace(/\D/g, "") === "") lastInn.current = "";
+                setForm((f) => ({ ...f, inn: v }));
+              }}
+              onBlur={() => {
+                // Подтягиваем реквизиты сами, когда ИНН введён полностью (10 или
+                // 12 цифр) и отличается от уже подтянутого. Лупа — запасной путь.
+                const d = form.inn.replace(/\D/g, "");
+                if ((d.length === 10 || d.length === 12) && d !== lastInn.current) {
+                  lastInn.current = d;
+                  fillFromInn();
+                }
+              }}
+              hint={lookup === "party" ? "Ищем в DaData…" : partyError ?? "Реквизиты подтянутся по ИНН автоматически"}
               trailing={
                 form.inn.trim() ? (
                   <LookupButton onClick={fillFromInn} busy={lookup === "party"} title="Заполнить реквизиты по ИНН" />
@@ -296,8 +315,21 @@ function ClientForm({ form, setForm, loading, onSubmit, submitLabel, onCancel }:
             <Input
               label="БИК"
               value={form.bankBik}
-              onChange={(e) => setForm((f) => ({ ...f, bankBik: e.target.value }))}
-              hint={lookup === "bank" ? "Ищем в DaData…" : bankError ?? "Введите БИК и нажмите на лупу"}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v.replace(/\D/g, "") === "") lastBik.current = "";
+                setForm((f) => ({ ...f, bankBik: v }));
+              }}
+              onBlur={() => {
+                // Банк подтягиваем сами, когда БИК введён полностью (9 цифр) и
+                // отличается от уже подтянутого.
+                const d = form.bankBik.replace(/\D/g, "");
+                if (d.length === 9 && d !== lastBik.current) {
+                  lastBik.current = d;
+                  fillFromBik();
+                }
+              }}
+              hint={lookup === "bank" ? "Ищем в DaData…" : bankError ?? "Банк подтянется по БИК автоматически"}
               trailing={
                 form.bankBik.trim() ? (
                   <LookupButton onClick={fillFromBik} busy={lookup === "bank"} title="Заполнить банк по БИК" />
