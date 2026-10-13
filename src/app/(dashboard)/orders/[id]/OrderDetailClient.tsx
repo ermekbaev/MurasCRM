@@ -75,6 +75,7 @@ interface OrderDetailClientProps {
       price: number;
       discount: number;
       total: number;
+      equipmentId: string | null;
       equipment: { name: string } | null;
     }[];
     comments: {
@@ -106,9 +107,14 @@ interface OrderDetailClientProps {
   };
   users: { id: string; name: string; role: string }[];
   orderTypes: { code: string; label: string; isActive: boolean }[];
+  equipment: { id: string; name: string; pricePerLm: number | null; pricingUnit: string }[];
   currentUserId: string;
   currentRole: string;
 }
+
+const PRICING_UNIT_SHORT: Record<string, string> = {
+  LM: "пог.м", SQM: "м²", PCS: "шт", CUT: "мм",
+};
 
 interface DocumentRow {
   id: string;
@@ -182,6 +188,7 @@ export default function OrderDetailClient({
   order: initialOrder,
   users,
   orderTypes,
+  equipment,
   currentUserId,
   currentRole,
 }: OrderDetailClientProps) {
@@ -216,7 +223,7 @@ export default function OrderDetailClient({
   const localPreviewsRef = useRef<Map<string, string>>(new Map());
 
   // Items edit state
-  type EditItem = { id?: string; name: string; qty: number; unit: string; price: number; discount: number };
+  type EditItem = { id?: string; equipmentId: string; name: string; qty: number; unit: string; price: number; discount: number };
   const [editingItems, setEditingItems] = useState(false);
   const [editItems, setEditItems] = useState<EditItem[]>([]);
   const [savingItems, setSavingItems] = useState(false);
@@ -438,7 +445,7 @@ export default function OrderDetailClient({
   }
 
   function startEditItems() {
-    setEditItems(order.items.map((i) => ({ id: i.id, name: i.name, qty: i.qty, unit: i.unit, price: i.price, discount: i.discount })));
+    setEditItems(order.items.map((i) => ({ id: i.id, equipmentId: i.equipmentId ?? "", name: i.name, qty: i.qty, unit: i.unit, price: i.price, discount: i.discount })));
     setEditingItems(true);
   }
 
@@ -446,8 +453,29 @@ export default function OrderDetailClient({
     setEditItems((prev) => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
   }
 
+  /** Выбор оборудования в позиции: подставляем наименование, единицу и цену
+      (продажную) со станка — как в форме создания заявки. */
+  function pickEquipment(idx: number, eqId: string) {
+    const eq = equipment.find((e) => e.id === eqId);
+    setEditItems((prev) =>
+      prev.map((item, i) =>
+        i === idx
+          ? eq
+            ? {
+                ...item,
+                equipmentId: eq.id,
+                name: eq.name,
+                unit: PRICING_UNIT_SHORT[eq.pricingUnit] || item.unit,
+                price: eq.pricePerLm != null ? Number(eq.pricePerLm) : item.price,
+              }
+            : { ...item, equipmentId: "" }
+          : item,
+      ),
+    );
+  }
+
   function addEditItem() {
-    setEditItems((prev) => [...prev, { name: "", qty: 1, unit: "шт", price: 0, discount: 0 }]);
+    setEditItems((prev) => [...prev, { equipmentId: "", name: "", qty: 1, unit: "шт", price: 0, discount: 0 }]);
   }
 
   function removeEditItem(idx: number) {
@@ -465,7 +493,7 @@ export default function OrderDetailClient({
           const price = Number(i.price);
           const discount = Number(i.discount);
           const total = Math.round(qty * price * (1 - discount / 100) * 100) / 100;
-          return { name: i.name, unit: i.unit, qty, price, discount, total };
+          return { equipmentId: i.equipmentId || null, name: i.name, unit: i.unit, qty, price, discount, total };
         }),
       }),
     });
@@ -903,6 +931,19 @@ export default function OrderDetailClient({
                         {editItems.map((item, idx) => (
                           <tr key={idx}>
                             <td className="px-5 py-2">
+                              {equipment.length > 0 && (
+                                <select
+                                  value={item.equipmentId}
+                                  onChange={(e) => pickEquipment(idx, e.target.value)}
+                                  className="mb-1 w-full px-2 py-1 text-xs border border-line rounded bg-surface text-fg-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                                  title="Подставит наименование, единицу и цену со станка"
+                                >
+                                  <option value="">— оборудование (необязательно) —</option>
+                                  {equipment.map((e) => (
+                                    <option key={e.id} value={e.id}>{e.name}</option>
+                                  ))}
+                                </select>
+                              )}
                               <input
                                 value={item.name}
                                 onChange={(e) => updateEditItem(idx, "name", e.target.value)}

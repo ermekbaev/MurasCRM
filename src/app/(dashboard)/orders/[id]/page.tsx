@@ -12,7 +12,7 @@ export default async function OrderDetailPage({
   const { id } = await params;
   const session = await auth();
 
-  const [order, users] = await Promise.all([
+  const [order, users, equipmentRaw] = await Promise.all([
     prisma.order.findUnique({
       where: { id },
       include: {
@@ -58,7 +58,19 @@ export default async function OrderDetailPage({
       where: { isBlocked: false },
       select: { id: true, name: true, role: true },
     }),
+    prisma.equipment.findMany({
+      where: { status: "ACTIVE" },
+      select: { id: true, name: true, pricePerLm: true, pricingUnit: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
+
+  const equipment = equipmentRaw.map((e) => ({
+    id: e.id,
+    name: e.name,
+    pricePerLm: e.pricePerLm != null ? Number(e.pricePerLm) : null,
+    pricingUnit: e.pricingUnit,
+  }));
 
   const orderTypes = await prisma.orderTypeOption.findMany({
     select: { code: true, label: true, isActive: true },
@@ -124,6 +136,7 @@ export default async function OrderDetailPage({
       }}
       users={users}
       orderTypes={orderTypes}
+      equipment={equipment}
       currentUserId={session?.user.id || ""}
       currentRole={session?.user.role || "MANAGER"}
     />
