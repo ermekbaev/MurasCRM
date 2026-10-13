@@ -784,12 +784,14 @@ model DefectRecord {
 // ─── Supplier ─────────────────────────────────────────────────────────────────
 
 model Supplier {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String?
-  email     String?
-  materials String[]
-  notes     String?
+  id            String   @id @default(cuid())
+  name          String
+  /// Контактное лицо (ФИО) — с кем общаемся у поставщика.
+  contactPerson String?
+  phone         String?
+  email         String?
+  materials     String[]
+  notes         String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

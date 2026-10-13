@@ -17,6 +17,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import SearchSelect from "@/components/ui/SearchSelect";
 import { Plus, Search, ShoppingCart, AlertTriangle, Trash2, Paperclip, X, FileText } from "lucide-react";
 import { Role } from "@prisma/client";
 
@@ -547,23 +548,21 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Select
+            <SearchSelect
               label="Клиент *"
               value={newClient ? "__new__" : form.clientId}
-              onChange={(e) => {
-                if (e.target.value === "__new__") {
+              onChange={(v) => {
+                if (v === "__new__") {
                   setNewClient({ name: "", phone: "" });
                   setForm({ ...form, clientId: "" });
                 } else {
                   setNewClient(null);
-                  setForm({ ...form, clientId: e.target.value });
+                  setForm({ ...form, clientId: v });
                 }
               }}
-              placeholder="Выберите клиента"
-              options={[
-                ...clientList.map((c) => ({ value: c.id, label: c.name })),
-                ...(canCreateClient ? [{ value: "__new__", label: "+ Новый клиент" }] : []),
-              ]}
+              placeholder="Начните вводить название…"
+              options={clientList.map((c) => ({ value: c.id, label: c.name }))}
+              extraOption={canCreateClient ? { value: "__new__", label: "+ Новый клиент" } : undefined}
             />
             {newClient && (
               <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface-sunken p-3">

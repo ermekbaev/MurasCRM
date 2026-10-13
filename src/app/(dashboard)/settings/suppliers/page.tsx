@@ -11,6 +11,7 @@ import { Plus, Truck, Edit3, Trash2, Package } from "lucide-react";
 interface Supplier {
   id: string;
   name: string;
+  contactPerson: string | null;
   phone: string | null;
   email: string | null;
   materials: string[];
@@ -18,7 +19,7 @@ interface Supplier {
   _count: { consumables: number };
 }
 
-const emptyForm = { name: "", phone: "", email: "", materials: "", notes: "" };
+const emptyForm = { name: "", contactPerson: "", phone: "", email: "", materials: "", notes: "" };
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -44,6 +45,7 @@ export default function SuppliersPage() {
     setEditing(s);
     setForm({
       name: s.name,
+      contactPerson: s.contactPerson || "",
       phone: s.phone || "",
       email: s.email || "",
       materials: s.materials.join(", "),
@@ -56,6 +58,7 @@ export default function SuppliersPage() {
     setSaving(true);
     const payload = {
       name: form.name.trim(),
+      contactPerson: form.contactPerson.trim() || null,
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       materials: form.materials.split(",").map((m) => m.trim()).filter(Boolean),
@@ -148,6 +151,12 @@ export default function SuppliersPage() {
               </div>
 
               <dl className="space-y-1.5">
+                {s.contactPerson && (
+                  <div className="flex justify-between text-sm">
+                    <dt className="text-fg-muted">Контактное лицо</dt>
+                    <dd className="text-fg">{s.contactPerson}</dd>
+                  </div>
+                )}
                 {s.phone && (
                   <div className="flex justify-between text-sm">
                     <dt className="text-fg-muted">Телефон</dt>
@@ -190,6 +199,12 @@ export default function SuppliersPage() {
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
             placeholder="ООО «ПолиграфМатериалы»"
+          />
+          <Input
+            label="Контактное лицо"
+            value={form.contactPerson}
+            onChange={(e) => setForm((p) => ({ ...p, contactPerson: e.target.value }))}
+            placeholder="Иван Петров, менеджер"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
