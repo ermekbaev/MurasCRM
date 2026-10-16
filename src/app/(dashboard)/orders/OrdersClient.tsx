@@ -85,12 +85,26 @@ const PRICING_UNIT_SHORT: Record<string, string> = {
   LM: "пог.м", SQM: "м²", PCS: "шт", CUT: "мм",
 };
 
+// Колонки канбана заявок. Порядок = движение заказа по этапам.
+// Цвет — точка в заголовке колонки (ring-классы статусов тут не подходят).
+const ORDER_BOARD_COLUMNS: { code: string; dot: string }[] = [
+  { code: "NEW", dot: "#0ea5e9" },
+  { code: "IN_PROGRESS", dot: "#f59e0b" },
+  { code: "REVIEW", dot: "#8b5cf6" },
+  { code: "READY", dot: "#10b981" },
+  { code: "ISSUED", dot: "#64748b" },
+  { code: "CANCELLED", dot: "#ef4444" },
+];
+
 const emptyItem = (): FormItem => ({ equipmentId: "", name: "", qty: "", unit: "шт", price: "", discount: "" });
 
 export default function OrdersClient({ initialOrders, clients, users, equipment, orderTypes, currentUserId, currentRole }: Props) {
   const typeLabels: Record<string, string> = Object.fromEntries(orderTypes.map((t) => [t.code, t.label]));
   const typeOptions = orderTypes.filter((t) => t.isActive).map((t) => ({ value: t.code, label: t.label }));
   const [orders, setOrders] = useState(initialOrders);
+  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [dragOrderId, setDragOrderId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
@@ -307,6 +321,35 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   const canDeleteOrder = ["ADMIN", "MANAGER"].includes(currentRole);
   const [deletingOrder, setDeletingOrder] = useState<string | null>(null);
 
+  // Смена статуса заявки (перетаскиванием карточки или выбором в карточке).
+  // Сервер сам пишет историю, шлёт уведомление и списывает расходники на нужных
+  // этапах, а также проверяет права — поэтому при ошибке откатываем карточку.
+  async function updateOrderStatus(id: string, newStatus: string) {
+    const previous = orders.find((o) => o.id === id)?.status;
+    if (previous === undefined || previous === newStatus) return;
+
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+
+    const res = await fetch(`/api/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!res.ok) {
+      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: previous } : o)));
+      const data = await res.json().catch(() => null);
+      alert(data?.error ? `Не удалось сменить статус: ${data.error}` : "Не удалось сменить статус заявки");
+    }
+  }
+
+  function handleBoardDrop(status: string) {
+    setDropTarget(null);
+    const id = dragOrderId;
+    setDragOrderId(null);
+    if (id) updateOrderStatus(id, status);
+  }
+
   async function handleDeleteOrder(id: string, number: string) {
     if (!confirm(`Удалить заявку ${number}? Вместе с ней удалятся её позиции, задачи, файлы и комментарии.`)) return;
     setDeletingOrder(id);
@@ -353,11 +396,27 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
         title="Заявки"
         subtitle={`${filtered.length} из ${orders.length}`}
         actions={
-          ["ADMIN", "MANAGER"].includes(currentRole) ? (
-            <Button onClick={() => setModalOpen(true)}>
-              <Plus size={16} /> Новая заявка
-            </Button>
-          ) : undefined
+          <>
+            <div className="flex rounded-lg border border-line bg-surface p-0.5">
+              <button
+                onClick={() => setViewMode("board")}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"}`}
+              >
+                Kanban
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-accent-soft text-accent-fg" : "text-fg-muted hover:text-fg"}`}
+              >
+                Список
+              </button>
+            </div>
+            {["ADMIN", "MANAGER"].includes(currentRole) && (
+              <Button onClick={() => setModalOpen(true)}>
+                <Plus size={16} /> Новая заявка
+              </Button>
+            )}
+          </>
         }
       />
 
@@ -422,7 +481,133 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
         </div>
       </Card>
 
+      {/* Kanban */}
+      {viewMode === "board" && (
+        <div className="flex items-stretch gap-4 overflow-x-auto pb-2">
+          {ORDER_BOARD_COLUMNS.map((col) => {
+            const colOrders = filtered.filter((o) => o.status === col.code);
+            return (
+              <div
+                key={col.code}
+                className="flex w-72 shrink-0 flex-col gap-2"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  setDropTarget(col.code);
+                }}
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+                  setDropTarget((prev) => (prev === col.code ? null : prev));
+                }}
+                onDrop={() => handleBoardDrop(col.code)}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-fg-muted">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: col.dot }} />
+                    {ORDER_STATUS_LABELS[col.code as keyof typeof ORDER_STATUS_LABELS]}
+                  </h3>
+                  <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs text-fg-muted">
+                    {colOrders.length}
+                  </span>
+                </div>
+                <div
+                  className={`flex-1 space-y-2 rounded-xl border-2 border-dashed p-2 transition-colors ${
+                    dragOrderId ? "min-h-[24rem]" : "min-h-[12rem]"
+                  } ${
+                    dropTarget === col.code
+                      ? "border-accent/50 bg-accent-soft/70"
+                      : dragOrderId
+                        ? "border-line bg-surface-sunken/60"
+                        : "border-transparent bg-surface-sunken/40"
+                  }`}
+                >
+                  {colOrders.map((order) => {
+                    const overdue = isOverdue(order.deadline) && !["READY", "ISSUED"].includes(order.status);
+                    return (
+                      <div
+                        key={order.id}
+                        draggable
+                        onDragStart={() => setDragOrderId(order.id)}
+                        onDragEnd={() => {
+                          setDragOrderId(null);
+                          setDropTarget(null);
+                        }}
+                        className={`cursor-grab rounded-lg border border-line bg-surface p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing ${
+                          dragOrderId === order.id ? "opacity-50" : ""
+                        }`}
+                      >
+                        <Link href={`/orders/${order.id}`} className="block">
+                          <p className="mb-1 text-sm font-medium text-fg line-clamp-2">
+                            {order.title || order.client.name}
+                          </p>
+                          {order.title && (
+                            <p className="mb-1 truncate text-xs text-fg-muted">{order.client.name}</p>
+                          )}
+                          <p className="mb-2 text-xs text-fg-subtle">{order.number}</p>
+                          <div className="mb-2 flex flex-wrap gap-1">
+                            <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent-fg">
+                              {typeLabels[order.type] ?? order.type}
+                            </span>
+                            <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PRIORITY_COLORS[order.priority as keyof typeof PRIORITY_COLORS]}`}>
+                              {PRIORITY_LABELS[order.priority as keyof typeof PRIORITY_LABELS]}
+                            </span>
+                            <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${PAYMENT_STATUS_COLORS[order.paymentStatus as keyof typeof PAYMENT_STATUS_COLORS]}`}>
+                              {PAYMENT_STATUS_LABELS[order.paymentStatus as keyof typeof PAYMENT_STATUS_LABELS]}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-fg">{formatCurrency(order.amount)}</span>
+                            {order.deadline && (
+                              <span className={`flex items-center gap-1 text-xs ${overdue ? "text-red-600" : "text-fg-subtle"}`}>
+                                {overdue && <AlertTriangle size={12} />}
+                                {formatDate(order.deadline)}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                        <div className="mt-2 flex items-center gap-1.5 border-t border-line-soft pt-2">
+                          <select
+                            value={order.status}
+                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="min-w-0 flex-1 rounded border border-line bg-surface px-2 py-1 text-xs text-fg focus:outline-none"
+                          >
+                            {ORDER_BOARD_COLUMNS.map((c) => (
+                              <option key={c.code} value={c.code}>
+                                {ORDER_STATUS_LABELS[c.code as keyof typeof ORDER_STATUS_LABELS]}
+                              </option>
+                            ))}
+                          </select>
+                          {canDeleteOrder && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order.id, order.number); }}
+                              disabled={deletingOrder === order.id}
+                              title={`Удалить заявку ${order.number}`}
+                              className="shrink-0 rounded p-1.5 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-40 dark:hover:bg-red-500/10"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {colOrders.length === 0 && (
+                    <div className="flex h-24 items-center justify-center">
+                      <span className="text-xs text-fg-subtle">
+                        {dragOrderId ? "Перенести сюда" : "Пусто"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Table */}
+      {viewMode === "list" && (
       <Card padding="none">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -523,6 +708,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
           </table>
         </div>
       </Card>
+      )}
 
       {/* Create Modal */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Новая заявка" size="xl">
