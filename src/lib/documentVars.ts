@@ -93,6 +93,7 @@ export const DOCUMENT_VAR_GROUPS = [
       { key: "invoice_date_long", label: "Дата счёта прописью", sample: "26 августа 2026 г." },
       { key: "invoice_due_date", label: "Оплатить до", sample: "02.09.2026" },
       { key: "invoice_basis", label: "Основание", sample: "Договор № 7 от 01.08.2026" },
+      { key: "items_count", label: "Число позиций (наименований)", sample: "3" },
       { key: "subtotal", label: "Сумма без НДС", sample: "15 000,00" },
       { key: "vat", label: "Сумма НДС", sample: "3 000,00" },
       { key: "vat_rate", label: "Ставка НДС", sample: "20" },

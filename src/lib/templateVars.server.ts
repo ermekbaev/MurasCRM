@@ -216,6 +216,9 @@ export async function buildTemplateVars(ctx: TemplateContext) {
           .map((item, i) => `${i + 1}. ${item.name} — ${Number(item.qty)} ${item.unit} × ${fmt(Number(item.price))} = ${fmt(Number(item.total))} руб.`)
           .join("\n");
       }
+      // Число наименований — для строки «Всего наименований N» в бланках.
+      // Счёт ниже перебьёт, если документ формируют из счёта (Сергей 01.11).
+      vars.items_count = String(order.items.length);
     }
   }
 
@@ -252,6 +255,7 @@ export async function buildTemplateVars(ctx: TemplateContext) {
       vars.vat_rate        = String(Number(invoice.vatRate));
       vars.total           = fmt(Number(invoice.total));
       vars.total_in_words  = numberToWords(Number(invoice.total));
+      vars.items_count     = String(invoice.items.length);
       if (invoice.client) {
         vars.client_name      = vars.client_name || invoice.client.name;
         vars.client_full_name = vars.client_full_name || invoice.client.fullName || invoice.client.name;
