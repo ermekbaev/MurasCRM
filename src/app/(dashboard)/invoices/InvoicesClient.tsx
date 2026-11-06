@@ -50,6 +50,7 @@ interface Props {
 
 export default function InvoicesClient({ clients, orders, companies }: Props) {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -232,6 +233,25 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
     setLoading(false);
   }
 
+  // Счёт нельзя было убрать из списка: удаление есть в API (в корзину), а
+  // кнопки не было — Сергей 02.11 не смог удалить лишний счёт. Удаляем мягко,
+  // как заявку: пропадает из списка, но лежит в корзине 30 дней.
+  async function handleDelete(invoice: Invoice) {
+    if (!confirm(`Удалить счёт ${invoice.number}? Он уедет в корзину — там его можно вернуть.`)) return;
+    setDeletingId(invoice.id);
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert(res.status === 403 ? "Удалять счета может администратор или бухгалтер" : "Не удалось удалить счёт");
+        return;
+      }
+      setInvoices((prev) => prev.filter((i) => i.id !== invoice.id));
+      setTotal((t) => Math.max(0, t - 1));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function togglePaid(id: string, isPaid: boolean) {
     const res = await fetch(`/api/invoices/${id}`, {
       method: "PATCH",
@@ -385,6 +405,14 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
                           title="Скачать PDF для отправки клиенту"
                         >
                           <Download size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(invoice)}
+                          disabled={deletingId === invoice.id}
+                          className="rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-500/10"
+                          title="Удалить счёт (в корзину)"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
