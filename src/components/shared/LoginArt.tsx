@@ -31,6 +31,7 @@ function Box({
 }
 
 export default function LoginArt({ stages, bare = false }: { stages?: { title: string; note: string }[]; bare?: boolean }) {
+  // bare: только принтер, без карточек и пустых полей вокруг (шапка дашборда)
   const cards = stages ?? [
     { title: "Макет принят", note: "Начало точной работы" },
     { title: "В производстве", note: "Каждый этап под контролем" },
@@ -38,8 +39,8 @@ export default function LoginArt({ stages, bare = false }: { stages?: { title: s
   ];
   const accent = "var(--accent)";
   return (
-    <div className="relative mx-auto aspect-[660/520] w-full max-w-[660px] select-none" aria-hidden="true">
-      <svg viewBox="0 0 660 520" className="absolute inset-0 h-full w-full">
+    <div className={bare ? "relative mx-auto aspect-[400/290] w-full select-none" : "relative mx-auto aspect-[660/520] w-full max-w-[660px] select-none"} aria-hidden="true">
+      <svg viewBox={bare ? "130 120 400 290" : "0 0 660 520"} className="absolute inset-0 h-full w-full">
         <defs>
           <linearGradient id="la-slab" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor="rgb(255 255 255 / .95)" />
