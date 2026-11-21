@@ -64,7 +64,17 @@ export default function LoginForm({
   }
 
   return (
-    <div className="fixed inset-0 overflow-auto bg-[#f6f5fb]">
+    // Страница входа всегда светлая, даже если система просит тёмную тему: оттенки акцента считаем от цвета клиента
+    <div
+      className="fixed inset-0 overflow-auto bg-[#f6f5fb]"
+      style={
+        {
+          "--accent-soft": "color-mix(in srgb, var(--accent) 9%, white)",
+          "--accent-soft-strong": "color-mix(in srgb, var(--accent) 22%, white)",
+          "--accent-on-soft": "var(--accent-hover)",
+        } as React.CSSProperties
+      }
+    >
       {/* Фон: мягкие пятна акцента клиента, как в рабочем пространстве (22.11) */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-24 -top-24 h-[28rem] w-[28rem] rounded-full bg-accent/15 blur-3xl" />
