@@ -16,6 +16,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { Plus, Search, CheckSquare, CheckCircle2, Circle, Trash2 } from "lucide-react";
+import EmptyState from "@/components/shared/EmptyState";
 
 interface Tag {
   id: string;
@@ -390,7 +391,7 @@ export default function TasksClient({ initialTasks, users, orders, currentUserId
             <tbody className="divide-y divide-line-soft">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={canDelete ? 7 : 6} className="text-center py-10 text-fg-subtle">Задач нет</td>
+                  <td colSpan={canDelete ? 7 : 6}><EmptyState kind="tasks" title="Задач нет" hint="Создайте задачу, и она появится в списке" /></td>
                 </tr>
               ) : (
                 filtered.map((task) => (

@@ -9,6 +9,7 @@ import Select from "@/components/ui/Select";
 import PageHeader from "@/components/layout/PageHeader";
 import { EQUIPMENT_STATUS_LABELS } from "@/lib/constants";
 import { Plus, Cpu, Pencil, Trash2, Package, X, ToggleLeft, ToggleRight } from "lucide-react";
+import EmptyState from "@/components/shared/EmptyState";
 
 interface Equipment {
   id: string;
@@ -271,7 +272,7 @@ export default function EquipmentSettingsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {equipment.length === 0 ? (
-          <p className="text-fg-subtle text-sm col-span-3 text-center py-8">Оборудования нет</p>
+          <EmptyState kind="equipment" className="col-span-3" title="Оборудования нет" hint="Добавьте станки и услуги: по ним считается цена заявки" />
         ) : (
           equipment.map((eq) => (
             <Card key={eq.id} padding="md">

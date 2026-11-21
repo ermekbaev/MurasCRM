@@ -27,6 +27,7 @@ import {
 import ClientContacts from "./ClientContacts";
 import ClientEditButton from "./ClientEditButton";
 import ClientPaymentButton from "./ClientPaymentButton";
+import EmptyState from "@/components/shared/EmptyState";
 
 export default async function ClientDetailPage({
   params,
@@ -255,10 +256,7 @@ export default async function ClientDetailPage({
               </h2>
             </div>
             {client.orders.length === 0 ? (
-              <div className="py-12 text-center text-fg-subtle">
-                <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
-                Заказов пока нет
-              </div>
+              <EmptyState kind="orders" title="Заказов пока нет" hint="Здесь будут все заявки этого клиента" />
             ) : (
               <div className="divide-y divide-line-soft">
                 {client.orders.map((order) => {

@@ -7,6 +7,7 @@ import Badge from "@/components/ui/Badge";
 import Link from "next/link";
 import { History, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import EmptyState from "@/components/shared/EmptyState";
 
 interface ChangeLogEntry {
   id: string;
@@ -107,7 +108,7 @@ export default function ChangelogPage() {
         {loading ? (
           <div className="py-12 text-center text-sm text-fg-subtle">Загрузка...</div>
         ) : logs.length === 0 ? (
-          <div className="py-12 text-center text-sm text-fg-subtle">Изменений пока нет</div>
+          <EmptyState kind="history" title="Изменений пока нет" />
         ) : (
           <div className="divide-y divide-line-soft">
             {logs.map((log) => (

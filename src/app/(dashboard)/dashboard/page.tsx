@@ -26,6 +26,8 @@ import {
 import { startOfMonth } from "date-fns";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import { Cpu } from "lucide-react";
+import EmptyState from "@/components/shared/EmptyState";
+import LoginArt from "@/components/shared/LoginArt";
 
 async function getDashboardData() {
   const now = new Date();
@@ -179,8 +181,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      {/* Header */}
-      <PageHeader
+      {/* Шапка с иллюстрацией (22.11): акцент клиента, на телефоне рисунка нет */}
+      <div className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-accent-soft via-surface to-surface px-5 py-5 sm:px-7 sm:py-6">
+        <div className="pointer-events-none absolute -right-4 -top-6 hidden w-[22rem] opacity-95 md:block lg:w-[26rem]">
+          <LoginArt bare />
+        </div>
+      <PageHeader className="relative z-10 mb-0"
         icon={<LayoutDashboard size={18} />}
         title={`Здравствуйте, ${session?.user.name || ""}`}
         subtitle="Сводка по производству на сегодня"
@@ -194,6 +200,7 @@ export default async function DashboardPage() {
           </Link>
         }
       />
+      </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -241,7 +248,7 @@ export default async function DashboardPage() {
             </div>
             <div className="divide-y divide-line-soft">
               {data.recentOrders.length === 0 ? (
-                <p className="text-center text-sm text-fg-subtle py-8">Заявок пока нет</p>
+                <EmptyState kind="orders" compact title="Заявок пока нет" hint="Первая заявка появится здесь" />
               ) : (
                 data.recentOrders.map((order) => (
                   <Link

@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
+import LoginArt from "@/components/shared/LoginArt";
 
 /** Бренд приходит сверху: страница входа — первое, что видит клиент. */
 export default function LoginForm({
@@ -63,41 +64,46 @@ export default function LoginForm({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-hidden">
-      {/* Фон */}
-      <div className="absolute inset-0 bg-slate-900" />
-
-      {/* Декоративные элементы */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-accent/15 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[38rem] h-[38rem] bg-slate-700/25 rounded-full blur-3xl" />
-        <svg
-          className="absolute inset-0 w-full h-full opacity-[0.05]"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+    <div className="fixed inset-0 overflow-auto bg-[#f6f5fb]">
+      {/* Фон: мягкие пятна акцента клиента, как в рабочем пространстве (22.11) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-24 -top-24 h-[28rem] w-[28rem] rounded-full bg-accent/15 blur-3xl" />
+        <div className="absolute -bottom-32 right-[-6rem] h-[32rem] w-[32rem] rounded-full bg-[#ffd9c7]/60 blur-3xl" />
+        <div className="absolute right-1/3 top-1/4 h-80 w-80 rounded-full bg-[#cfeaf0]/60 blur-3xl" />
+        <svg className="absolute inset-0 h-full w-full opacity-[0.5]" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <pattern
-              id="grid"
-              width="40"
-              height="40"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M 40 0 L 0 0 0 40"
-                fill="none"
-                stroke="white"
-                strokeWidth="1"
-              />
+            <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1.2" fill="var(--accent)" opacity="0.18" />
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
+          <rect width="100%" height="100%" fill="url(#dots)" />
         </svg>
       </div>
 
+      <div className="relative z-10 mx-auto grid min-h-full max-w-[1280px] items-center gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_28rem] lg:gap-12 lg:px-10">
+        {/* Левая часть: смысл и картинка (на телефоне скрыта) */}
+        <section className="hidden lg:block">
+          <div className="mb-8 flex items-center gap-3">
+            <Image src={brand.logo} alt={brand.name} width={40} height={40} unoptimized className="h-10 w-10 object-contain" />
+            <div className="leading-tight">
+              <div className="text-sm font-bold uppercase tracking-wide text-slate-800">{brand.name}</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{brand.tagline}</div>
+            </div>
+          </div>
+          <h2 className="text-[40px] font-semibold leading-[1.1] tracking-tight text-slate-900">
+            От заявки
+            <br />
+            до готового заказа.
+          </h2>
+          <p className="mt-4 max-w-md text-slate-600">Клиенты, производство и склад. Все этапы связаны, всё под контролем.</p>
+          <div className="mt-6">
+            <LoginArt />
+          </div>
+        </section>
+
       {/* Карточка */}
-      <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-white rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
+      <div className="w-full max-w-md justify-self-center lg:justify-self-end">
+        <div className="overflow-hidden rounded-3xl bg-white/95 shadow-[0_30px_80px_-30px_rgb(16_20_28/0.35)] ring-1 ring-white">
           {/* Шапка */}
           <div className="px-8 pt-8 pb-6 border-b border-slate-100">
             <div className="flex items-center gap-3 mb-5">
@@ -236,9 +242,10 @@ export default function LoginForm({
           </form>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-4">
+        <p className="mt-4 text-center text-xs text-slate-500">
           © {new Date().getFullYear()} {brand.name}
         </p>
+      </div>
       </div>
     </div>
   );

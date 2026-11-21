@@ -25,6 +25,7 @@ import {
   ClipboardList, FileSpreadsheet, ArrowUpRight, Link2, HelpCircle,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
+import EmptyState from "@/components/shared/EmptyState";
 
 interface OrderFile {
   id: string;
@@ -909,7 +910,7 @@ export default function OrderDetailClient({
                 </div>
               )}
               {!editingItems && order.items.length === 0 ? (
-                <div className="py-10 text-center text-fg-subtle text-sm">Позиций нет</div>
+                <EmptyState kind="orders" compact title="Позиций нет" hint="Добавьте позиции из оборудования" />
               ) : (
                 <table className="w-full text-sm">
                   <thead>

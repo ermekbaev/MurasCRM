@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import { AlertTriangle, Plus, Check, X, Trash2, ChevronDown } from "lucide-react";
+import EmptyState from "@/components/shared/EmptyState";
 
 interface Equipment {
   id: string;
@@ -237,7 +238,7 @@ export default function DefectsPage() {
       {loading ? (
         <div className="text-center py-10 text-fg-subtle">Загрузка...</div>
       ) : records.length === 0 ? (
-        <div className="text-center py-10 text-fg-subtle text-sm">Записей нет</div>
+        <EmptyState kind="generic" title="Записей нет" hint="Брак и возвраты будут видны здесь" />
       ) : (
         <Card padding="none">
           <div className="overflow-x-auto">

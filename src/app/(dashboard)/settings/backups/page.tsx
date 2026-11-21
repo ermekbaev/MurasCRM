@@ -5,6 +5,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import PageHeader from "@/components/layout/PageHeader";
 import { DatabaseBackup, Download, RotateCcw, Loader2, Check, AlertTriangle } from "lucide-react";
+import EmptyState from "@/components/shared/EmptyState";
 
 interface Backup {
   key: string;
@@ -124,9 +125,8 @@ export default function BackupsPage() {
       {loading ? (
         <div className="py-10 text-center text-fg-subtle">Загрузка...</div>
       ) : backups.length === 0 ? (
-        <Card padding="md" className="py-12 text-center">
-          <DatabaseBackup size={40} className="mx-auto mb-2 text-fg-subtle/50" />
-          <p className="text-sm text-fg-subtle">Копий пока нет — нажмите «Создать копию сейчас»</p>
+        <Card padding="md">
+          <EmptyState kind="files" title="Копий пока нет" hint="Нажмите «Создать копию сейчас»" />
         </Card>
       ) : (
         <Card padding="none">
