@@ -33,6 +33,7 @@ export default function BackupsPage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   // Восстановление: какой ключ подтверждаем и что вписали.
+  const [storageError, setStorageError] = useState<string | null>(null);
   const [restoreKey, setRestoreKey] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [restoring, setRestoring] = useState(false);
@@ -40,6 +41,7 @@ export default function BackupsPage() {
   async function load() {
     const res = await fetch("/api/backups").then((r) => (r.ok ? r.json() : null));
     setBackups(res?.backups ?? []);
+    setStorageError(res?.error ?? null);
     setLoading(false);
   }
 
@@ -126,7 +128,7 @@ export default function BackupsPage() {
         <div className="py-10 text-center text-fg-subtle">Загрузка...</div>
       ) : backups.length === 0 ? (
         <Card padding="md">
-          <EmptyState kind="files" title="Копий пока нет" hint="Нажмите «Создать копию сейчас»" />
+          <EmptyState kind="files" title={storageError ? "Хранилище копий недоступно" : "Копий пока нет"} hint={storageError ?? "Нажмите «Создать копию сейчас»"} />
         </Card>
       ) : (
         <Card padding="none">

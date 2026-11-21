@@ -10,7 +10,15 @@ export async function GET() {
   if (!session) return apiError.unauthorized();
   if (session.user.role !== "ADMIN") return apiError.forbidden();
 
-  const items = (await listObjects(PREFIX))
+  // хранилище копий недоступно (ключи S3 не подошли, нет сети): отвечаем понятной ошибкой, а не 500 (сквозная проверка 22.11)
+  let listed;
+  try {
+    listed = await listObjects(PREFIX);
+  } catch (e) {
+    console.error("[backups] список копий:", e instanceof Error ? e.message : e);
+    return NextResponse.json({ backups: [], error: "Хранилище копий недоступно. Проверьте ключи доступа к хранилищу в настройках сервера." });
+  }
+  const items = listed
     .sort((a, b) => (b.lastModified?.getTime() ?? 0) - (a.lastModified?.getTime() ?? 0))
     .slice(0, 100);
 
