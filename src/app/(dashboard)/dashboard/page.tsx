@@ -182,8 +182,8 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Шапка с иллюстрацией (22.11): акцент клиента, на телефоне рисунка нет */}
-      <div className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-accent-soft via-surface to-surface px-5 py-5 sm:px-7 sm:py-6 md:min-h-[150px] md:pr-[20rem]">
-        <div className="pointer-events-none absolute bottom-0 right-4 top-2 hidden w-[19rem] md:flex md:items-center">
+      <div className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-accent-soft via-surface to-surface px-5 py-5 sm:px-7 sm:py-6 md:min-h-[168px] md:pr-[17rem]">
+        <div className="pointer-events-none absolute bottom-2 right-6 top-2 hidden md:block">
           <LoginArt bare />
         </div>
       <PageHeader className="relative z-10 mb-0"
