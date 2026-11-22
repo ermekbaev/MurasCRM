@@ -53,7 +53,9 @@ export function BrandLockup({ name, tagline, size = 26 }: { name: string; taglin
       <span className="relative inline-block font-extrabold tracking-tight" style={{ fontSize: size, lineHeight: 1, isolation: "isolate" }}>
         {layer("text-[#1fc3dc] mix-blend-multiply dark:mix-blend-normal", -1, -0.7, true)}
         {layer("text-[#f0368f] mix-blend-multiply dark:mix-blend-normal", 1, -0.4, false)}
-        {layer("text-[#f5d90a] mix-blend-multiply dark:text-white dark:mix-blend-normal", 0, 0.7, false)}
+        {layer("text-[#f5d90a] mix-blend-multiply dark:mix-blend-normal", 0, 1, false)}
+        {/* тёмная тема: белый слой сверху, чтобы слово читалось, а каёмка CMY (включая жёлтую снизу) осталась по краям */}
+        {layer("hidden text-white dark:block", 0, 0, false)}
       </span>
       {rest && (
         <span className="ml-3 min-w-0 truncate border-l border-line pl-3 text-[9.5px] font-semibold uppercase leading-[1.25] tracking-[0.16em] text-fg-subtle">{rest}</span>
