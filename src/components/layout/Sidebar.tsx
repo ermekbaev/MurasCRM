@@ -185,18 +185,23 @@ export default function Sidebar({
               />
             ) : (
               <>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
-                  <BrandImage
-                    src={brand.logo}
-                    alt={brand.name}
-                    width={22}
-                    height={22}
-                    onLoad={measureLogo}
-                    className="h-[22px] w-[22px] object-contain"
-                    unoptimized
-                    priority
-                  />
-                </div>
+                {brand.logo ? (
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
+                    <BrandImage
+                      src={brand.logo}
+                      alt={brand.name}
+                      width={22}
+                      height={22}
+                      onLoad={measureLogo}
+                      className="h-[22px] w-[22px] object-contain"
+                      unoptimized
+                      priority
+                    />
+                  </div>
+                ) : (
+                  /* Наш знак без рамки и крупнее (Адилет 23.11: в плашке не видно) */
+                  <BrandImage src="" alt={brand.name} width={38} height={38} />
+                )}
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-[13px] font-semibold tracking-tight text-fg">{brand.name}</p>
                   <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
