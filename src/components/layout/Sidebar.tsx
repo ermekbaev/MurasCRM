@@ -198,7 +198,9 @@ export default function Sidebar({
                       priority
                     />
                   </div>
-                                ) : null}
+                ) : (
+                  <BrandImage src="" alt={brand.name} width={38} height={38} />
+                )}
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-[13px] font-semibold tracking-tight text-fg">{brand.name}</p>
                   <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
@@ -215,9 +217,13 @@ export default function Sidebar({
               collapsed && "lg:opacity-100"
             )}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
-              <BrandImage src={brand.logo} alt={brand.name} width={20} height={20} className="h-5 w-5 object-contain" unoptimized />
-            </div>
+            {brand.logo ? (
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
+                <BrandImage src={brand.logo} alt={brand.name} width={20} height={20} className="h-5 w-5 object-contain" unoptimized />
+              </div>
+            ) : (
+              <BrandImage src="" alt={brand.name} width={36} height={36} />
+            )}
           </div>
 
           {onClose && (

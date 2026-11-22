@@ -93,7 +93,9 @@ export default function DashboardShell({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface">
               <BrandImage src={brand.logo} alt={brand.name} width={18} height={18} className="h-[18px] w-[18px] object-contain" unoptimized />
             </div>
-          ) : null}
+          ) : (
+            <BrandImage src="" alt={brand.name} width={32} height={32} />
+          )}
           <span className="text-[13px] font-semibold tracking-tight text-fg">{brand.name}</span>
           <button
             onClick={openSearch}
