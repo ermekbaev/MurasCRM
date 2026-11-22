@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getObjectWithType } from "@/lib/s3";
-import { getBranding, DEFAULT_BRAND } from "@/lib/branding.server";
-import { buildBrandPalette } from "@/lib/brand-palette";
 
 /**
  * Значок вкладки.
@@ -11,8 +9,7 @@ import { buildBrandPalette } from "@/lib/brand-palette";
  * вкладка CRM должна выглядеть так же — иначе в браузере рядом висят две
  * вкладки одной компании с разными значками.
  *
- * Если файла нет — рисуем букву на плашке фирменного цвета. Логотип для этого
- * не годится: у большинства он надпись с названием, вытянутая по горизонтали,
+ * Если файла нет — наш знак. Логотип для этого не годится: у большинства он надпись с названием, вытянутая по горизонтали,
  * и в квадрате 16×16 от неё остаётся неразборчивая крошка.
  */
 export async function GET() {
@@ -34,14 +31,9 @@ export async function GET() {
     }
   }
 
-  const brand = await getBranding();
-  const palette = buildBrandPalette(brand.color);
-  const letter = firstLetter(brand.name);
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-<rect width="64" height="64" rx="14" fill="${brand.color}"/>
-<text x="32" y="33" fill="${palette.light.accentFg}" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="38" font-weight="700" text-anchor="middle" dominant-baseline="central">${letter}</text>
-</svg>`;
+  // Своего значка нет: наш знак, буква C в красках CMY (как в логотипе внутри; Адилет 23.11). Без режимов
+  // наложения, они во вкладке браузера не работают, поэтому слои с прозрачностью.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#fff"/><g fill="none" stroke-width="11"><path transform="translate(-3 -2)" d="M48 18.5A19 19 0 1 0 48 45.5" stroke="#1fc3dc" stroke-opacity=".85"/><path transform="translate(3 -1.5)" d="M48 18.5A19 19 0 1 0 48 45.5" stroke="#f0368f" stroke-opacity=".8"/><path transform="translate(0 3)" d="M48 18.5A19 19 0 1 0 48 45.5" stroke="#f5d90a" stroke-opacity=".85"/></g></svg>`;
 
   return new NextResponse(svg, {
     headers: {
@@ -49,10 +41,4 @@ export async function GET() {
       "Cache-Control": "public, max-age=3600",
     },
   });
-}
-
-/** Первая буква названия; экранируется — она попадает прямо в разметку SVG. */
-function firstLetter(name: string): string {
-  const ch = (name.trim() || DEFAULT_BRAND.name)[0].toUpperCase();
-  return ch.replace(/[<>&"']/g, "");
 }
