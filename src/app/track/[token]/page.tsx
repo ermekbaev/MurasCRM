@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getBranding } from "@/lib/branding.server";
 import { Check, Package, Clock, X } from "lucide-react";
 import type { OrderStatus } from "@prisma/client";
+import BrandImage from "@/components/shared/BrandImage";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
     <div className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
       <div className="w-full max-w-lg">
         <div className="mb-6 flex items-center justify-center gap-2.5">
-          <Image src={brand.logo} alt={brand.name} width={28} height={28} className="h-7 w-auto max-h-7 object-contain" unoptimized />
+          <BrandImage src={brand.logo} alt={brand.name} width={28} height={28} className="h-7 w-auto max-h-7 object-contain" unoptimized />
           <span className="text-sm font-semibold text-fg">{brand.name}</span>
         </div>
 

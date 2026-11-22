@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import LoginArt from "@/components/shared/LoginArt";
+import BrandImage from "@/components/shared/BrandImage";
 
 /** Бренд приходит сверху: страница входа — первое, что видит клиент. */
 export default function LoginForm({
@@ -90,68 +91,57 @@ export default function LoginForm({
         </svg>
       </div>
 
-      <div className="relative z-10 mx-auto grid min-h-full max-w-[1280px] items-center gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_28rem] lg:gap-12 lg:px-10">
+      <div className="relative z-10 mx-auto grid min-h-full max-w-[1520px] items-center gap-8 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_34rem] lg:gap-20 lg:px-16 xl:grid-cols-[minmax(0,1fr)_36rem]">
         {/* Левая часть: смысл и картинка (на телефоне скрыта) */}
         <section className="hidden lg:block">
           <div className="mb-8 flex items-center gap-3">
-            <Image src={brand.logo} alt={brand.name} width={40} height={40} unoptimized className="h-10 w-10 object-contain" />
+            <BrandImage src={brand.logo} alt={brand.name} width={40} height={40} unoptimized className="h-10 w-10 object-contain" />
             <div className="leading-tight">
               <div className="text-sm font-bold uppercase tracking-wide text-slate-800">{brand.name}</div>
               <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{brand.tagline}</div>
             </div>
           </div>
-          <h2 className="text-[40px] font-semibold leading-[1.1] tracking-tight text-slate-900">
+          <h2 className="text-[48px] font-semibold leading-[1.08] tracking-tight text-slate-900">
             От заявки
             <br />
             до готового заказа.
           </h2>
-          <p className="mt-4 max-w-md text-slate-600">Клиенты, производство и склад. Все этапы связаны, всё под контролем.</p>
-          <div className="mt-6">
+          <p className="mt-5 max-w-lg text-lg text-slate-600">Клиенты, производство и склад. Все этапы связаны, всё под контролем.</p>
+          <div className="mt-10">
             <LoginArt />
           </div>
         </section>
 
       {/* Карточка */}
-      <div className="w-full max-w-md justify-self-center lg:justify-self-end">
-        <div className="overflow-hidden rounded-3xl bg-white/95 shadow-[0_30px_80px_-30px_rgb(16_20_28/0.35)] ring-1 ring-white">
-          {/* Шапка */}
-          <div className="px-8 pt-8 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-3 mb-5">
-              {/* В широком логотипе название уже набрано — второй раз его не
-                  пишем и в квадрат 40×40 не ужимаем. */}
-              <Image
+      <div className="w-full max-w-xl justify-self-center lg:justify-self-end">
+        <div className="overflow-hidden rounded-[28px] bg-white/95 shadow-[0_40px_100px_-36px_rgb(16_20_28/0.4)] ring-1 ring-white">
+          {/* Шапка: на телефоне знак и название (слева их там нет), на компьютере только заголовок */}
+          <div className="px-6 pb-2 pt-8 sm:px-12 sm:pt-12">
+            <div className="mb-6 flex items-center gap-3 lg:hidden">
+              <BrandImage
                 src={brand.logo}
                 alt={brand.name}
                 width={wideLogo ? 200 : 40}
                 height={40}
                 onLoad={measureLogo}
-                className={
-                  wideLogo
-                    ? "h-10 w-auto max-w-[200px] object-contain object-left"
-                    : "h-10 w-10 object-contain"
-                }
+                className={wideLogo ? "h-10 w-auto max-w-[200px] object-contain object-left" : "h-10 w-10 object-contain"}
                 unoptimized
                 priority
               />
               {!wideLogo && (
-                <div>
-                  <h1 className="text-base font-bold text-slate-800 leading-tight">
-                    {brand.name}
-                  </h1>
-                  <p className="text-xs text-slate-500">{brand.tagline}</p>
+                <div className="leading-tight">
+                  <div className="text-base font-bold text-slate-800">{brand.name}</div>
+                  <div className="text-xs text-slate-500">{brand.tagline}</div>
                 </div>
               )}
             </div>
-            <div className="inline-flex items-center gap-2 bg-accent-soft border border-accent/25 rounded-full px-4 py-1.5">
-              <LogIn className="w-3.5 h-3.5 text-accent" />
-              <span className="text-accent-fg text-xs font-medium">
-                Вход в систему
-              </span>
-            </div>
+            <p className="text-sm text-slate-500">С возвращением</p>
+            <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight text-slate-900 sm:text-[32px]">Вход в систему</h1>
+            <p className="mt-2 text-[15px] text-slate-500">Введите почту и пароль, чтобы продолжить работу.</p>
           </div>
 
           {/* Форма */}
-          <form onSubmit={handleSubmit} className="px-8 py-6 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6 px-6 pb-8 pt-6 sm:px-12 sm:pb-12">
             {/* Email */}
             <div className="space-y-1.5">
               <label
@@ -171,9 +161,9 @@ export default function LoginForm({
                   placeholder="you@example.com"
                   autoComplete="email"
                   required
-                  className="w-full px-4 py-2.5 pl-10 text-sm border border-slate-200 rounded-lg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 transition-all bg-white text-slate-900 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400"
+                  className="w-full px-4 py-3.5 pl-11 text-base border border-slate-200 rounded-lg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 transition-all bg-white text-slate-900 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400"
                 />
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400" />
               </div>
             </div>
 
@@ -205,9 +195,9 @@ export default function LoginForm({
                   placeholder="••••••••"
                   autoComplete="current-password"
                   required
-                  className="w-full px-4 py-2.5 pl-10 pr-10 text-sm border border-slate-200 rounded-lg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 transition-all bg-white text-slate-900 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400"
+                  className="w-full px-4 py-3.5 pl-11 pr-11 text-base border border-slate-200 rounded-lg outline-none focus:border-accent focus:ring-[3px] focus:ring-accent/20 transition-all bg-white text-slate-900 disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400"
                 />
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400" />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
@@ -235,7 +225,7 @@ export default function LoginForm({
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-accent hover:bg-accent-hover active:bg-accent-active text-on-accent text-sm font-medium rounded-lg shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg mt-1"
+              className="mt-2 flex w-full items-center justify-center gap-2 py-3.5 text-base bg-accent hover:bg-accent-hover active:bg-accent-active text-on-accent text-sm font-medium rounded-lg shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg mt-1"
             >
               {loading ? (
                 <>

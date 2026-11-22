@@ -6,6 +6,7 @@ import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
 import CommandPalette from "@/components/layout/CommandPalette";
 import { Role } from "@prisma/client";
+import BrandImage from "@/components/shared/BrandImage";
 
 /** Открыть глобальный поиск из любого места. */
 const openSearch = () => window.dispatchEvent(new Event("open-search"));
@@ -89,7 +90,7 @@ export default function DashboardShell({
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface">
-            <Image
+            <BrandImage
               src={brand.logo}
               alt={brand.name}
               width={18}

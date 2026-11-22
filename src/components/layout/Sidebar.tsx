@@ -39,6 +39,7 @@ import { settingsSectionsFor } from "@/lib/settings-nav";
 import { CHAT_ROLES } from "@/lib/chat-roles";
 import { ROLE_LABELS } from "@/lib/constants";
 import Image from "next/image";
+import BrandImage from "@/components/shared/BrandImage";
 
 interface NavItem {
   label: string;
@@ -172,7 +173,7 @@ export default function Sidebar({
           {/* Развёрнутая шапка — при сворачивании плавно гаснет. */}
           <div className={cn("flex flex-1 items-center gap-2.5 overflow-hidden", labelFade)}>
             {wideLogo ? (
-              <Image
+              <BrandImage
                 src={brand.logo}
                 alt={brand.name}
                 width={180}
@@ -185,7 +186,7 @@ export default function Sidebar({
             ) : (
               <>
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
-                  <Image
+                  <BrandImage
                     src={brand.logo}
                     alt={brand.name}
                     width={22}
@@ -213,7 +214,7 @@ export default function Sidebar({
             )}
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
-              <Image src={brand.logo} alt={brand.name} width={20} height={20} className="h-5 w-5 object-contain" unoptimized />
+              <BrandImage src={brand.logo} alt={brand.name} width={20} height={20} className="h-5 w-5 object-contain" unoptimized />
             </div>
           </div>
 

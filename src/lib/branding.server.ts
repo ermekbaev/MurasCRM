@@ -4,10 +4,11 @@ import { buildBrandPalette, isHexColor, type AccentPalette } from "@/lib/brand-p
 
 /** Наши значения по умолчанию — то, как система выглядит без настройки. */
 export const DEFAULT_BRAND = {
-  name: "Muras-Brand",
+  name: "CRM",
   tagline: "CRM производства",
   color: "#7c3aed",
-  logo: "/logo.svg",
+  // своего знака по умолчанию нет: логотип Muras-Brand клиентам не показываем (22.11)
+  logo: "",
 };
 
 export interface Branding {
@@ -54,7 +55,7 @@ export const getBranding = cache(async (): Promise<Branding> => {
     name: settings?.brandName?.trim() || DEFAULT_BRAND.name,
     tagline: settings?.brandTagline?.trim() || DEFAULT_BRAND.tagline,
     color,
-    logo: settings?.interfaceLogoKey ? "/api/branding/logo" : DEFAULT_BRAND.logo,
+    logo: settings?.interfaceLogoKey ? "/api/branding/logo" : "",
     css: color === DEFAULT_BRAND.color ? "" : paletteCss(color),
   };
 });
