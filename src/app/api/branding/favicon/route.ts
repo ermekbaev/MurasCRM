@@ -23,7 +23,7 @@ export async function GET() {
       return new NextResponse(new Uint8Array(buffer), {
         headers: {
           "Content-Type": contentType,
-          "Cache-Control": "public, max-age=3600",
+          "Cache-Control": "public, max-age=300",
         },
       });
     } catch {
@@ -38,7 +38,7 @@ export async function GET() {
   return new NextResponse(svg, {
     headers: {
       "Content-Type": "image/svg+xml",
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "public, max-age=300",
     },
   });
 }

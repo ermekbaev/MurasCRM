@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: "CRM-система для рекламно-производственного цеха",
     // Не логотип: у большинства он — вытянутая надпись, а во вкладке нужен
     // квадрат. Значок рисуется из цвета и первой буквы названия.
-    icons: { icon: brand.configured ? "/api/branding/favicon" : "/icon-neutral.svg?v=2" },
+    icons: { icon: brand.configured ? "/api/branding/favicon?v=3" : "/icon-neutral.svg?v=2" },
   };
 }
 
