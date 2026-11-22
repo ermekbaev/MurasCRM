@@ -202,7 +202,7 @@ export default function Sidebar({
                   <BrandImage src="" alt={brand.name} width={38} height={38} />
                 )}
                 <div className="min-w-0 flex-1 leading-tight">
-                  <p className="truncate text-[13px] font-semibold tracking-tight text-fg">{brand.name}</p>
+                  <p className="truncate text-[15px] font-bold tracking-tight text-fg">{brand.name}</p>
                   <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
                 </div>
               </>
