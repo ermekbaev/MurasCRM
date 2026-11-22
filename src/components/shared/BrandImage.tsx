@@ -33,24 +33,33 @@ export default function BrandImage({ src, alt, width, height, className, ...rest
 }
 
 /**
- * Логотип с названием одной связкой (Адилет 23.11: «текст должен быть частью лого»). Если название начинается
- * с «C», эта буква и есть знак CMY, дальше идёт остаток слова крупно, а остальные слова мелко капсом под ним.
- * Иначе знак слева и название. Цвет текста берётся от родителя (text-fg).
+ * Логотип-слово (Адилет 23.11: «всё слово CRM в такие цвета»): первое слово названия печатается тремя слоями
+ * CMY со сдвигом, как оттиск на плохой приводке; остальные слова мелко капсом справа. На светлой теме слои
+ * перемножаются, на тёмной складываются. Фавикон остаётся буквой C (PrinterMark).
  */
-export function BrandLockup({ name, tagline, size = 30 }: { name: string; tagline?: string; size?: number }) {
+export function BrandLockup({ name, tagline, size = 26 }: { name: string; tagline?: string; size?: number }) {
   const words = name.trim().split(/\s+/);
   const head = words[0] || "";
   const rest = words.slice(1).join(" ") || tagline || "";
-  const startsC = /^c/i.test(head);
-  const big = startsC ? head.slice(1) : head;
+  const o = Math.max(1, size / 22);
+  const layer = (col: string, dx: number, dy: number, flow: boolean) => (
+    <span
+      aria-hidden="true"
+      className={`mix-blend-multiply dark:mix-blend-screen ${flow ? "" : "absolute left-0 top-0"}`}
+      style={{ color: col, transform: `translate(${dx * o}px, ${dy * o}px)` }}
+    >
+      {head}
+    </span>
+  );
   return (
     <span className="flex min-w-0 items-center" aria-label={name} role="img">
-      <span className="flex items-end leading-none">
-        {startsC ? <PrinterMark size={size} className="-mr-0.5" /> : <PrinterMark size={size} className="mr-2" />}
-        <span className="pb-[3px] text-[24px] font-extrabold tracking-tight text-fg" style={{ lineHeight: 1 }}>{big}</span>
+      <span className="relative inline-block font-extrabold tracking-tight" style={{ fontSize: size, lineHeight: 1, isolation: "isolate" }}>
+        {layer("#1fc3dc", -0.9, -0.7, true)}
+        {layer("#f0368f", 0.9, -0.5, false)}
+        {layer("#f5d90a", 0, 0.9, false)}
       </span>
       {rest && (
-        <span className="ml-2.5 min-w-0 truncate border-l border-line pl-2.5 text-[9.5px] font-semibold uppercase leading-[1.25] tracking-[0.16em] text-fg-subtle">{rest}</span>
+        <span className="ml-3 min-w-0 truncate border-l border-line pl-3 text-[9.5px] font-semibold uppercase leading-[1.25] tracking-[0.16em] text-fg-subtle">{rest}</span>
       )}
     </span>
   );
