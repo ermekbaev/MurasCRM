@@ -41,22 +41,19 @@ export function BrandLockup({ name, tagline, size = 26 }: { name: string; taglin
   const words = name.trim().split(/\s+/);
   const head = words[0] || "";
   const rest = words.slice(1).join(" ") || tagline || "";
-  const o = Math.max(1, size / 22);
-  const layer = (col: string, dx: number, dy: number, flow: boolean) => (
-    <span
-      aria-hidden="true"
-      className={`mix-blend-multiply dark:mix-blend-screen ${flow ? "" : "absolute left-0 top-0"}`}
-      style={{ color: col, transform: `translate(${dx * o}px, ${dy * o}px)` }}
-    >
+  const o = Math.max(1.4, size / 16);
+  // Светлая тема: слои перемножаются. Тёмная: голубой и малиновый остаются каёмкой, верхний слой белый (иначе всё складывается в белый).
+  const layer = (cls: string, dx: number, dy: number, flow: boolean) => (
+    <span aria-hidden="true" className={`${cls} ${flow ? "" : "absolute left-0 top-0"}`} style={{ transform: `translate(${dx * o}px, ${dy * o}px)` }}>
       {head}
     </span>
   );
   return (
     <span className="flex min-w-0 items-center" aria-label={name} role="img">
       <span className="relative inline-block font-extrabold tracking-tight" style={{ fontSize: size, lineHeight: 1, isolation: "isolate" }}>
-        {layer("#1fc3dc", -0.9, -0.7, true)}
-        {layer("#f0368f", 0.9, -0.5, false)}
-        {layer("#f5d90a", 0, 0.9, false)}
+        {layer("text-[#1fc3dc] mix-blend-multiply dark:mix-blend-normal", -1, -0.7, true)}
+        {layer("text-[#f0368f] mix-blend-multiply dark:mix-blend-normal", 1, -0.4, false)}
+        {layer("text-[#f5d90a] mix-blend-multiply dark:text-white dark:mix-blend-normal", 0, 0.7, false)}
       </span>
       {rest && (
         <span className="ml-3 min-w-0 truncate border-l border-line pl-3 text-[9.5px] font-semibold uppercase leading-[1.25] tracking-[0.16em] text-fg-subtle">{rest}</span>
