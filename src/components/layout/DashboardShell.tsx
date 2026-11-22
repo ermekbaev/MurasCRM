@@ -6,7 +6,7 @@ import Image from "next/image";
 import Sidebar from "@/components/layout/Sidebar";
 import CommandPalette from "@/components/layout/CommandPalette";
 import { Role } from "@prisma/client";
-import BrandImage from "@/components/shared/BrandImage";
+import BrandImage, { BrandLockup } from "@/components/shared/BrandImage";
 
 /** Открыть глобальный поиск из любого места. */
 const openSearch = () => window.dispatchEvent(new Event("open-search"));
@@ -90,13 +90,15 @@ export default function DashboardShell({
             <Menu className="h-5 w-5" />
           </button>
           {brand.logo ? (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface">
-              <BrandImage src={brand.logo} alt={brand.name} width={18} height={18} className="h-[18px] w-[18px] object-contain" unoptimized />
-            </div>
+            <>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface">
+                <BrandImage src={brand.logo} alt={brand.name} width={18} height={18} className="h-[18px] w-[18px] object-contain" unoptimized />
+              </div>
+              <span className="text-[13px] font-semibold tracking-tight text-fg">{brand.name}</span>
+            </>
           ) : (
-            <BrandImage src="" alt={brand.name} width={32} height={32} />
+            <BrandLockup name={brand.name} size={26} />
           )}
-          <span className="text-[13px] font-semibold tracking-tight text-fg">{brand.name}</span>
           <button
             onClick={openSearch}
             aria-label="Поиск"

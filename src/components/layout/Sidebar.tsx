@@ -39,7 +39,7 @@ import { settingsSectionsFor } from "@/lib/settings-nav";
 import { CHAT_ROLES } from "@/lib/chat-roles";
 import { ROLE_LABELS } from "@/lib/constants";
 import Image from "next/image";
-import BrandImage from "@/components/shared/BrandImage";
+import BrandImage, { BrandLockup } from "@/components/shared/BrandImage";
 
 interface NavItem {
   label: string;
@@ -184,8 +184,8 @@ export default function Sidebar({
                 priority
               />
             ) : (
-              <>
-                {brand.logo ? (
+              brand.logo ? (
+                <>
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface shadow-card">
                     <BrandImage
                       src={brand.logo}
@@ -198,14 +198,14 @@ export default function Sidebar({
                       priority
                     />
                   </div>
-                ) : (
-                  <BrandImage src="" alt={brand.name} width={38} height={38} />
-                )}
-                <div className="min-w-0 flex-1 leading-tight">
-                  <p className="truncate text-[15px] font-bold tracking-tight text-fg">{brand.name}</p>
-                  <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
-                </div>
-              </>
+                  <div className="min-w-0 flex-1 leading-tight">
+                    <p className="truncate text-[15px] font-bold tracking-tight text-fg">{brand.name}</p>
+                    <p className="truncate text-[11px] text-fg-subtle">{brand.tagline}</p>
+                  </div>
+                </>
+              ) : (
+                <BrandLockup name={brand.name} tagline={brand.tagline} />
+              )
             )}
           </div>
 
