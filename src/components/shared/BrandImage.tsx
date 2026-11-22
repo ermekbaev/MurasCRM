@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,7 +17,10 @@ export default function BrandImage({ src, alt, width, height, className, ...rest
       className={cn("inline-grid shrink-0 place-items-center rounded-[28%] bg-accent text-on-accent", className?.replace(/max-w-\[[^\]]+\]|w-auto|object-\S+/g, ""))}
       style={{ width: side, height: side }}
     >
-      <Layers style={{ width: side * 0.58, height: side * 0.58 }} strokeWidth={2.2} />
+      {/* временный знак (22.11): два пика, «Ашуу» значит перевал; рисуется цветом надписи на акценте */}
+      <svg viewBox="0 0 24 24" style={{ width: side * 0.66, height: side * 0.66 }} fill="currentColor" aria-hidden="true">
+        <path d="M2 19 9.5 6.5 14 14l2.2-3.7L22 19z" />
+      </svg>
     </span>
   );
 }
