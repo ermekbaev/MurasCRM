@@ -32,8 +32,8 @@ export async function GET() {
   }
 
   // Своего значка нет: наш знак, буква C в красках CMY (как в логотипе внутри; Адилет 23.11). Без режимов
-  // наложения, они во вкладке браузера не работают, поэтому слои с прозрачностью.
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="none" stroke-width="13"><path transform="translate(-4 -3)" d="M52 17A25 25 0 1 0 52 47" stroke="#1fc3dc"/><path transform="translate(4 -2)" d="M52 17A25 25 0 1 0 52 47" stroke="#f0368f" stroke-opacity=".9"/><path transform="translate(0 4)" d="M52 17A25 25 0 1 0 52 47" stroke="#f5d90a" stroke-opacity=".9"/></g></svg>`;
+  // наложения, они во вкладке браузера не работают, поэтому слои с прозрачностью. Цвета меняются по теме браузера (prefers-color-scheme): на светлой вкладке чуть темнее, на тёмной ярче.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><style>.c{stroke:#0aa5c2}.m{stroke:#d81b7a}.y{stroke:#e6b800}@media (prefers-color-scheme: dark){.c{stroke:#2bd0ea}.m{stroke:#ff4fa3}.y{stroke:#ffe53b}}</style><g fill="none" stroke-width="13"><path class="c" transform="translate(-4 -3)" d="M52 17A25 25 0 1 0 52 47"/><path class="m" transform="translate(4 -2)" d="M52 17A25 25 0 1 0 52 47" stroke-opacity=".9"/><path class="y" transform="translate(0 4)" d="M52 17A25 25 0 1 0 52 47" stroke-opacity=".9"/></g></svg>`;
 
   return new NextResponse(svg, {
     headers: {
