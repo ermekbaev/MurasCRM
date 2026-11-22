@@ -44,7 +44,7 @@ export function BrandLockup({ name, tagline, size = 26 }: { name: string; taglin
   const o = Math.max(1.4, size / 16);
   // Светлая тема: слои перемножаются. Тёмная: голубой и малиновый остаются каёмкой, верхний слой белый (иначе всё складывается в белый).
   const layer = (cls: string, dx: number, dy: number, flow: boolean) => (
-    <span aria-hidden="true" className={`${cls} ${flow ? "" : "absolute left-0 top-0"}`} style={{ transform: `translate(${dx * o}px, ${dy * o}px)` }}>
+    <span aria-hidden="true" className={`${cls} ${flow ? "inline-block" : "absolute left-0 top-0"}`} style={{ transform: `translate(${dx * o}px, ${dy * o}px)` }}>
       {head}
     </span>
   );
