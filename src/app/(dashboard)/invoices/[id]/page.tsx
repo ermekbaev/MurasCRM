@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import InvoicePrintView from "./InvoicePrintView";
+import InvoiceClosingDocs from "./InvoiceClosingDocs";
 import { defaultInvoiceTemplate } from "@/lib/fillTemplate.server";
 
 export default async function InvoiceDetailPage({
@@ -17,6 +18,9 @@ export default async function InvoiceDetailPage({
         client: true,
         order: { select: { id: true, number: true } },
         items: true,
+        // закрывающие документы по счёту — блок «Документы по счёту» (DASS 26.11)
+        waybills: { select: { id: true, number: true, date: true }, orderBy: { date: "asc" } },
+        acts: { select: { id: true, number: true, date: true }, orderBy: { date: "asc" } },
       },
     }),
     prisma.companySettings.findFirst(),
@@ -59,6 +63,15 @@ export default async function InvoiceDetailPage({
       stampUrl={stampUrl}
       signatureUrl={signatureUrl}
       templateName={(await defaultInvoiceTemplate())?.name ?? null}
+      closingDocs={
+        <InvoiceClosingDocs
+          invoiceId={invoice.id}
+          orderId={invoice.order?.id ?? null}
+          items={invoice.items.map((i) => ({ name: i.name, qty: Number(i.qty), unit: i.unit, price: Number(i.price) }))}
+          waybills={invoice.waybills.map((w) => ({ ...w, date: w.date.toISOString() }))}
+          acts={invoice.acts.map((a) => ({ ...a, date: a.date.toISOString() }))}
+        />
+      }
     />
   );
 }
