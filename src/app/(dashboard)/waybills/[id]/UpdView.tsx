@@ -1,6 +1,6 @@
 "use client";
 
-import { legalName } from "@/lib/utils";
+import { legalName, TZ } from "@/lib/utils";
 import type { Party } from "./WaybillPrintView";
 
 interface UpdItem {
@@ -155,11 +155,13 @@ export default function UpdView({
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: TZ, // без пояса сервер и браузер расходятся в дне (#418, 26.11)
   });
   const dateShort = new Date(waybill.date).toLocaleDateString("ru-RU", {
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
+    timeZone: TZ, // без пояса сервер и браузер расходятся в дне (#418, 26.11)
   });
 
   const sellerInnKpp = company ? `${company.inn}/${company.kpp}` : "";

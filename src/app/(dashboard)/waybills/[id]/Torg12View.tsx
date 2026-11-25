@@ -2,6 +2,7 @@
 
 import { companyRequisitesLine, partyRequisitesLine } from "@/lib/waybillParties";
 import { numberToWords } from "@/lib/numberToWords";
+import { TZ } from "@/lib/utils";
 import type { Party } from "./WaybillPrintView";
 
 interface WaybillItem {
@@ -156,11 +157,13 @@ export default function Torg12View({
     day: "2-digit",
     month: "2-digit",
     year: "2-digit",
+    timeZone: TZ, // без пояса сервер и браузер расходятся в дне (#418, 26.11)
   });
   const dateLong = new Date(waybill.date).toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: TZ, // без пояса сервер и браузер расходятся в дне (#418, 26.11)
   });
 
   return (
