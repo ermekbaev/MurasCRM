@@ -199,6 +199,7 @@ export default function OrderDetailClient({
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"items" | "files" | "tasks" | "docs" | "comments" | "history">("items");
   const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [creatingClosing, setCreatingClosing] = useState<null | "waybill" | "act">(null);
   const [docsError, setDocsError] = useState<string | null>(null);
   const docsCount = order.invoices.length + order.acts.length + order.waybills.length;
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -317,6 +318,55 @@ export default function OrderDetailClient({
    * привязанным к заявке. Скидка позиции уже учтена в её сумме, поэтому в счёт
    * уходит фактическая цена (total / qty) — иначе итог счёта разошёлся бы с заявкой.
    */
+  /** Позиции заявки для документа: цена с учётом скидки строки (total / qty), как в счёте. */
+  const orderLines = () =>
+    order.items.map((i) => ({
+      name: i.name,
+      qty: Number(i.qty),
+      unit: i.unit,
+      price: Number(i.qty) > 0 ? Number(i.total) / Number(i.qty) : Number(i.price),
+    }));
+
+  /**
+   * Закрывающий документ прямо из заявки (Сергей из DASS 25.11: «не хватает кнопки сформировать УПД, накладную
+   * или акт сразу в этом окне», раньше надо было идти в раздел и выбирать счёт вручную).
+   * Есть счёт по заявке — документ делается по нему (позиции, клиент, основание «Счёт № …»), нет — по позициям заявки.
+   * После создания открывается сам документ: там его печатают, в том числе по своему Word-бланку (УПД).
+   */
+  async function createClosingFromOrder(kind: "waybill" | "act") {
+    const invoice = order.invoices[0];
+    if (!invoice && order.items.length === 0) {
+      setDocsError("В заявке нет позиций — сначала добавьте их на вкладке «Позиции»");
+      return;
+    }
+    setCreatingClosing(kind);
+    setDocsError(null);
+    try {
+      const body =
+        kind === "waybill"
+          ? invoice
+            ? { invoiceId: invoice.id, orderId: order.id }
+            : { orderId: order.id, clientId: order.client.id, basis: `Заявка № ${order.number}`, items: orderLines() }
+          : { orderId: order.id, ...(invoice ? { invoiceId: invoice.id } : {}), items: orderLines() };
+      const res = await fetch(kind === "waybill" ? "/api/waybills" : "/api/acts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        setDocsError(typeof b?.error === "string" ? b.error : kind === "waybill" ? "Не удалось создать УПД" : "Не удалось создать акт");
+        return;
+      }
+      const doc = await res.json();
+      window.location.href = kind === "waybill" ? `/waybills/${doc.id}` : `/acts/${doc.id}`;
+    } catch {
+      setDocsError("Нет связи с сервером");
+    } finally {
+      setCreatingClosing(null);
+    }
+  }
+
   async function createInvoiceFromOrder() {
     if (order.items.length === 0) {
       setDocsError("В заявке нет позиций — сначала добавьте их на вкладке «Позиции»");
@@ -1247,17 +1297,25 @@ export default function OrderDetailClient({
                 <Card padding="md">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-fg">Счёт по этой заявке</p>
+                      <p className="text-sm font-medium text-fg">Документы по этой заявке</p>
                       <p className="mt-0.5 text-xs text-fg-muted">
-                        Позиции и клиент подставятся из заявки, счёт останется привязан к ней
+                        Позиции и клиент подставятся из заявки. УПД и акт делаются по счёту заявки, если он есть
                       </p>
                       <p className="mt-1 text-xs text-fg-subtle">
-                        Появится в разделе «Счета» — оттуда его печатают и отправляют клиенту
+                        Документ откроется сразу — там его печатают, в том числе по вашему бланку
                       </p>
                     </div>
-                    <Button onClick={createInvoiceFromOrder} loading={creatingInvoice}>
-                      <Plus size={16} /> Сформировать счёт
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={createInvoiceFromOrder} loading={creatingInvoice}>
+                        <Plus size={16} /> Счёт
+                      </Button>
+                      <Button variant="outline" onClick={() => createClosingFromOrder("waybill")} loading={creatingClosing === "waybill"}>
+                        <Plus size={16} /> УПД / накладная
+                      </Button>
+                      <Button variant="outline" onClick={() => createClosingFromOrder("act")} loading={creatingClosing === "act"}>
+                        <Plus size={16} /> Акт
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               )}
@@ -1298,11 +1356,11 @@ export default function OrderDetailClient({
               />
 
               <DocumentList
-                title="Накладные"
+                title="УПД и накладные"
                 icon={<FileSpreadsheet size={15} />}
                 href="/waybills"
                 items={order.waybills}
-                empty="Накладных пока нет"
+                empty="УПД и накладных пока нет"
               />
             </div>
           )}
