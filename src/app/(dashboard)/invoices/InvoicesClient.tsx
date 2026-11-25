@@ -40,6 +40,7 @@ interface Invoice {
   client: { id: string; name: string };
   order: { id: string; number: string } | null;
   items: InvoiceItem[];
+  _count?: { items: number; waybills?: number; acts?: number };
 }
 
 interface Props {
@@ -364,6 +365,13 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
                             {invoice.order.number}
                           </Link>
                         )}
+                        {/* что уже сделано по счёту: сразу видно, где ещё нет закрывающих (DASS 26.11) */}
+                        {invoice._count?.waybills || invoice._count?.acts ? (
+                          <div className="mt-0.5 flex gap-1">
+                            {invoice._count?.waybills ? <span className="rounded bg-accent-soft px-1.5 text-[10px] font-medium text-accent-fg">УПД ✓</span> : null}
+                            {invoice._count?.acts ? <span className="rounded bg-accent-soft px-1.5 text-[10px] font-medium text-accent-fg">Акт ✓</span> : null}
+                          </div>
+                        ) : null}
                       </div>
                     </td>
                     <td className="px-4 py-3">
