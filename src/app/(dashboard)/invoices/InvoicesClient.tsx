@@ -361,7 +361,7 @@ export default function InvoicesClient({ clients, orders, companies }: Props) {
                           {invoice.number}
                         </Link>
                         {invoice.order && (
-                          <Link href={`/orders/${invoice.order.id}`} className="text-xs text-accent hover:underline">
+                          <Link href={`/orders/${invoice.order.id}`} className="block text-xs text-accent hover:underline">
                             {invoice.order.number}
                           </Link>
                         )}
