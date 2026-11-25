@@ -72,8 +72,10 @@ export async function buildTemplateVars(ctx: TemplateContext) {
   // Ключи ограничены справочником @/lib/documentVars — если добавить сюда
   // переменную, которой там нет, сборка упадёт, и подсказка в интерфейсе
   // не разойдётся с реальным набором.
+  // «г.» ставим ровно один раз: toLocaleDateString на сервере уже дописывает его сам,
+  // и в счёте DASS выходило «25 ноября 2026 г. г.» (Сергей 25.11)
   const longDate = (d: Date) =>
-    d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) + " г.";
+    d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }).replace(/\s*г\.?$/, "") + " г.";
   const vars: Partial<Record<DocumentVarKey, string>> = {
     date: fmtDate(new Date()),
     date_long: longDate(new Date()),
