@@ -169,7 +169,8 @@ export default function InvoiceDocumentMenu({ invoiceId, invoiceNumber, clientId
         <FileText size={16} /> Документ <ChevronDown size={14} />
       </Button>
       {open && (
-        <div className="absolute right-0 z-30 mt-1 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg">
+        // на телефоне кнопка может оказаться слева после переноса — меню во всю ширину, чтобы не уехало за край
+        <div className="absolute right-0 z-30 mt-1 w-72 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg max-sm:fixed max-sm:inset-x-4 max-sm:top-28 max-sm:w-auto">
           {item("upd", "УПД", lastWaybill ? `№ ${lastWaybill.number}` : "создать", () => openWaybill("upd"))}
           {item("torg12", "Накладная ТОРГ-12", lastWaybill ? `№ ${lastWaybill.number}` : "создать", () => openWaybill("torg12"))}
           {item("act", "Акт", lastAct ? `№ ${lastAct.number}` : "создать", openAct)}

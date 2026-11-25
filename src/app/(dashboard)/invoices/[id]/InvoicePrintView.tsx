@@ -149,11 +149,12 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
   return (
     <div className="p-6 print:p-0">
       {/* Controls — hidden on print */}
-      <div className="flex items-center justify-between mb-6 print:hidden">
-        <Link href="/invoices" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
+      {/* на телефоне кнопки переносятся, иначе «Документ» и «Скачать PDF» уезжали за экран (26.11) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 print:hidden">
+        <Link href="/invoices" className="flex shrink-0 items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft size={14} /> Все счета
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {editing ? (
             <>
               <Button variant="outline" onClick={cancelEditing}><X size={16} /> Отмена</Button>
