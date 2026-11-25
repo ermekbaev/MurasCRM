@@ -22,6 +22,8 @@ interface InvoiceItem {
 }
 
 interface Props {
+  /** Свой шаблон счёта по умолчанию: PDF скачивается по нему, а не по форме на экране. */
+  templateName?: string | null;
   logoUrl?: string | null;
   stampUrl?: string | null;
   signatureUrl?: string | null;
@@ -74,12 +76,13 @@ function fmtDateLong(d: string): string {
   return new Date(d).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, signatureUrl }: Props) {
+export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, signatureUrl, templateName = null }: Props) {
   // Показывается только классическая форма — та, к которой привыкли
   // бухгалтерии. Вёрстка Muras сохранена ниже и остаётся в коде: чтобы
   // вернуть её, достаточно поменять значение здесь на "muras".
   const [form] = useState<"standard" | "muras">("standard");
   const [downloading, setDownloading] = useState(false);
+  const [withStamp, setWithStamp] = useState(false);
   const documentRef = useRef<HTMLDivElement>(null);
   const [isPaid, setIsPaid] = useState(invoice.isPaid);
   const [togglingPaid, setTogglingPaid] = useState(false);
@@ -97,7 +100,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
     setDownloading(true);
     try {
       await downloadServerPdf(
-        `/api/invoices/${invoice.id}/pdf`,
+        `/api/invoices/${invoice.id}/pdf${templateName && withStamp ? "?stamp=1" : ""}`,
         `Счёт ${invoice.number}`,
       );
     } finally { setDownloading(false); }
@@ -163,6 +166,12 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
                 {isPaid ? "Снять оплату" : "Отметить оплаченным"}
               </Button>
               <Button variant="outline" onClick={() => window.print()}><Printer size={16} /> Печать</Button>
+              {templateName && (
+                <label className="flex items-center gap-2 text-sm" title={`PDF скачивается по вашему шаблону «${templateName}»`}>
+                  <input type="checkbox" checked={withStamp} onChange={(e) => setWithStamp(e.target.checked)} />
+                  С печатью и подписью
+                </label>
+              )}
               <Button onClick={handleDownloadPDF} loading={downloading}><Download size={16} /> Скачать PDF</Button>
             </>
           )}

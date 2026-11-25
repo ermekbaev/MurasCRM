@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import InvoicePrintView from "./InvoicePrintView";
+import { defaultInvoiceTemplate } from "@/lib/fillTemplate.server";
 
 export default async function InvoiceDetailPage({
   params,
@@ -57,6 +58,7 @@ export default async function InvoiceDetailPage({
       logoUrl={logoUrl}
       stampUrl={stampUrl}
       signatureUrl={signatureUrl}
+      templateName={(await defaultInvoiceTemplate())?.name ?? null}
     />
   );
 }
