@@ -45,6 +45,8 @@ export interface Party {
 
 interface Props {
   logoUrl?: string | null;
+  /** Форма из адреса (?form=upd), прочитанная на сервере. */
+  initialForm?: "simple" | "torg12" | "upd";
   waybill: {
     id: string;
     number: string;
@@ -99,17 +101,13 @@ function PartyBlock({ title, party }: { title: string; party: Party | null }) {
   );
 }
 
-export default function WaybillPrintView({ waybill, company, logoUrl }: Props) {
+export default function WaybillPrintView({ waybill, company, logoUrl, initialForm = "torg12" }: Props) {
   // Показываем только официальные бланки. Собственная простая форма
   // сохранена ниже и остаётся в коде: чтобы вернуть её, достаточно
   // добавить "simple" в переключатель и поставить начальным значением.
   // Форму можно задать адресом: по ней сервер открывает страницу, когда
-  // печатает документ в PDF.
-  const [form, setForm] = useState<"simple" | "torg12" | "upd">(() => {
-    if (typeof window === "undefined") return "torg12";
-    const asked = new URLSearchParams(window.location.search).get("form");
-    return asked === "upd" || asked === "simple" ? asked : "torg12";
-  });
+  // печатает документ в PDF. Адрес читает сервер (page.tsx) и передаёт initialForm.
+  const [form, setForm] = useState<"simple" | "torg12" | "upd">(initialForm);
 
   /**
    * Выгрузка УПД в XML формата ФНС для ручной загрузки в ЭДО.

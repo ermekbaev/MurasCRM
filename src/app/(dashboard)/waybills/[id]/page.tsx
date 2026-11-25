@@ -4,10 +4,16 @@ import WaybillPrintView from "./WaybillPrintView";
 
 export default async function WaybillDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ form?: string }>;
 }) {
   const { id } = await params;
+  // форма из адреса (меню «Документ» счёта, печать в PDF) читается на сервере — иначе сервер рисовал ТОРГ-12,
+  // а браузер УПД, и страница ловила ошибку гидратации (26.11)
+  const asked = (await searchParams).form;
+  const initialForm = asked === "upd" || asked === "simple" ? asked : "torg12";
 
   const [waybill, settings] = await Promise.all([
     prisma.waybill.findUnique({
@@ -60,6 +66,7 @@ export default async function WaybillDetailPage({
       }}
       company={company}
       logoUrl={settings?.logoKey ? "/api/settings/branding?kind=logo" : null}
+      initialForm={initialForm}
     />
   );
 }

@@ -24,6 +24,8 @@ interface InvoiceItem {
 interface Props {
   /** Блок «Документы по счёту» (УПД, акт, XML для ЭДО), над документом, не печатается. */
   closingDocs?: React.ReactNode;
+  /** Меню «Документ ▾» в панели — что сформировать на основе счёта, как в Битриксе (DASS 26.11). */
+  documentMenu?: React.ReactNode;
   /** Свой шаблон счёта по умолчанию: PDF скачивается по нему, а не по форме на экране. */
   templateName?: string | null;
   logoUrl?: string | null;
@@ -79,7 +81,7 @@ function fmtDateLong(d: string): string {
   return new Date(d).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric", timeZone: TZ });
 }
 
-export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, signatureUrl, templateName = null, closingDocs = null }: Props) {
+export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, signatureUrl, templateName = null, closingDocs = null, documentMenu = null }: Props) {
   // Показывается только классическая форма — та, к которой привыкли
   // бухгалтерии. Вёрстка Muras сохранена ниже и остаётся в коде: чтобы
   // вернуть её, достаточно поменять значение здесь на "muras".
@@ -175,6 +177,7 @@ export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, 
                   С печатью и подписью
                 </label>
               )}
+              {documentMenu}
               <Button onClick={handleDownloadPDF} loading={downloading}><Download size={16} /> Скачать PDF</Button>
             </>
           )}

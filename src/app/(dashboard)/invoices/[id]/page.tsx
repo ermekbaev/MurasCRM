@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import InvoicePrintView from "./InvoicePrintView";
 import InvoiceClosingDocs from "./InvoiceClosingDocs";
+import InvoiceDocumentMenu from "./InvoiceDocumentMenu";
 import { defaultInvoiceTemplate } from "@/lib/fillTemplate.server";
 
 export default async function InvoiceDetailPage({
@@ -63,6 +64,17 @@ export default async function InvoiceDetailPage({
       stampUrl={stampUrl}
       signatureUrl={signatureUrl}
       templateName={(await defaultInvoiceTemplate())?.name ?? null}
+      documentMenu={
+        <InvoiceDocumentMenu
+          invoiceId={invoice.id}
+          invoiceNumber={invoice.number}
+          clientId={invoice.clientId}
+          orderId={invoice.order?.id ?? null}
+          items={invoice.items.map((i) => ({ name: i.name, qty: Number(i.qty), unit: i.unit, price: Number(i.price) }))}
+          waybills={invoice.waybills.map((w) => ({ id: w.id, number: w.number }))}
+          acts={invoice.acts.map((a) => ({ id: a.id, number: a.number }))}
+        />
+      }
       closingDocs={
         <InvoiceClosingDocs
           invoiceId={invoice.id}
