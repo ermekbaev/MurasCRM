@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { formatDate } from "@/lib/utils";
+import { TZ } from "@/lib/utils";
 import { legalName } from "@/lib/utils";
 import { numberToWords } from "@/lib/numberToWords";
 import Button from "@/components/ui/Button";
@@ -75,7 +75,8 @@ function fmt(n: number) {
 }
 
 function fmtDateLong(d: string): string {
-  return new Date(d).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+  // с поясом, иначе сервер и браузер расходятся в дне — ошибка гидратации #418 (26.11)
+  return new Date(d).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric", timeZone: TZ });
 }
 
 export default function InvoicePrintView({ invoice, company, logoUrl, stampUrl, signatureUrl, templateName = null, closingDocs = null }: Props) {

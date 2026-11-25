@@ -18,7 +18,7 @@ export function formatCurrency(amount: number | string | null | undefined): stri
 
 // Часовой пояс для дат на экране. Без него сервер (UTC) и браузер рисовали разные даты около полуночи, и страница
 // заявок падала с ошибкой гидратации React #418 (нашла сквозная проверка 22.11). Менять можно через NEXT_PUBLIC_TIMEZONE.
-const TZ = process.env.NEXT_PUBLIC_TIMEZONE || "Europe/Moscow";
+export const TZ = process.env.NEXT_PUBLIC_TIMEZONE || "Europe/Moscow";
 
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return "—";

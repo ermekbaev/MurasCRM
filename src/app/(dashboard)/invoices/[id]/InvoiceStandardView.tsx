@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Plus, Trash2 } from "lucide-react";
-import { legalName } from "@/lib/utils";
+import { legalName, TZ } from "@/lib/utils";
 import { numberToWords } from "@/lib/numberToWords";
 import type { LineItem } from "@/hooks/useLineItems";
 
@@ -86,6 +86,7 @@ export default function InvoiceStandardView({
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: TZ, // без пояса сервер и браузер могли разойтись в дне — ошибка гидратации #418 (26.11)
   });
 
   const subtotal = items.reduce((s, i) => s + Number(i.qty) * Number(i.price), 0);
