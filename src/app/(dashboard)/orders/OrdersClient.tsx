@@ -32,6 +32,8 @@ interface Order {
   amount: number;
   deadline: string | null;
   createdAt: string;
+  /** Когда перевели в «Выдано» — по ней старые уходят в архив. */
+  issuedAt?: string | null;
   client: { id: string; name: string };
   manager: { id: string; name: string } | null;
   assignees: { id: string; name: string }[];
@@ -87,6 +89,9 @@ const PRICING_UNIT_SHORT: Record<string, string> = {
 
 // Колонки канбана заявок. Порядок = движение заказа по этапам.
 // Цвет — точка в заголовке колонки (ring-классы статусов тут не подходят).
+// Сколько дней выданная заявка ещё видна в канбане, потом уходит в архив (DASS 26.11).
+const ISSUED_ARCHIVE_DAYS = 7;
+
 const ORDER_BOARD_COLUMNS: { code: string; dot: string }[] = [
   { code: "NEW", dot: "#0ea5e9" },
   { code: "IN_PROGRESS", dot: "#f59e0b" },
@@ -103,6 +108,9 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   const typeOptions = orderTypes.filter((t) => t.isActive).map((t) => ({ value: t.code, label: t.label }));
   const [orders, setOrders] = useState(initialOrders);
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  // Архив выданных (Сергей, DASS 26.11): в канбане в «Выдано» только выданные за последние 7 дней,
+  // остальные не копятся кучей и находятся в списке «Выдано» и поиском. Момент фиксируем один раз на рендер.
+  const [archiveCutoff] = useState(() => Date.now() - ISSUED_ARCHIVE_DAYS * 24 * 3600 * 1000);
   const [dragOrderId, setDragOrderId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -328,7 +336,11 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
     const previous = orders.find((o) => o.id === id)?.status;
     if (previous === undefined || previous === newStatus) return;
 
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === id ? { ...o, status: newStatus, issuedAt: newStatus === "ISSUED" ? new Date().toISOString() : null } : o,
+      ),
+    );
 
     const res = await fetch(`/api/orders/${id}`, {
       method: "PATCH",
@@ -485,7 +497,13 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
       {viewMode === "board" && (
         <div className="flex items-stretch gap-4 overflow-x-auto pb-2">
           {ORDER_BOARD_COLUMNS.map((col) => {
-            const colOrders = filtered.filter((o) => o.status === col.code);
+            const inColumn = filtered.filter((o) => o.status === col.code);
+            // при поиске показываем всё, иначе давно выданные уходят в архив
+            const isArchivable = col.code === "ISSUED" && !search;
+            const colOrders = isArchivable
+              ? inColumn.filter((o) => !o.issuedAt || Date.parse(o.issuedAt) >= archiveCutoff)
+              : inColumn;
+            const archivedCount = inColumn.length - colOrders.length;
             return (
               <div
                 key={col.code}
@@ -598,6 +616,19 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                         {dragOrderId ? "Перенести сюда" : "Пусто"}
                       </span>
                     </div>
+                  )}
+                  {archivedCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter("ISSUED");
+                        setViewMode("list");
+                      }}
+                      className="w-full rounded-lg px-2 py-2 text-xs text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+                      title={`Выданные больше ${ISSUED_ARCHIVE_DAYS} дней назад`}
+                    >
+                      Ещё {archivedCount} в архиве →
+                    </button>
                   )}
                 </div>
               </div>

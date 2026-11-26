@@ -205,6 +205,13 @@ export async function PATCH(
     data: {
       ...rest,
       deadline: deadline === null ? null : deadline ? new Date(deadline) : undefined,
+      // дата выдачи: по ней старые выданные уходят из канбана в архив (Сергей, DASS 26.11)
+      issuedAt:
+        rest.status === undefined || rest.status === existing.status
+          ? undefined
+          : rest.status === "ISSUED"
+            ? new Date()
+            : null,
       assignees: assigneeIds
         ? { set: assigneeIds.map((aid) => ({ id: aid })) }
         : undefined,
