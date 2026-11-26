@@ -46,7 +46,6 @@ export default async function ClientDetailPage({
         orderBy: { createdAt: "desc" },
         include: { _count: { select: { items: true } } },
       },
-      invoices: { where: { deletedAt: null }, orderBy: { date: "desc" }, take: 10 },
       contacts: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
       payments: {
         orderBy: { createdAt: "desc" },
@@ -57,6 +56,32 @@ export default async function ClientDetailPage({
   });
 
   if (!client) notFound();
+
+  // Все документы контрагента в одном месте (Сергей, DASS 26.11): заявку выдали и она ушла в архив,
+  // а счета, УПД и акты по ней остаются тут. Удалённые в корзину сюда не попадают (фильтр в prisma).
+  // У акта нет своего клиента — берём по счёту или заявке; УПД — и где клиент покупатель, и где плательщик.
+  const [docInvoices, docWaybills, docActs] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { clientId: id },
+      select: { id: true, number: true, date: true, total: true, isPaid: true, order: { select: { number: true } } },
+      orderBy: { date: "desc" },
+    }),
+    prisma.waybill.findMany({
+      where: { OR: [{ clientId: id }, { payerId: id }] },
+      select: { id: true, number: true, date: true, total: true, order: { select: { number: true } } },
+      orderBy: { date: "desc" },
+    }),
+    prisma.act.findMany({
+      where: { OR: [{ invoice: { clientId: id } }, { order: { clientId: id } }] },
+      select: { id: true, number: true, date: true, total: true, order: { select: { number: true } } },
+      orderBy: { date: "desc" },
+    }),
+  ]);
+  const documents = [
+    ...docInvoices.map((d) => ({ ...d, kind: "Счёт", href: `/invoices/${d.id}` })),
+    ...docWaybills.map((d) => ({ ...d, kind: "УПД / накладная", href: `/waybills/${d.id}`, isPaid: null })),
+    ...docActs.map((d) => ({ ...d, kind: "Акт", href: `/acts/${d.id}`, isPaid: null })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const activeOrders = client.orders.filter((o) => o.status !== "CANCELLED");
   const totalAmount = activeOrders.reduce((sum, o) => sum + Number(o.amount), 0);
@@ -301,6 +326,47 @@ export default async function ClientDetailPage({
                   </Link>
                   );
                 })}
+              </div>
+            )}
+          </Card>
+
+          <Card padding="none">
+            <div className="px-6 py-4 border-b border-line-soft">
+              <h2 className="font-semibold text-fg flex items-center gap-2">
+                <FileText size={16} /> Документы ({documents.length})
+              </h2>
+            </div>
+            {documents.length === 0 ? (
+              <div className="py-10 text-center text-fg-subtle">
+                <FileText size={28} className="mx-auto mb-2 opacity-30" />
+                Счетов, УПД и актов пока нет
+              </div>
+            ) : (
+              <div className="divide-y divide-line-soft">
+                {documents.map((d) => (
+                  <Link
+                    key={d.href}
+                    href={d.href}
+                    className="flex items-center justify-between gap-3 px-6 py-2.5 hover:bg-surface-sunken transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-md bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-fg-muted">{d.kind}</span>
+                        <span className="text-sm font-medium text-fg">№ {d.number}</span>
+                        {d.isPaid !== null && (
+                          <span className={`text-[11px] font-medium ${d.isPaid ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                            {d.isPaid ? "оплачен" : "не оплачен"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-xs text-fg-subtle">
+                        {formatDate(d.date)}
+                        {d.order ? ` · заявка ${d.order.number}` : ""}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold text-fg-muted">{formatCurrency(Number(d.total))}</span>
+                  </Link>
+                ))}
               </div>
             )}
           </Card>
