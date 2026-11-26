@@ -46,6 +46,7 @@ export default async function OrdersPage() {
         createdAt: o.createdAt.toISOString(),
         deadline: o.deadline?.toISOString() || null,
         updatedAt: o.updatedAt.toISOString(),
+        issuedAt: o.issuedAt?.toISOString() ?? null,
       }))}
       clients={clients}
       users={users}
