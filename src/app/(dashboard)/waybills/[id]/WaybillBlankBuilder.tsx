@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import { FileSignature, Download, Printer } from "lucide-react";
+import { FileSignature, Download, Printer, FileCode, Eye } from "lucide-react";
 
 interface Template {
   id: string;
@@ -22,9 +22,18 @@ interface Template {
 export default function WaybillBlankBuilder({
   waybillId,
   waybillNumber,
+  form,
+  onXml,
+  onPreviewChange,
 }: {
   waybillId: string;
   waybillNumber: string;
+  /** UPD / TORG12 — вид документа; по нему выбирается бланк, у ТОРГ-12 нет XML */
+  form?: string | null;
+  /** выгрузка XML УПД для ЭДО (та же, что в шапке страницы) */
+  onXml?: () => void;
+  /** показан предпросмотр бланка — страница прячет встроенную форму */
+  onPreviewChange?: (shown: boolean) => void;
 }) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -32,6 +41,11 @@ export default function WaybillBlankBuilder({
   const [withStamp, setWithStamp] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Предпросмотр выбранного бланка (Сергей, DASS 27.11: «скачивается в нужном формате, но превью другое» —
+  // под блоком показывалась встроенная ТОРГ-12, а скачивался его бланк УПД). Показываем ровно то, что скачается.
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewOn, setPreviewOn] = useState(true);
+  const [previewBusy, setPreviewBusy] = useState(false);
 
   useEffect(() => {
     fetch("/api/templates")
@@ -41,14 +55,48 @@ export default function WaybillBlankBuilder({
           (t) => t.kind === "DOCX" && t.type === "WAYBILL",
         );
         setTemplates(list);
-        const preferred = list.find((t) => t.isDefault) ?? list[0];
+        // для УПД — бланк с «УПД» в названии, для ТОРГ-12 — с «ТОРГ», иначе отмеченный по умолчанию
+        const byForm =
+          form === "UPD" ? list.find((t) => /упд/i.test(t.name)) : form === "TORG12" ? list.find((t) => /торг/i.test(t.name)) : undefined;
+        const preferred = byForm ?? list.find((t) => t.isDefault) ?? list[0];
         if (preferred) setTemplateId(preferred.id);
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
-  }, []);
+  }, [form]);
 
   const selected = templates.find((t) => t.id === templateId);
+
+  useEffect(() => {
+    onPreviewChange?.(previewOn && Boolean(templateId));
+  }, [previewOn, templateId, onPreviewChange]);
+
+  // бланк в PDF для предпросмотра: при выборе бланка и галочке печати
+  useEffect(() => {
+    if (!templateId || !previewOn) return;
+    let url: string | null = null;
+    let cancelled = false;
+    setPreviewBusy(true);
+    fetch(`/api/templates/${templateId}/render-docx`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ waybillId, withStamp, format: "pdf" }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const b = await res.json().catch(() => null);
+          throw new Error(typeof b?.error === "string" ? b.error : "Не удалось показать бланк");
+        }
+        url = URL.createObjectURL(await res.blob());
+        if (!cancelled) setPreviewUrl(url);
+      })
+      .catch((e: Error) => !cancelled && setError(e.message))
+      .finally(() => !cancelled && setPreviewBusy(false));
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [templateId, withStamp, previewOn, waybillId]);
 
   async function render(mode: "docx" | "pdf" | "print") {
     if (!templateId) return;
@@ -161,8 +209,40 @@ export default function WaybillBlankBuilder({
           <Button variant="outline" onClick={() => render("print")} loading={busy}>
             <Printer size={16} /> Печать
           </Button>
+          {form !== "TORG12" && onXml && (
+            <Button variant="outline" onClick={onXml}>
+              <FileCode size={16} /> XML для ЭДО
+            </Button>
+          )}
         </div>
       </div>
+      <div className="mt-3 flex items-center gap-2 text-xs text-fg-muted">
+        <Eye size={14} />
+        {previewOn ? (
+          <>
+            Ниже показан выбранный бланк, именно он скачается.
+            <button type="button" onClick={() => setPreviewOn(false)} className="text-accent hover:underline">
+              Стандартная форма
+            </button>
+          </>
+        ) : (
+          <>
+            Ниже стандартная форма программы.
+            <button type="button" onClick={() => setPreviewOn(true)} className="text-accent hover:underline">
+              Показать мой бланк
+            </button>
+          </>
+        )}
+      </div>
+      {previewOn && (
+        <div className="mt-3 overflow-hidden rounded-lg border border-line bg-white">
+          {previewBusy || !previewUrl ? (
+            <div className="flex h-40 items-center justify-center text-sm text-gray-500">Готовим бланк…</div>
+          ) : (
+            <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} title={`Бланк ${selected?.name ?? ""}`} className="h-[80vh] w-full" />
+          )}
+        </div>
+      )}
     </div>
   );
 }

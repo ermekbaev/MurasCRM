@@ -110,6 +110,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl, initialFor
   // Форму можно задать адресом: по ней сервер открывает страницу, когда
   // печатает документ в PDF. Адрес читает сервер (page.tsx) и передаёт initialForm.
   const [form, setForm] = useState<"simple" | "torg12" | "upd">(initialForm);
+  const [blankShown, setBlankShown] = useState(false);
 
   /**
    * Выгрузка УПД в XML формата ФНС для ручной загрузки в ЭДО.
@@ -226,7 +227,8 @@ export default function WaybillPrintView({ waybill, company, logoUrl, initialFor
           ) : (
             <>
               {/* переключатель только у старых накладных без вида: УПД и ТОРГ-12 теперь отдельные документы (DASS 27.11) */}
-              {!waybill.form && <div className="flex rounded-lg border border-line bg-surface p-0.5">
+              {/* при показанном своём бланке печать и PDF берутся из блока бланка, а эти кнопки относятся к встроенной форме */}
+              {!waybill.form && !blankShown && <div className="flex rounded-lg border border-line bg-surface p-0.5">
                 {(["torg12", "upd"] as const).map((f) => (
                   <button
                     key={f}
@@ -242,17 +244,17 @@ export default function WaybillPrintView({ waybill, company, logoUrl, initialFor
               <Button variant="outline" onClick={startEditing}>
                 <Pencil size={16} /> Редактировать позиции
               </Button>
-              <Button variant="outline" onClick={() => window.print()}>
+              {!blankShown && <Button variant="outline" onClick={() => window.print()}>
                 <Printer size={16} /> Печать
-              </Button>
-              {form === "upd" && (
+              </Button>}
+              {form === "upd" && !blankShown && (
                 <Button variant="outline" onClick={downloadUpdXml}>
                   <FileCode size={16} /> XML для ЭДО
                 </Button>
               )}
-              <Button onClick={handleDownloadPDF} loading={downloading}>
+              {!blankShown && <Button onClick={handleDownloadPDF} loading={downloading}>
                 <Download size={16} /> Скачать PDF
-              </Button>
+              </Button>}
             </>
           )}
         </div>
@@ -261,11 +263,18 @@ export default function WaybillPrintView({ waybill, company, logoUrl, initialFor
       {/* Свой Word-бланк: встроенные формы поправить нельзя, бланк — можно. */}
       {!editing && (
         <div className="mb-4 print:hidden">
-          <WaybillBlankBuilder waybillId={waybill.id} waybillNumber={waybill.number} />
+          <WaybillBlankBuilder
+            waybillId={waybill.id}
+            waybillNumber={waybill.number}
+            form={waybill.form}
+            onXml={downloadUpdXml}
+            onPreviewChange={setBlankShown}
+          />
         </div>
       )}
 
-      {form === "upd" ? (
+      {/* показан свой бланк — встроенную форму прячем, чтобы не было двух разных документов на экране */}
+      {blankShown ? null : form === "upd" ? (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white print:border-0">
           <UpdView
             rootRef={documentRef}
