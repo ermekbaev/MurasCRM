@@ -11,6 +11,8 @@ const startNumber = z.preprocess(
 ).optional();
 
 const settingsSchema = z.object({
+  // архив выданных заявок в канбане: через сколько дней (0 — сразу), DASS 27.11
+  issuedArchiveDays: z.number().int().min(0).max(90).optional(),
   name: z.string().optional(),
   inn: z.string().optional(),
   kpp: z.string().optional(),

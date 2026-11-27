@@ -19,6 +19,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import SearchSelect from "@/components/ui/SearchSelect";
 import { Plus, Search, ShoppingCart, AlertTriangle, Trash2, Paperclip, X, FileText } from "lucide-react";
+import ArchiveDaysPicker, { archiveLabel } from "./ArchiveDaysPicker";
 import { Role } from "@prisma/client";
 
 interface Order {
@@ -81,6 +82,8 @@ interface Props {
   orderTypes: OrderTypeOption[];
   currentUserId: string;
   currentRole: string;
+  /** через сколько дней выданные уходят в архив (настройка компании) */
+  archiveDays?: number;
 }
 
 const PRICING_UNIT_SHORT: Record<string, string> = {
@@ -89,9 +92,6 @@ const PRICING_UNIT_SHORT: Record<string, string> = {
 
 // Колонки канбана заявок. Порядок = движение заказа по этапам.
 // Цвет — точка в заголовке колонки (ring-классы статусов тут не подходят).
-// Сколько дней выданная заявка ещё видна в канбане, потом уходит в архив (DASS 26.11).
-const ISSUED_ARCHIVE_DAYS = 7;
-
 const ORDER_BOARD_COLUMNS: { code: string; dot: string }[] = [
   { code: "NEW", dot: "#0ea5e9" },
   { code: "IN_PROGRESS", dot: "#f59e0b" },
@@ -103,14 +103,16 @@ const ORDER_BOARD_COLUMNS: { code: string; dot: string }[] = [
 
 const emptyItem = (): FormItem => ({ equipmentId: "", name: "", qty: "", unit: "шт", price: "", discount: "" });
 
-export default function OrdersClient({ initialOrders, clients, users, equipment, orderTypes, currentUserId, currentRole }: Props) {
+export default function OrdersClient({ initialOrders, clients, users, equipment, orderTypes, currentUserId, currentRole, archiveDays: initialArchiveDays = 7 }: Props) {
   const typeLabels: Record<string, string> = Object.fromEntries(orderTypes.map((t) => [t.code, t.label]));
   const typeOptions = orderTypes.filter((t) => t.isActive).map((t) => ({ value: t.code, label: t.label }));
   const [orders, setOrders] = useState(initialOrders);
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
   // Архив выданных (Сергей, DASS 26.11): в канбане в «Выдано» только выданные за последние 7 дней,
   // остальные не копятся кучей и находятся в списке «Выдано» и поиском. Момент фиксируем один раз на рендер.
-  const [archiveCutoff] = useState(() => Date.now() - ISSUED_ARCHIVE_DAYS * 24 * 3600 * 1000);
+  const [archiveDays, setArchiveDays] = useState(initialArchiveDays);
+  const [openedAt] = useState(() => Date.now());
+  const archiveCutoff = openedAt - archiveDays * 24 * 3600 * 1000;
   const [dragOrderId, setDragOrderId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -502,7 +504,9 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
             // при поиске показываем всё, иначе давно выданные уходят в архив
             const isArchivable = col.code === "ISSUED" && !search;
             const colOrders = isArchivable
-              ? inColumn.filter((o) => !o.issuedAt || Date.parse(o.issuedAt) >= archiveCutoff)
+              ? archiveDays === 0
+                ? [] // «сразу»: выданные в канбане не держим совсем
+                : inColumn.filter((o) => !o.issuedAt || Date.parse(o.issuedAt) >= archiveCutoff)
               : inColumn;
             const archivedCount = inColumn.length - colOrders.length;
             return (
@@ -525,9 +529,14 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: col.dot }} />
                     {ORDER_STATUS_LABELS[col.code as keyof typeof ORDER_STATUS_LABELS]}
                   </h3>
-                  <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs text-fg-muted">
-                    {colOrders.length}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {col.code === "ISSUED" && (
+                      <ArchiveDaysPicker days={archiveDays} canEdit={currentRole === "ADMIN"} onChange={setArchiveDays} />
+                    )}
+                    <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs text-fg-muted">
+                      {colOrders.length}
+                    </span>
+                  </div>
                 </div>
                 <div
                   className={`flex-1 space-y-2 rounded-xl border-2 border-dashed p-2 transition-colors ${
@@ -626,7 +635,7 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
                         setViewMode("list");
                       }}
                       className="w-full rounded-lg px-2 py-2 text-xs text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
-                      title={`Выданные больше ${ISSUED_ARCHIVE_DAYS} дней назад`}
+                      title={`Выданные заявки уходят в архив ${archiveLabel(archiveDays)}`}
                     >
                       Ещё {archivedCount} в архиве →
                     </button>
