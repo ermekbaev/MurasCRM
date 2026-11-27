@@ -363,7 +363,8 @@ export default function OrdersClient({ initialOrders, clients, users, equipment,
   }
 
   async function handleDeleteOrder(id: string, number: string) {
-    if (!confirm(`Удалить заявку ${number}? Вместе с ней удалятся её позиции, задачи, файлы и комментарии.`)) return;
+    // выполненные заявки удаляли вместо завершения (DASS 27.11) — подсказываем прямо в вопросе
+    if (!confirm(`Удалить заявку ${number}?\n\nЕсли заказ выполнен, не удаляйте его: нажмите «Завершить» в заявке или перенесите в «Выдано», он сам уйдёт в архив, а документы останутся у клиента.\n\nУдалённая заявка попадёт в корзину на 30 дней вместе с позициями, задачами, файлами и комментариями.`)) return;
     setDeletingOrder(id);
     try {
       const res = await fetch(`/api/orders/${id}`, { method: "DELETE" });

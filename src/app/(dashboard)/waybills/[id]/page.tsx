@@ -13,7 +13,6 @@ export default async function WaybillDetailPage({
   // форма из адреса (меню «Документ» счёта, печать в PDF) читается на сервере — иначе сервер рисовал ТОРГ-12,
   // а браузер УПД, и страница ловила ошибку гидратации (26.11)
   const asked = (await searchParams).form;
-  const initialForm = asked === "upd" || asked === "simple" ? asked : "torg12";
 
   const [waybill, settings] = await Promise.all([
     prisma.waybill.findUnique({
@@ -31,6 +30,10 @@ export default async function WaybillDetailPage({
   ]);
 
   if (!waybill) notFound();
+
+  // вид документа (УПД / ТОРГ-12) задан при создании — открываем его; у старых без вида решает адрес, как раньше
+  const initialForm =
+    waybill.form === "UPD" ? "upd" : waybill.form === "TORG12" ? "torg12" : asked === "upd" || asked === "simple" ? asked : "torg12";
 
   // Источник реквизитов: выбранная доп.компания, иначе основная (CompanySettings)
   const chosenCompany = waybill.companyId

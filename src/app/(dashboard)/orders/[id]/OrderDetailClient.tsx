@@ -22,7 +22,7 @@ import {
   ArrowLeft, Send, CheckSquare, Clock, User, CreditCard, AlertCircle,
   Paperclip, Download, FileText, Image as ImageIcon, Upload,
   Pencil, Plus, Trash2, Check, X, UserPlus,
-  ClipboardList, FileSpreadsheet, ArrowUpRight, Link2, HelpCircle,
+  ClipboardList, FileSpreadsheet, ArrowUpRight, Link2, HelpCircle, CircleCheck,
 } from "lucide-react";
 import Select from "@/components/ui/Select";
 
@@ -199,7 +199,7 @@ export default function OrderDetailClient({
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"items" | "files" | "tasks" | "docs" | "comments" | "history">("items");
   const [creatingInvoice, setCreatingInvoice] = useState(false);
-  const [creatingClosing, setCreatingClosing] = useState<null | "waybill" | "act">(null);
+  const [creatingClosing, setCreatingClosing] = useState<null | "UPD" | "TORG12" | "act">(null);
   const [docsError, setDocsError] = useState<string | null>(null);
   const docsCount = order.invoices.length + order.acts.length + order.waybills.length;
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -333,7 +333,7 @@ export default function OrderDetailClient({
    * Есть счёт по заявке — документ делается по нему (позиции, клиент, основание «Счёт № …»), нет — по позициям заявки.
    * После создания открывается сам документ: там его печатают, в том числе по своему Word-бланку (УПД).
    */
-  async function createClosingFromOrder(kind: "waybill" | "act") {
+  async function createClosingFromOrder(kind: "UPD" | "TORG12" | "act") {
     const invoice = order.invoices[0];
     if (!invoice && order.items.length === 0) {
       setDocsError("В заявке нет позиций — сначала добавьте их на вкладке «Позиции»");
@@ -343,23 +343,23 @@ export default function OrderDetailClient({
     setDocsError(null);
     try {
       const body =
-        kind === "waybill"
+        kind !== "act"
           ? invoice
-            ? { invoiceId: invoice.id, orderId: order.id }
-            : { orderId: order.id, clientId: order.client.id, basis: `Заявка № ${order.number}`, items: orderLines() }
+            ? { invoiceId: invoice.id, orderId: order.id, form: kind }
+            : { orderId: order.id, clientId: order.client.id, basis: `Заявка № ${order.number}`, items: orderLines(), form: kind }
           : { orderId: order.id, ...(invoice ? { invoiceId: invoice.id } : {}), items: orderLines() };
-      const res = await fetch(kind === "waybill" ? "/api/waybills" : "/api/acts", {
+      const res = await fetch(kind !== "act" ? "/api/waybills" : "/api/acts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
         const b = await res.json().catch(() => null);
-        setDocsError(typeof b?.error === "string" ? b.error : kind === "waybill" ? "Не удалось создать УПД" : "Не удалось создать акт");
+        setDocsError(typeof b?.error === "string" ? b.error : kind === "act" ? "Не удалось создать акт" : kind === "UPD" ? "Не удалось создать УПД" : "Не удалось создать накладную");
         return;
       }
       const doc = await res.json();
-      window.location.href = kind === "waybill" ? `/waybills/${doc.id}` : `/acts/${doc.id}`;
+      window.location.href = kind !== "act" ? `/waybills/${doc.id}` : `/acts/${doc.id}`;
     } catch {
       setDocsError("Нет связи с сервером");
     } finally {
@@ -688,7 +688,14 @@ export default function OrderDetailClient({
             </div>
           </div>
           {canEdit && (
-            <div className="flex items-center gap-2 lg:justify-end">
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+              {/* Завершить = «Выдано», а не удалить (Сергей, DASS 27.11: удалял выполненные заявки, не найдя, как их закрыть).
+                  Выданная заявка через неделю сама уходит из канбана в архив, документы остаются у клиента. */}
+              {!["ISSUED", "CANCELLED"].includes(order.status) && (
+                <Button onClick={() => updateField("status", "ISSUED")} loading={saving} title="Заказ выполнен и выдан клиенту">
+                  <CircleCheck size={16} /> Завершить
+                </Button>
+              )}
               <Select
                 value={order.status}
                 onChange={(e) => updateField("status", e.target.value)}
@@ -1312,8 +1319,11 @@ export default function OrderDetailClient({
                       <Button onClick={createInvoiceFromOrder} loading={creatingInvoice}>
                         <Plus size={16} /> Счёт
                       </Button>
-                      <Button variant="outline" onClick={() => createClosingFromOrder("waybill")} loading={creatingClosing === "waybill"}>
-                        <Plus size={16} /> УПД / накладная
+                      <Button variant="outline" onClick={() => createClosingFromOrder("UPD")} loading={creatingClosing === "UPD"}>
+                        <Plus size={16} /> УПД
+                      </Button>
+                      <Button variant="outline" onClick={() => createClosingFromOrder("TORG12")} loading={creatingClosing === "TORG12"}>
+                        <Plus size={16} /> Накладная
                       </Button>
                       <Button variant="outline" onClick={() => createClosingFromOrder("act")} loading={creatingClosing === "act"}>
                         <Plus size={16} /> Акт

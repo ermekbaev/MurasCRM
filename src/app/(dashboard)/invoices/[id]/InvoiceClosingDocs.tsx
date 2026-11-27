@@ -6,11 +6,13 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { formatDate } from "@/lib/utils";
 import { FileCode, Plus } from "lucide-react";
+import { waybillLabel, type WaybillForm } from "@/lib/waybillForm";
 
 interface Doc {
   id: string;
   number: string;
   date: string;
+  form?: string | null;
 }
 
 interface Props {
@@ -27,30 +29,30 @@ interface Props {
  * Разделы «Накладные» и «Акты» остаются журналом для бухгалтера.
  */
 export default function InvoiceClosingDocs({ invoiceId, orderId, items, waybills, acts }: Props) {
-  const [creating, setCreating] = useState<"waybill" | "act" | null>(null);
+  const [creating, setCreating] = useState<WaybillForm | "act" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function create(kind: "waybill" | "act") {
+  async function create(kind: WaybillForm | "act") {
     setCreating(kind);
     setError(null);
     try {
       // накладная берёт позиции и основание «Счёт № …» из самого счёта; акту позиции передаём явно
       const body =
-        kind === "waybill"
-          ? { invoiceId, ...(orderId ? { orderId } : {}) }
+        kind !== "act"
+          ? { invoiceId, form: kind, ...(orderId ? { orderId } : {}) }
           : { invoiceId, ...(orderId ? { orderId } : {}), items };
-      const res = await fetch(kind === "waybill" ? "/api/waybills" : "/api/acts", {
+      const res = await fetch(kind !== "act" ? "/api/waybills" : "/api/acts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
         const b = await res.json().catch(() => null);
-        setError(typeof b?.error === "string" ? b.error : kind === "waybill" ? "Не удалось создать УПД" : "Не удалось создать акт");
+        setError(typeof b?.error === "string" ? b.error : kind === "act" ? "Не удалось создать акт" : `Не удалось создать: ${waybillLabel(kind)}`);
         return;
       }
       const doc = await res.json();
-      window.location.href = kind === "waybill" ? `/waybills/${doc.id}` : `/acts/${doc.id}`;
+      window.location.href = kind !== "act" ? `/waybills/${doc.id}` : `/acts/${doc.id}`;
     } catch {
       setError("Нет связи с сервером");
     } finally {
@@ -89,8 +91,11 @@ export default function InvoiceClosingDocs({ invoiceId, orderId, items, waybills
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => create("waybill")} loading={creating === "waybill"} disabled={items.length === 0}>
-            <Plus size={16} /> УПД / накладная
+          <Button variant="outline" onClick={() => create("UPD")} loading={creating === "UPD"} disabled={items.length === 0}>
+            <Plus size={16} /> УПД
+          </Button>
+          <Button variant="outline" onClick={() => create("TORG12")} loading={creating === "TORG12"} disabled={items.length === 0}>
+            <Plus size={16} /> Накладная
           </Button>
           <Button variant="outline" onClick={() => create("act")} loading={creating === "act"} disabled={items.length === 0}>
             <Plus size={16} /> Акт
@@ -103,12 +108,12 @@ export default function InvoiceClosingDocs({ invoiceId, orderId, items, waybills
           {waybills.map((w) => (
             <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
               <Link href={`/waybills/${w.id}`} className="text-accent hover:underline">
-                УПД / накладная № {w.number} от {formatDate(w.date)}
+                {waybillLabel(w.form)} № {w.number} от {formatDate(w.date)}
               </Link>
               {/* XML формата ФНС 5.03 для загрузки в ЭДО — прямо отсюда, без захода в накладную */}
-              <button type="button" onClick={() => downloadXml(w)} className="flex items-center gap-1.5 text-xs text-fg-muted hover:text-fg">
+              {w.form !== "TORG12" && <button type="button" onClick={() => downloadXml(w)} className="flex items-center gap-1.5 text-xs text-fg-muted hover:text-fg">
                 <FileCode size={14} /> XML для ЭДО
-              </button>
+              </button>}
             </li>
           ))}
           {acts.map((a) => (

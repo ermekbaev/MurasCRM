@@ -38,7 +38,7 @@ export async function GET(
       client: true,
       order: { select: { id: true, number: true } },
       items: true,
-      acts: true,
+      acts: { where: { deletedAt: null } },
     },
   });
 
