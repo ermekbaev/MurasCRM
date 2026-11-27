@@ -920,6 +920,8 @@ model Message {
 
 model CompanySettings {
   id                 String   @id @default(cuid())
+  /// Через сколько дней выданные заявки уходят из канбана в архив; 0 — сразу (DASS 27.11).
+  issuedArchiveDays  Int      @default(7)
   name               String   @default("")
   inn                String   @default("")
   kpp                String   @default("")
