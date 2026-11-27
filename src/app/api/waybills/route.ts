@@ -21,6 +21,8 @@ const waybillSchema = z.object({
   number: z.string().optional(),
   date: z.string().optional(),
   basis: z.string().optional(),
+  // УПД и накладная ТОРГ-12 — отдельные документы (Сергей, DASS 27.11)
+  form: z.enum(["UPD", "TORG12"]).optional(),
   items: z.array(itemSchema).optional(),
 });
 
@@ -126,6 +128,7 @@ export async function POST(req: Request) {
         consigneeId: rest.consigneeId?.trim() || undefined,
         date: date ? new Date(date) : undefined,
         basis: resolvedBasis,
+        form: rest.form,
         total,
         items: { create: calculatedItems },
       },

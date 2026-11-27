@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, FileText, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { isForm, type WaybillForm } from "@/lib/waybillForm";
 
 interface Doc {
   id: string;
   number: string;
+  form?: string | null;
 }
 
 interface Template {
@@ -72,19 +74,19 @@ export default function InvoiceDocumentMenu({ invoiceId, invoiceNumber, clientId
       .catch(() => setTemplates([]));
   }, [open, templates]);
 
-  async function createFromInvoice(kind: "waybill" | "act"): Promise<string | null> {
+  async function createFromInvoice(kind: WaybillForm | "act"): Promise<string | null> {
     const body =
-      kind === "waybill"
-        ? { invoiceId, ...(orderId ? { orderId } : {}) }
+      kind !== "act"
+        ? { invoiceId, form: kind, ...(orderId ? { orderId } : {}) }
         : { invoiceId, ...(orderId ? { orderId } : {}), items };
-    const res = await fetch(kind === "waybill" ? "/api/waybills" : "/api/acts", {
+    const res = await fetch(kind !== "act" ? "/api/waybills" : "/api/acts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     if (!res.ok) {
       const b = await res.json().catch(() => null);
-      setError(typeof b?.error === "string" ? b.error : kind === "waybill" ? "Не удалось создать УПД" : "Не удалось создать акт");
+      setError(typeof b?.error === "string" ? b.error : kind === "act" ? "Не удалось создать акт" : kind === "UPD" ? "Не удалось создать УПД" : "Не удалось создать накладную");
       return null;
     }
     return (await res.json()).id as string;
@@ -102,13 +104,16 @@ export default function InvoiceDocumentMenu({ invoiceId, invoiceNumber, clientId
     }
   }
 
-  // последний УПД/акт по счёту, иначе новый
-  const lastWaybill = waybills[waybills.length - 1];
+  // последний документ нужного вида по счёту, иначе новый; УПД и ТОРГ-12 — отдельные (DASS 27.11)
+  const lastOf = (want: WaybillForm) => [...waybills].reverse().find((w) => isForm(w.form, want));
+  const lastUpd = lastOf("UPD");
+  const lastTorg = lastOf("TORG12");
   const lastAct = acts[acts.length - 1];
 
   const openWaybill = (form: "upd" | "torg12") =>
     run(form, async () => {
-      const id = lastWaybill?.id ?? (await createFromInvoice("waybill"));
+      const want: WaybillForm = form === "upd" ? "UPD" : "TORG12";
+      const id = (want === "UPD" ? lastUpd : lastTorg)?.id ?? (await createFromInvoice(want));
       if (id) window.location.href = `/waybills/${id}?form=${form}`;
     });
 
@@ -120,7 +125,7 @@ export default function InvoiceDocumentMenu({ invoiceId, invoiceNumber, clientId
 
   const downloadXml = () =>
     run("xml", async () => {
-      const id = lastWaybill?.id ?? (await createFromInvoice("waybill"));
+      const id = lastUpd?.id ?? (await createFromInvoice("UPD"));
       if (!id) return;
       const res = await fetch(`/api/waybills/${id}/upd-xml`);
       if (!res.ok) {
@@ -131,7 +136,7 @@ export default function InvoiceDocumentMenu({ invoiceId, invoiceNumber, clientId
       saveBlob(await res.blob(), res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] ?? `upd-${invoiceNumber}.xml`);
       setOpen(false);
       // XML мог создать УПД — обновим страницу, чтобы он появился в списке документов
-      if (!lastWaybill) window.location.reload();
+      if (!lastUpd) window.location.reload();
     });
 
   const renderTemplate = (t: Template) =>
@@ -139,7 +144,7 @@ export default function InvoiceDocumentMenu({ invoiceId, invoiceNumber, clientId
       const res = await fetch(`/api/templates/${t.id}/render-docx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId, clientId, orderId: orderId ?? undefined, waybillId: lastWaybill?.id, format: "pdf" }),
+        body: JSON.stringify({ invoiceId, clientId, orderId: orderId ?? undefined, waybillId: (lastUpd ?? lastTorg)?.id, format: "pdf" }),
       });
       if (!res.ok) {
         const b = await res.json().catch(() => null);
@@ -171,8 +176,8 @@ export default function InvoiceDocumentMenu({ invoiceId, invoiceNumber, clientId
       {open && (
         // на телефоне кнопка может оказаться слева после переноса — меню во всю ширину, чтобы не уехало за край
         <div className="absolute right-0 z-30 mt-1 w-72 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg max-sm:fixed max-sm:inset-x-4 max-sm:top-28 max-sm:w-auto">
-          {item("upd", "УПД", lastWaybill ? `№ ${lastWaybill.number}` : "создать", () => openWaybill("upd"))}
-          {item("torg12", "Накладная ТОРГ-12", lastWaybill ? `№ ${lastWaybill.number}` : "создать", () => openWaybill("torg12"))}
+          {item("upd", "УПД", lastUpd ? `№ ${lastUpd.number}` : "создать", () => openWaybill("upd"))}
+          {item("torg12", "Накладная ТОРГ-12", lastTorg ? `№ ${lastTorg.number}` : "создать", () => openWaybill("torg12"))}
           {item("act", "Акт", lastAct ? `№ ${lastAct.number}` : "создать", openAct)}
           {item("xml", "XML УПД для ЭДО", null, downloadXml)}
           <div className="my-1 border-t border-line" />

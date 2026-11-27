@@ -20,8 +20,9 @@ export default async function InvoiceDetailPage({
         order: { select: { id: true, number: true } },
         items: true,
         // закрывающие документы по счёту — блок «Документы по счёту» (DASS 26.11)
-        waybills: { select: { id: true, number: true, date: true }, orderBy: { date: "asc" } },
-        acts: { select: { id: true, number: true, date: true }, orderBy: { date: "asc" } },
+        // удалённые в корзину не показываем: связи не проходят через фильтр prisma (у Сергея висели две удалённые накладные, 27.11)
+        waybills: { where: { deletedAt: null }, select: { id: true, number: true, date: true, form: true }, orderBy: { date: "asc" } },
+        acts: { where: { deletedAt: null }, select: { id: true, number: true, date: true }, orderBy: { date: "asc" } },
       },
     }),
     prisma.companySettings.findFirst(),
@@ -71,7 +72,7 @@ export default async function InvoiceDetailPage({
           clientId={invoice.clientId}
           orderId={invoice.order?.id ?? null}
           items={invoice.items.map((i) => ({ name: i.name, qty: Number(i.qty), unit: i.unit, price: Number(i.price) }))}
-          waybills={invoice.waybills.map((w) => ({ id: w.id, number: w.number }))}
+          waybills={invoice.waybills.map((w) => ({ id: w.id, number: w.number, form: w.form }))}
           acts={invoice.acts.map((a) => ({ id: a.id, number: a.number }))}
         />
       }

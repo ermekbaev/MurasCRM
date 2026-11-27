@@ -65,7 +65,7 @@ export async function GET(req: Request) {
         client: { select: { id: true, name: true } },
         order: { select: { id: true, number: true } },
         items: true,
-        _count: { select: { items: true, waybills: true, acts: true } }, // метки «УПД ✓» и «Акт ✓» в списке (DASS 26.11)
+        _count: { select: { items: true, waybills: { where: { deletedAt: null } }, acts: { where: { deletedAt: null } } } }, // метки «УПД ✓» и «Акт ✓» в списке (DASS 26.11)
       },
     }),
     prisma.invoice.count({ where }),

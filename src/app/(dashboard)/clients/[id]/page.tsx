@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getClientSourceLabels } from "@/lib/clientSources";
 import { notFound } from "next/navigation";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { waybillLabel } from "@/lib/waybillForm";
 import {
   CLIENT_TYPE_LABELS,
   ORDER_STATUS_LABELS,
@@ -69,7 +70,7 @@ export default async function ClientDetailPage({
     }),
     prisma.waybill.findMany({
       where: { OR: [{ clientId: id }, { payerId: id }] },
-      select: { id: true, number: true, date: true, total: true, order: { select: { number: true } } },
+      select: { id: true, number: true, date: true, total: true, form: true, order: { select: { number: true } } },
       orderBy: { date: "desc" },
     }),
     prisma.act.findMany({
@@ -80,7 +81,7 @@ export default async function ClientDetailPage({
   ]);
   const documents = [
     ...docInvoices.map((d) => ({ ...d, kind: "Счёт", href: `/invoices/${d.id}` })),
-    ...docWaybills.map((d) => ({ ...d, kind: "УПД / накладная", href: `/waybills/${d.id}`, isPaid: null })),
+    ...docWaybills.map((d) => ({ ...d, kind: waybillLabel(d.form), href: `/waybills/${d.id}`, isPaid: null })),
     ...docActs.map((d) => ({ ...d, kind: "Акт", href: `/acts/${d.id}`, isPaid: null })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 

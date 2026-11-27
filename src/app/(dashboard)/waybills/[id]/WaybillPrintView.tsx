@@ -50,6 +50,8 @@ interface Props {
   waybill: {
     id: string;
     number: string;
+    /** UPD или TORG12 — отдельный документ без переключателя; пусто у старых накладных */
+    form?: string | null;
     date: string;
     basis: string | null;
     total: number;
@@ -223,7 +225,8 @@ export default function WaybillPrintView({ waybill, company, logoUrl, initialFor
             </>
           ) : (
             <>
-              <div className="flex rounded-lg border border-line bg-surface p-0.5">
+              {/* переключатель только у старых накладных без вида: УПД и ТОРГ-12 теперь отдельные документы (DASS 27.11) */}
+              {!waybill.form && <div className="flex rounded-lg border border-line bg-surface p-0.5">
                 {(["torg12", "upd"] as const).map((f) => (
                   <button
                     key={f}
@@ -235,7 +238,7 @@ export default function WaybillPrintView({ waybill, company, logoUrl, initialFor
                     {f === "torg12" ? "ТОРГ-12" : "УПД"}
                   </button>
                 ))}
-              </div>
+              </div>}
               <Button variant="outline" onClick={startEditing}>
                 <Pencil size={16} /> Редактировать позиции
               </Button>
